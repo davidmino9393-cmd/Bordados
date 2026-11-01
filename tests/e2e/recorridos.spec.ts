@@ -37,8 +37,8 @@ test('éxito: etapas reales, listo para prueba y descarga del trabajo correcto',
   await expectNoHorizontalScroll(page);
 
   const download = page.waitForEvent('download');
-  await page.getByRole('link', { name: /Descargar Archivo de bordado/ }).click();
-  expect((await download).suggestedFilename()).toMatch(/^job_sim_\d+\.jef$/);
+  await page.getByRole('link', { name: /Descargar\s*Archivo de bordado/ }).click();
+  expect((await download).suggestedFilename()).toMatch(/^job_sim_\d+-mock\.jef$/);
 });
 
 test('fallo: causa visible y sin descargas', async ({ page }) => {
@@ -60,9 +60,9 @@ test('cancelación: queda cancelado y sin archivos', async ({ page }) => {
 test('revisión localizada: corrige y regenera', async ({ page }) => {
   await generate(page, 'logo-revision.png');
   await expect(page.getByText('Hay un elemento que necesita revisión')).toBeVisible({ timeout: RUN_TIMEOUT_MS });
-  await expect(page.getByText(/Elementos: obj_007/)).toBeVisible();
+  await expect(page.getByText(/object_mock_satin/).first()).toBeVisible();
   await expectNoHorizontalScroll(page);
-  await page.getByLabel(/Qué querés hacer \(obj_007\)/).selectOption({ label: 'Excluir del bordado' });
+  await page.getByLabel(/Qué querés hacer \(object_mock_satin\)/).selectOption({ label: 'Excluir del bordado' });
   await page.getByRole('button', { name: 'Aplicar y regenerar' }).click();
   await expect(page.getByText('Listo para prueba (digital)').first()).toBeVisible({ timeout: RUN_TIMEOUT_MS });
 });
