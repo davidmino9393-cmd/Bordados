@@ -1,0 +1,23 @@
+{
+  "archivo": "Anime_Socks_Optimizado.jef",
+  "bytes": 14816,
+  "sha256": "60a185b27c542cb5a12a4ed97779a5bfb00c5811696f4c1da81f2584e71da80d",
+  "ancho_mm": 150.0,
+  "alto_mm": 142.8,
+  "colores_lista": 3,
+  "puntadas": 6789,
+  "saltos_comandos": 112,
+  "cortes_decodificados": 53,
+  "cambios_color": 2,
+  "fin": 1,
+  "recorrido_saltos_mm": 1094.0130251606502,
+  "puntada_max_mm": 4.870318264754369,
+  "puntadas_menores_0_3_mm": 199,
+  "hoop_cabecera": 4,
+  "limites_01mm": [
+    -750,
+    -714,
+    750,
+    714
+  ]
+}

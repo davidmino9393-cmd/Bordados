@@ -1,0 +1,9 @@
+# >>> ai-kit (managed) >>>
+# Installed by devagent-kit — keep kit files local, do not commit.
+.agents/
+.ai-kit.lock
+.codex/
+.kit-data/
+AGENTS.md
+WORKFLOW.md
+# <<< ai-kit (managed) <<<

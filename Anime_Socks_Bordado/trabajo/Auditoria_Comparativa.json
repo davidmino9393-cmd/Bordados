@@ -1,0 +1,530 @@
+[
+  {
+    "archivo": "Anime_Socks_Optimizado.jef",
+    "dimensiones_mm": [
+      150.0,
+      142.8
+    ],
+    "colores": 3,
+    "puntadas": 6789,
+    "saltos": 112,
+    "cortes_explicitos": 53,
+    "cambios_color": 2,
+    "fin": 1,
+    "puntada_max_mm": 4.870318264754369,
+    "puntadas_cero": 56,
+    "puntadas_0_a_03_mm": 199,
+    "saltos_total_mm": 1107.7101051414336,
+    "salto_max_comando_mm": 15.042606157179014,
+    "cabecera": {
+      "offset": 140,
+      "registros_2bytes": 7338,
+      "bytes": 14816,
+      "hoop_id": 4,
+      "integridad": true,
+      "ordenes_binarias": {
+        "JUMP": 272,
+        "STITCH": 6789,
+        "COLOR_CHANGE": 2,
+        "END": 1
+      }
+    },
+    "max_penetraciones_cuadricula_1mm": [
+      [
+        [
+          -54,
+          -40
+        ],
+        15
+      ],
+      [
+        [
+          -29,
+          -63
+        ],
+        12
+      ],
+      [
+        [
+          53,
+          47
+        ],
+        12
+      ],
+      [
+        [
+          -6,
+          -3
+        ],
+        11
+      ],
+      [
+        [
+          49,
+          43
+        ],
+        11
+      ],
+      [
+        [
+          -27,
+          -62
+        ],
+        10
+      ],
+      [
+        [
+          34,
+          8
+        ],
+        10
+      ],
+      [
+        [
+          -54,
+          -39
+        ],
+        10
+      ],
+      [
+        [
+          -52,
+          -39
+        ],
+        10
+      ],
+      [
+        [
+          47,
+          44
+        ],
+        10
+      ]
+    ],
+    "sha256": "60a185b27c542cb5a12a4ed97779a5bfb00c5811696f4c1da81f2584e71da80d",
+    "paleta_jef": [
+      {
+        "hex": "#986c80",
+        "descripcion": "Salmon",
+        "catalogo": "256"
+      },
+      {
+        "hex": "#e3c4b4",
+        "descripcion": "Beige Gray",
+        "catalogo": "223"
+      },
+      {
+        "hex": "#b59474",
+        "descripcion": "Umber",
+        "catalogo": "237"
+      }
+    ]
+  },
+  {
+    "archivo": "Anime_Socks_Con_Circulo.jef",
+    "dimensiones_mm": [
+      150.0,
+      142.8
+    ],
+    "colores": 3,
+    "puntadas": 6966,
+    "saltos": 112,
+    "cortes_explicitos": 54,
+    "cambios_color": 2,
+    "fin": 1,
+    "puntada_max_mm": 4.870318264754369,
+    "puntadas_cero": 57,
+    "puntadas_0_a_03_mm": 199,
+    "saltos_total_mm": 1110.9866031051847,
+    "salto_max_comando_mm": 15.042606157179014,
+    "cabecera": {
+      "offset": 140,
+      "registros_2bytes": 7521,
+      "bytes": 15182,
+      "hoop_id": 4,
+      "integridad": true,
+      "ordenes_binarias": {
+        "JUMP": 275,
+        "STITCH": 6966,
+        "COLOR_CHANGE": 2,
+        "END": 1
+      }
+    },
+    "max_penetraciones_cuadricula_1mm": [
+      [
+        [
+          -54,
+          -40
+        ],
+        15
+      ],
+      [
+        [
+          -29,
+          -63
+        ],
+        12
+      ],
+      [
+        [
+          -52,
+          -39
+        ],
+        12
+      ],
+      [
+        [
+          53,
+          47
+        ],
+        12
+      ],
+      [
+        [
+          -27,
+          -62
+        ],
+        11
+      ],
+      [
+        [
+          -6,
+          -3
+        ],
+        11
+      ],
+      [
+        [
+          49,
+          43
+        ],
+        11
+      ],
+      [
+        [
+          34,
+          8
+        ],
+        10
+      ],
+      [
+        [
+          -54,
+          -39
+        ],
+        10
+      ],
+      [
+        [
+          47,
+          44
+        ],
+        10
+      ]
+    ],
+    "sha256": "c67718bd3a26575f59a77b55a70a28a77303f195990f99ae74f78b63de73922e",
+    "paleta_jef": [
+      {
+        "hex": "#986c80",
+        "descripcion": "Salmon",
+        "catalogo": "256"
+      },
+      {
+        "hex": "#e3c4b4",
+        "descripcion": "Beige Gray",
+        "catalogo": "223"
+      },
+      {
+        "hex": "#b59474",
+        "descripcion": "Umber",
+        "catalogo": "237"
+      }
+    ]
+  },
+  {
+    "archivo": "trabajo/Anime_Socks_Inicial.jef",
+    "dimensiones_mm": [
+      150.0,
+      142.8
+    ],
+    "colores": 36,
+    "puntadas": 7248,
+    "saltos": 196,
+    "cortes_explicitos": 109,
+    "cambios_color": 35,
+    "fin": 1,
+    "puntada_max_mm": 4.870318264754369,
+    "puntadas_cero": 109,
+    "puntadas_0_a_03_mm": 190,
+    "saltos_total_mm": 1696.0383125534304,
+    "salto_max_comando_mm": 16.542369842317033,
+    "cabecera": {
+      "offset": 404,
+      "registros_2bytes": 8377,
+      "bytes": 17158,
+      "hoop_id": 4,
+      "integridad": true,
+      "ordenes_binarias": {
+        "JUMP": 529,
+        "STITCH": 7248,
+        "COLOR_CHANGE": 35,
+        "END": 1
+      }
+    },
+    "max_penetraciones_cuadricula_1mm": [
+      [
+        [
+          -36,
+          -58
+        ],
+        20
+      ],
+      [
+        [
+          -51,
+          -41
+        ],
+        18
+      ],
+      [
+        [
+          -54,
+          -39
+        ],
+        18
+      ],
+      [
+        [
+          -54,
+          -40
+        ],
+        18
+      ],
+      [
+        [
+          48,
+          42
+        ],
+        18
+      ],
+      [
+        [
+          47,
+          44
+        ],
+        18
+      ],
+      [
+        [
+          25,
+          62
+        ],
+        18
+      ],
+      [
+        [
+          -50,
+          -39
+        ],
+        16
+      ],
+      [
+        [
+          50,
+          45
+        ],
+        16
+      ],
+      [
+        [
+          47,
+          45
+        ],
+        16
+      ]
+    ],
+    "sha256": "8092f3f9e7800c8274f4867e78c374a749433d8b627b672c63d3d112d23b95af",
+    "paleta_jef": [
+      {
+        "hex": "#e3c4b4",
+        "descripcion": "Beige Gray",
+        "catalogo": "223"
+      },
+      {
+        "hex": "#b59474",
+        "descripcion": "Umber",
+        "catalogo": "237"
+      },
+      {
+        "hex": "#e3c4b4",
+        "descripcion": "Beige Gray",
+        "catalogo": "223"
+      },
+      {
+        "hex": "#b59474",
+        "descripcion": "Umber",
+        "catalogo": "237"
+      },
+      {
+        "hex": "#e3c4b4",
+        "descripcion": "Beige Gray",
+        "catalogo": "223"
+      },
+      {
+        "hex": "#b59474",
+        "descripcion": "Umber",
+        "catalogo": "237"
+      },
+      {
+        "hex": "#e3c4b4",
+        "descripcion": "Beige Gray",
+        "catalogo": "223"
+      },
+      {
+        "hex": "#b59474",
+        "descripcion": "Umber",
+        "catalogo": "237"
+      },
+      {
+        "hex": "#e3c4b4",
+        "descripcion": "Beige Gray",
+        "catalogo": "223"
+      },
+      {
+        "hex": "#b59474",
+        "descripcion": "Umber",
+        "catalogo": "237"
+      },
+      {
+        "hex": "#e3c4b4",
+        "descripcion": "Beige Gray",
+        "catalogo": "223"
+      },
+      {
+        "hex": "#b59474",
+        "descripcion": "Umber",
+        "catalogo": "237"
+      },
+      {
+        "hex": "#e3c4b4",
+        "descripcion": "Beige Gray",
+        "catalogo": "223"
+      },
+      {
+        "hex": "#b59474",
+        "descripcion": "Umber",
+        "catalogo": "237"
+      },
+      {
+        "hex": "#e3c4b4",
+        "descripcion": "Beige Gray",
+        "catalogo": "223"
+      },
+      {
+        "hex": "#b59474",
+        "descripcion": "Umber",
+        "catalogo": "237"
+      },
+      {
+        "hex": "#e3c4b4",
+        "descripcion": "Beige Gray",
+        "catalogo": "223"
+      },
+      {
+        "hex": "#b59474",
+        "descripcion": "Umber",
+        "catalogo": "237"
+      },
+      {
+        "hex": "#e3c4b4",
+        "descripcion": "Beige Gray",
+        "catalogo": "223"
+      },
+      {
+        "hex": "#b59474",
+        "descripcion": "Umber",
+        "catalogo": "237"
+      },
+      {
+        "hex": "#e3c4b4",
+        "descripcion": "Beige Gray",
+        "catalogo": "223"
+      },
+      {
+        "hex": "#b59474",
+        "descripcion": "Umber",
+        "catalogo": "237"
+      },
+      {
+        "hex": "#e3c4b4",
+        "descripcion": "Beige Gray",
+        "catalogo": "223"
+      },
+      {
+        "hex": "#b59474",
+        "descripcion": "Umber",
+        "catalogo": "237"
+      },
+      {
+        "hex": "#986c80",
+        "descripcion": "Salmon",
+        "catalogo": "256"
+      },
+      {
+        "hex": "#e3c4b4",
+        "descripcion": "Beige Gray",
+        "catalogo": "223"
+      },
+      {
+        "hex": "#b59474",
+        "descripcion": "Umber",
+        "catalogo": "237"
+      },
+      {
+        "hex": "#986c80",
+        "descripcion": "Salmon",
+        "catalogo": "256"
+      },
+      {
+        "hex": "#e3c4b4",
+        "descripcion": "Beige Gray",
+        "catalogo": "223"
+      },
+      {
+        "hex": "#b59474",
+        "descripcion": "Umber",
+        "catalogo": "237"
+      },
+      {
+        "hex": "#986c80",
+        "descripcion": "Salmon",
+        "catalogo": "256"
+      },
+      {
+        "hex": "#e3c4b4",
+        "descripcion": "Beige Gray",
+        "catalogo": "223"
+      },
+      {
+        "hex": "#b59474",
+        "descripcion": "Umber",
+        "catalogo": "237"
+      },
+      {
+        "hex": "#986c80",
+        "descripcion": "Salmon",
+        "catalogo": "256"
+      },
+      {
+        "hex": "#e3c4b4",
+        "descripcion": "Beige Gray",
+        "catalogo": "223"
+      },
+      {
+        "hex": "#986c80",
+        "descripcion": "Salmon",
+        "catalogo": "256"
+      }
+    ]
+  }
+]

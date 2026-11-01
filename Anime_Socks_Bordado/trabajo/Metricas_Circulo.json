@@ -1,0 +1,23 @@
+{
+  "archivo": "Anime_Socks_Con_Circulo.jef",
+  "bytes": 15182,
+  "sha256": "c67718bd3a26575f59a77b55a70a28a77303f195990f99ae74f78b63de73922e",
+  "ancho_mm": 150.0,
+  "alto_mm": 142.8,
+  "colores_lista": 3,
+  "puntadas": 6966,
+  "saltos_comandos": 112,
+  "cortes_decodificados": 54,
+  "cambios_color": 2,
+  "fin": 1,
+  "recorrido_saltos_mm": 1097.289523124401,
+  "puntada_max_mm": 4.870318264754369,
+  "puntadas_menores_0_3_mm": 199,
+  "hoop_cabecera": 4,
+  "limites_01mm": [
+    -750,
+    -714,
+    750,
+    714
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "fecha_local": "2026-10-12",
+  "estado": "jef_verificado_para_prueba",
+  "inkscape": {
+    "version": "1.4.2 (f4327f4, 2025-05-13)",
+    "ejecutable": "C:\\Program Files\\Inkscape\\bin\\inkscape.com",
+    "ayuda_consultada": true,
+    "acciones_inkstitch_registradas": true
+  },
+  "inkstitch": {
+    "version_archivo_VERSION": "v3.2.2 (windows-x86_64) 2025-06-15 10:48",
+    "ejecutable": "C:\\Users\\david\\AppData\\Roaming\\inkscape\\extensions\\inkstitch\\inkstitch\\bin\\inkstitch.exe",
+    "ayuda_subprocess_codigo": 0,
+    "descriptor_exportacion_jef": "org.inkstitch.output.jef",
+    "exportacion_logo_probada": true
+  },
+  "python": {
+    "version": "3.12.14",
+    "ejecutable": "C:\\Users\\david\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "modulos_disponibles": [
+      "PIL",
+      "lxml",
+      "numpy"
+    ],
+    "modulos_no_encontrados": [
+      "shapely",
+      "pyembroidery",
+      "cv2",
+      "scipy"
+    ]
+  },
+  "objetivo": {
+    "maquina": "Janome Memory Craft 550E",
+    "ancho_mm": 150,
+    "material": "gabardina de bolso",
+    "formato": "jef"
+  },
+  "metricas_logo": {
+    "dimensiones_mm": [
+      150,
+      142.8
+    ],
+    "colores": 3,
+    "puntadas": 6789,
+    "saltos": 112,
+    "cortes_codificados": 53
+  },
+  "simulacion_logo_realizada": true,
+  "jef_generado": true,
+  "prueba_fisica_realizada": false,
+  "advertencias_inkstitch": {
+    "Satin has no rungs": 14
+  }
+}
