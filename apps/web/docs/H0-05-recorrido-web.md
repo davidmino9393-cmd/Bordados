@@ -82,6 +82,26 @@ La franja «Datos simulados» aparece siempre que el cliente sea simulado. Sin `
 9. **Fotos de la muestra:** `photo_asset_ids` existe en el contrato, pero no define cómo subir una foto como asset. Queda pendiente (cambio propuesto: indicar el flujo de subida).
 10. **Quién puede registrar:** el contrato habla de «usuario autorizado»; si no lo es, el 403 se muestra con su código.
 
+## Accesibilidad
+
+Se corre **axe-core** (`@axe-core/playwright`, solo en `tests/e2e`) sobre la UI real en Chrome, en escritorio y en móvil (Pixel 7), con las etiquetas WCAG 2.0/2.1/2.2 A y AA más las buenas prácticas de axe, contraste incluido. Pantallas escaneadas: proyectos (vacío y con uno), proyecto sin imagen, con imagen y error de validación y con aviso de bastidor, trabajo en curso, fallido y cancelado, resultado listo (con y sin errores del formulario de muestra), revisión con archivos (14 incidencias) y la pantalla de error 501 con el cliente real.
+
+| Hallazgo | Corrección |
+|---|---|
+| `region`: el aviso «Datos simulados» quedaba fuera de un landmark | Pasó a estar dentro de `<header>`; la navegación quedó en `<nav aria-label="Principal">` |
+| `color-contrast`: texto verde sobre verde claro de la insignia «Listo para prueba» (4,40:1) | `--color-ok` de `#2e7d4f` a `#226640` (6,02:1 sobre el fondo de la insignia) |
+
+Mejoras que axe no detecta y se hicieron igual:
+- Título de pestaña descriptivo por pantalla (WCAG 2.4.2): «Proyectos», nombre del proyecto y «Generación del bordado», todos seguidos de «· Bordados con IA».
+- Los cambios de estado del trabajo se anuncian a lectores de pantalla (`role="status"` oculto visualmente).
+- Prueba de teclado: se crea un proyecto sin mouse y cada elemento enfocable con Tab muestra contorno de foco (≥ 2 px).
+
+**Sin resolver**
+- **Foco al cambiar de pantalla:** tras navegar, el foco no se mueve al título. Es una decisión de diseño de navegación; conviene probarla con un lector de pantalla antes de elegir la solución.
+- **Cobertura de axe:** analiza solo lo renderizado en cada estado. No cubre `:hover`, controles deshabilitados en cada estado, zoom al 200 % ni reflujo a 320 px, ni modo oscuro (no existe).
+- **Sin prueba manual con lector de pantalla** (NVDA/VoiceOver): axe no sustituye esa revisión.
+- **Fotos de la muestra:** cuando exista la subida, habrá que revisar su texto alternativo.
+
 ## Deuda menor (H1 completo)
 
 - **Paginación:** primera página de proyectos, assets y trabajos; falta «ver más».

@@ -8,10 +8,14 @@ import { SimulationBanner } from './shared/components/SimulationBanner';
 export function App() {
   return (
     <>
-      <SimulationBanner />
-      <header className="app-header">
-        <Link to="/">{es.appName}</Link>
-        <Link to="/">{es.projects.title}</Link>
+      <header>
+        <SimulationBanner />
+        <div className="app-header">
+          <Link to="/">{es.appName}</Link>
+          <nav aria-label="Principal">
+            <Link to="/">{es.projects.title}</Link>
+          </nav>
+        </div>
       </header>
       <main className="page">
         <Routes>

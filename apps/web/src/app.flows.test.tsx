@@ -289,6 +289,24 @@ describe('recorrido principal (cliente SIMULADO)', () => {
   });
 });
 
+describe('accesibilidad', () => {
+  it('cada pantalla tiene un título descriptivo', async () => {
+    const user = setupUser();
+    renderApp();
+    await screen.findByRole('heading', { name: 'Proyectos' });
+    expect(document.title).toBe('Proyectos · Bordados con IA');
+    await user.type(screen.getByLabelText('Nombre del proyecto'), 'Mi logo');
+    await user.click(screen.getByRole('button', { name: 'Crear proyecto' }));
+    await screen.findByLabelText('Elegir archivo');
+    expect(document.title).toBe('Mi logo · Bordados con IA');
+    await user.upload(screen.getByLabelText('Elegir archivo'), pngFile('logo.png'));
+    await screen.findByAltText('Imagen original: logo.png');
+    await user.click(screen.getByRole('button', { name: 'Generar bordado' }));
+    await screen.findByRole('heading', { name: 'Generación del bordado' });
+    expect(document.title).toBe('Generación del bordado · Bordados con IA');
+  });
+});
+
 describe('muestra física (POST /sewouts)', () => {
   const FORM = 'Registrar muestra física';
   const PAST = '2026-10-01T11:00';

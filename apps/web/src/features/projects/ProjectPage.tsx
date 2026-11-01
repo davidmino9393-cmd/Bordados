@@ -7,6 +7,7 @@ import type { JobSettings } from '../../contracts/settings';
 import { es } from '../../copy/es';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { errorMessage, useAsync } from '../../shared/hooks/useAsync';
+import { useDocumentTitle } from '../../shared/hooks/useDocumentTitle';
 import { useIdempotencyKey } from '../../shared/hooks/useIdempotencyKey';
 import { useRenewBeforeExpiry } from '../../shared/hooks/useRenewBeforeExpiry';
 import { earliestDownload } from '../../shared/utils/expiry';
@@ -25,6 +26,7 @@ export function ProjectPage() {
   const [busy, setBusy] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
 
+  useDocumentTitle(project.data?.project.name);
   const assets = project.data?.assets ?? [];
   const selected = assets.find((a) => a.asset_id === pickedId) ?? assets.at(-1);
 

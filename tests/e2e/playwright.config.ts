@@ -27,12 +27,12 @@ export default defineConfig({
   projects: [
     {
       name: 'escritorio',
-      testMatch: 'recorridos.spec.ts',
+      testMatch: ['recorridos.spec.ts', 'a11y.spec.ts'],
       use: { baseURL: `http://localhost:${MOCK_PORT}`, viewport: { width: 1280, height: 800 } },
     },
     {
       name: 'movil',
-      testMatch: 'recorridos.spec.ts',
+      testMatch: ['recorridos.spec.ts', 'a11y.spec.ts'],
       use: { ...devices['Pixel 7'], channel, baseURL: `http://localhost:${MOCK_PORT}` },
     },
     {

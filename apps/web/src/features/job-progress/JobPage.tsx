@@ -5,6 +5,7 @@ import { es } from '../../copy/es';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { RetryCountdown } from '../../shared/components/RetryCountdown';
 import { useAsync } from '../../shared/hooks/useAsync';
+import { useDocumentTitle } from '../../shared/hooks/useDocumentTitle';
 import { useJobPolling } from '../../shared/hooks/useJobPolling';
 import { useRenewBeforeExpiry } from '../../shared/hooks/useRenewBeforeExpiry';
 import { ReviewResult } from '../review/ReviewResult';
@@ -16,6 +17,7 @@ export function JobPage() {
   const { jobId = '' } = useParams();
   const api = useApi();
   const { job, error, retryAt, replace } = useJobPolling(jobId);
+  useDocumentTitle(es.jobs.title);
   const projectId = job?.project_id;
   const project = useAsync(
     () => (projectId ? api.getProject(projectId) : Promise.resolve(null)),

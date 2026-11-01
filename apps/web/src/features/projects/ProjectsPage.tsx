@@ -6,6 +6,7 @@ import { Card } from '../../shared/components/Card';
 import { Field } from '../../shared/components/Field';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { errorMessage, useAsync } from '../../shared/hooks/useAsync';
+import { useDocumentTitle } from '../../shared/hooks/useDocumentTitle';
 import { newIdempotencyKey } from '../../shared/utils/idempotency';
 
 export function ProjectsPage() {
@@ -34,6 +35,7 @@ export function ProjectsPage() {
     }
   };
 
+  useDocumentTitle(es.projects.title);
   const items = projects.data?.items ?? [];
   return (
     <>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useApi } from '../../api/ApiProvider';
 import { ACTIVE_STATUSES, StageOutcome, type JobResponse } from '../../contracts/job';
-import { es, stageLabel, stageOutcomeLabel } from '../../copy/es';
+import { es, jobStatusLabel, stageLabel, stageOutcomeLabel } from '../../copy/es';
 import { Card } from '../../shared/components/Card';
 import { JobStatusBadge } from '../../shared/components/Badges';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
@@ -41,6 +41,10 @@ export function JobProgress({ job, onJobChanged }: JobProgressProps) {
     <Card>
       <Card.Header>{es.progress.title}</Card.Header>
       <Card.Body>
+        {/* Anuncia a lectores de pantalla cada cambio de estado del trabajo. */}
+        <p className="visually-hidden" role="status">
+          {jobStatusLabel[job.status]}
+        </p>
         <div className="row">
           <JobStatusBadge status={job.status} />
           <span>{es.progress.summary(done, total)}</span>
