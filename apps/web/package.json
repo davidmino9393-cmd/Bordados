@@ -7,8 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test": "vitest run"
   },
   "dependencies": {
     "react": "^19.3.1",
@@ -16,7 +15,6 @@
     "react-router-dom": "^7.18.5"
   },
   "devDependencies": {
-    "@playwright/test": "^1.64.1",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.8",
