@@ -64,6 +64,11 @@ class ContractTests(unittest.TestCase):
                 invalid["issues"] = fixture("needs-review")["payload"]["issues"]
             with self.subTest(change=change), self.assertRaises(ValidationError):
                 JobResponse.model_validate(invalid)
+        failure = fixture("failure")["payload"]
+        info = dict(failure["issues"][0], code="JOB_CANCELLED", severity="info")
+        for issues in ([], [info]):
+            with self.subTest(failure_issues=issues), self.assertRaises(ValidationError):
+                JobResponse.model_validate(dict(failure, issues=issues))
 
     def test_transitions_reject_skip_and_terminal_restart(self):
         ready = JobResponse.model_validate(fixture("valid-result")["payload"])

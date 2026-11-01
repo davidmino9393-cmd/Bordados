@@ -1,6 +1,6 @@
 # Contratos v0.1 concretos
 
-Propósito: propuesta ejecutable **pendiente de revisión humana**, todavía no congelada. Tanda A: Pydantic, estados y mocks; OpenAPI y catálogo completo llegan en Tanda B. No hay API ni worker ejecutable en esta entrega.
+Propósito: propuesta ejecutable **pendiente de revisión humana**, todavía no congelada. Tandas A/B: Pydantic, estados, mocks, OpenAPI y catálogo. No hay API ni worker ejecutable en esta entrega.
 
 Contenido: [Uso](#uso), [documentos](#documentos), [reglas](#reglas), [relacionados](#relacionados).
 
@@ -33,4 +33,4 @@ Contenido: [Uso](#uso), [documentos](#documentos), [reglas](#reglas), [relaciona
 
 ## Relacionados
 
-[Fixtures](fixtures/README.md), [estados](states.md), [unidades](units.md), [propuesta original](../../CONTRATOS_Y_CALIDAD.md).
+[Fixtures](fixtures/README.md), [estados](states.md), [unidades](units.md), [OpenAPI](openapi.json), [incidencias](incidences.md), [propuesta original](../../CONTRATOS_Y_CALIDAD.md).

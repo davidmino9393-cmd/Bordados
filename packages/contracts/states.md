@@ -23,6 +23,7 @@ Contenido: [Tabla](#tabla), [guardas](#guardas), [relacionados](#relacionados).
 - `validate_transition(previous, following)` valida la arista y conserva job/proyecto/revisión/asset/tipo de entrada/ajustes. No es un endpoint para asignar estado desde el cliente.
 - Salto queued→digitizing: solo prepared_svg, con analyzing y vectorizing registrados como skipped y motivo explícito.
 - `needs_review`: al menos una incidencia review_required vinculada a objetos o regiones.
+- `failed`: al menos una incidencia blocking_error con diagnóstico controlado; no basta una lista vacía o informativa.
 - `ready_for_sewout`: digitizing/validating completados; reporte aprobado; checks de archivo, dimensiones, bastidor, geometría, satin y recorrido; métricas releídas coincidentes con manifest y misma procedencia.
 - No se permiten errores/revisiones pendientes en un resultado listo. Se requieren referencias JEF, preview derivada de JEF y reporte. El worker comprobará los archivos reales antes de construir esta respuesta.
 - `cancellation_requested=true` solo confirma solicitud. El servidor publica cancelled cuando haya detenido los procesos; un terminal no vuelve a correr por recibir cancelación.

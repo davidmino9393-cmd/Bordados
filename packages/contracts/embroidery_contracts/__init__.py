@@ -1,5 +1,7 @@
 """Contratos v0.1 concretos: proposal pending human review, not a running API."""
 from .base import SCHEMA_VERSION
+from .http import AssetUpload, CancelRequest, ErrorCode, ProblemResponse
+from .issues import ISSUE_RULES, IssueCode, Severity, ValidationStage
 from .design import AnalysisSpec, EmbroideryDocument
 from .jobs import (
     JobCreate, JobResponse, JobStatus, ProjectCreate, ProjectResponse,
@@ -14,4 +16,6 @@ __all__ = [
     "JobStatus", "ProjectCreate", "ProjectResponse", "RevisionCreate", "RevisionResponse",
     "SewoutRecord", "SewoutResponse", "ArtifactManifest", "Issue", "StitchPlan",
     "ValidationReport", "JobSettings", "SourceAsset", "ALLOWED_TRANSITIONS", "validate_transition",
+    "AssetUpload", "CancelRequest", "ErrorCode", "ProblemResponse", "ISSUE_RULES", "IssueCode",
+    "Severity", "ValidationStage",
 ]

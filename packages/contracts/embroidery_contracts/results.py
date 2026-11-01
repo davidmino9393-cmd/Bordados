@@ -4,18 +4,13 @@ from typing import Annotated, Literal
 from pydantic import AnyHttpUrl, AwareDatetime, Field, JsonValue, model_validator
 
 from .base import BoundsMM, ContractModel, Identifier, NonEmpty, Provenance, SHA256, Versioned
-
-Severity = Literal["blocking_error", "review_required", "info"]
-ValidationStage = Literal[
-    "input", "analysis", "geometry", "satin", "routing", "dimensions",
-    "hoop", "file", "visual", "worker", "sewout",
-]
+from .issues import ISSUE_RULES, IssueCode, Severity, ValidationStage
 CheckKind = Literal["file", "dimensions", "hoop", "geometry", "satin", "routing", "visual"]
 REQUIRED_DIGITAL_CHECKS = frozenset({"file", "dimensions", "hoop", "geometry", "satin", "routing"})
 
 
 class Issue(ContractModel):
-    code: Annotated[str, Field(pattern=r"^[A-Z][A-Z0-9_]+$")]
+    code: IssueCode
     severity: Severity
     stage: ValidationStage
     object_ids: tuple[Identifier, ...] = ()
@@ -23,6 +18,15 @@ class Issue(ContractModel):
     description: NonEmpty
     evidence: dict[str, JsonValue]
     suggested_correction: NonEmpty
+
+    @model_validator(mode="after")
+    def catalogue_classification(self):
+        rule = ISSUE_RULES[self.code]
+        if self.severity != rule.severity or self.stage != rule.stage:
+            raise ValueError("Issue stage/severity must match the v0.1 catalogue")
+        if self.code == IssueCode.SATIN_PAIRED_NODES_VERIFIED and (not self.object_ids or not self.evidence):
+            raise ValueError("Verified satin construction requires object-specific evidence")
+        return self
 
 
 class ValidationCheck(ContractModel):

@@ -1,7 +1,7 @@
 """Input and physical settings. Profile names reference versioned server data."""
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from .base import BoundsPX, ContractModel, Identifier, NonEmpty, PositiveMM, SHA256, Versioned
 
@@ -43,3 +43,15 @@ class SourceAsset(Versioned):
     crop_px: BoundsPX | None = None
     original_preserved: Literal[True] = True
     # Private storage keys belong to persistence, never to a web response.
+
+    @model_validator(mode="after")
+    def pixel_dimensions_and_crop(self):
+        width, height = self.original_width_px, self.original_height_px
+        if (width is None) != (height is None):
+            raise ValueError("Pixel width and height must be provided together")
+        if self.media_type != "image/svg+xml" and width is None:
+            raise ValueError("Raster uploads require original pixel dimensions")
+        crop = self.crop_px
+        if crop and (width is None or crop.x_px + crop.width_px > width or crop.y_px + crop.height_px > height):
+            raise ValueError("A crop must lie within known original pixel dimensions")
+        return self

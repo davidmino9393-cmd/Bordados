@@ -6,6 +6,7 @@ from pydantic import AwareDatetime, Field, model_validator
 
 from .base import ContractModel, Identifier, NonEmpty, Versioned
 from .design import EmbroideryDocument
+from .issues import Severity
 from .results import ArtifactManifest, Issue, ValidationReport
 from .settings import JobSettings
 
@@ -69,6 +70,10 @@ class JobResponse(Versioned):
                 raise ValueError("Result documents must belong to this job and immutable revision")
         if len({record.stage for record in self.stages}) != len(self.stages):
             raise ValueError("Stage records must be unique")
+        if self.status == JobStatus.FAILED and not any(
+            issue.severity == Severity.BLOCKING_ERROR for issue in self.issues
+        ):
+            raise ValueError("failed requires a controlled blocking diagnostic")
         if self.status == JobStatus.NEEDS_REVIEW and not any(
             issue.severity == "review_required" and (issue.object_ids or issue.region_ids)
             for issue in self.issues
