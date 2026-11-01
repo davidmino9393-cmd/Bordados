@@ -50,8 +50,7 @@ export type RevisionRequest =
 
 export type Correction =
   | { action: 'exclude_region'; object_id: string }
-  | { action: 'set_technique'; object_id: string; technique: Technique }
-  | { action: 'accept_as_is'; object_id: string };
+  | { action: 'set_technique'; object_id: string; technique: Technique };
 
 export const Technique = {
   Running: 'running',
