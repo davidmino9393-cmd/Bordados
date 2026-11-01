@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, screen } from '@testing-library/react';
+import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { ApiError, ClientErrorCode } from './api/ApiClient';
 import { createHttpApiClient } from './api/HttpApiClient';
 import type { ApiClient } from './api/ApiClient';
@@ -284,6 +284,130 @@ describe('recorrido principal (cliente SIMULADO)', () => {
 
     expect(await screen.findByText(/no pertenecen a este trabajo/)).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Descargar/ })).not.toBeInTheDocument();
+  });
+});
+
+describe('muestra física (POST /sewouts)', () => {
+  const FORM = 'Registrar muestra física';
+  const PAST = '2026-10-01T11:00';
+
+  async function readyPage(client: ApiClient) {
+    const user = setupUser();
+    renderApp(client);
+    await generateFrom(user, pngFile('logo.png'));
+    await advance(FULL_RUN_MS);
+    await screen.findByRole('heading', { name: FORM });
+    return user;
+  }
+  async function fill(user: ReturnType<typeof setupUser>, result: string, date: string | null = PAST) {
+    await user.click(screen.getByRole('radio', { name: result }));
+    if (date) fireEvent.change(screen.getByLabelText('Fecha de la muestra'), { target: { value: date } });
+    await user.type(screen.getByLabelText('Estabilizador'), 'Cut-away');
+    await user.type(screen.getByLabelText('Hilo'), 'Poliéster 40');
+    await user.type(screen.getByLabelText('Observaciones'), 'Sin arrugas.');
+  }
+
+  it('el formulario solo aparece con el trabajo en ready_for_sewout', async () => {
+    const user = setupUser();
+    renderApp();
+    await generateFrom(user, pngFile('logo.png'));
+    expect(screen.queryByRole('heading', { name: FORM })).not.toBeInTheDocument();
+    await advance(FULL_RUN_MS);
+    expect(await screen.findByRole('heading', { name: FORM })).toBeInTheDocument();
+  });
+
+  it.each([['logo-fallo.png'], ['logo-revision.png']])('no aparece con %s (falla o necesita revisión)', async (name) => {
+    const user = setupUser();
+    renderApp();
+    await generateFrom(user, pngFile(name));
+    await advance(FULL_RUN_MS);
+    await screen.findByText(/No se pudo generar|necesita revisión/);
+    expect(screen.queryByRole('heading', { name: FORM })).not.toBeInTheDocument();
+  });
+
+  it('registra una muestra aprobada: cambia el estado físico y el digital queda igual', async () => {
+    const { client, calls } = instrument();
+    const user = await readyPage(client);
+    expect(screen.getByText('Sin probar en tela')).toBeInTheDocument();
+
+    await fill(user, 'Aprobada');
+    await user.click(screen.getByRole('button', { name: 'Registrar muestra' }));
+
+    expect(await screen.findByText(/Muestra registrada/)).toBeInTheDocument();
+    expect(await screen.findByText('Muestra física aprobada')).toBeInTheDocument();
+    expect(screen.queryByText('Sin probar en tela')).not.toBeInTheDocument();
+    expect(screen.getAllByText(READY).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Sin arrugas\./)).toBeInTheDocument();
+
+    const sent = calls.find((c) => c.method === 'recordSewout')!.args[1] as Record<string, unknown>;
+    expect(sent).toMatchObject({
+      status: 'approved',
+      fabric_profile: 'gabardina_inicial',
+      stabilizer: 'Cut-away',
+      thread: 'Poliéster 40',
+      observations: 'Sin arrugas.',
+      photo_asset_ids: [],
+    });
+    expect(sent.tested_at).toBe(new Date(PAST).toISOString());
+    const job = calls.find((c) => c.method === 'createJob')!.args[1] as { revision_id: string };
+    expect(sent.revision_id).toBe(job.revision_id);
+  });
+
+  it('una muestra que requiere ajustes se refleja sin tocar el estado digital', async () => {
+    const user = await readyPage(instrument().client);
+    await fill(user, 'Requiere ajustes');
+    await user.click(screen.getByRole('button', { name: 'Registrar muestra' }));
+    expect(await screen.findByText('La muestra requiere ajustes')).toBeInTheDocument();
+    expect(screen.getAllByText(READY).length).toBeGreaterThan(0);
+  });
+
+  it('"sin probar" no lleva fecha y se envía con tested_at null', async () => {
+    const { client, calls } = instrument();
+    const user = await readyPage(client);
+    await user.click(screen.getByRole('radio', { name: /Sin probar \(solo dejar constancia\)/ }));
+    expect(screen.getByLabelText('Fecha de la muestra')).toBeDisabled();
+    await user.type(screen.getByLabelText('Estabilizador'), 'Tear-away');
+    await user.type(screen.getByLabelText('Hilo'), 'Rayón');
+    await user.type(screen.getByLabelText('Observaciones'), 'Todavía no se cosió.');
+    await user.click(screen.getByRole('button', { name: 'Registrar muestra' }));
+    await screen.findByText(/Muestra registrada/);
+    expect((calls.find((c) => c.method === 'recordSewout')!.args[1] as { tested_at: null }).tested_at).toBeNull();
+    expect(screen.getByText('Sin probar en tela')).toBeInTheDocument();
+  });
+
+  it('valida los datos antes de enviar y no llama al servidor', async () => {
+    const { client, count } = instrument();
+    const user = await readyPage(client);
+    await user.click(screen.getByRole('button', { name: 'Registrar muestra' }));
+    expect(screen.getAllByText('Completá este dato.').length).toBeGreaterThanOrEqual(4);
+
+    await user.click(screen.getByRole('radio', { name: 'Aprobada' }));
+    await user.type(screen.getByLabelText('Estabilizador'), 'a');
+    await user.type(screen.getByLabelText('Hilo'), 'b');
+    await user.type(screen.getByLabelText('Observaciones'), 'c');
+    await user.click(screen.getByRole('button', { name: 'Registrar muestra' }));
+    expect(screen.getAllByText('Completá este dato.')).toHaveLength(1); // la fecha
+
+    fireEvent.change(screen.getByLabelText('Fecha de la muestra'), { target: { value: '2999-01-01T00:00' } });
+    await user.click(screen.getByRole('button', { name: 'Registrar muestra' }));
+    expect(screen.getByText('La fecha no puede ser futura.')).toBeInTheDocument();
+    expect(count('recordSewout')).toBe(0);
+  });
+
+  it('si el servidor rechaza el registro lo informa con su código y el estado no cambia', async () => {
+    const base = createMockApiClient();
+    const client: ApiClient = {
+      ...base,
+      async recordSewout() {
+        throw new ApiError('INVALID_REQUEST', 'El servidor no aceptó algunos datos. Revisá los ajustes.', 422);
+      },
+    };
+    const user = await readyPage(client);
+    await fill(user, 'Aprobada');
+    await user.click(screen.getByRole('button', { name: 'Registrar muestra' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Código de incidencia: INVALID_REQUEST');
+    expect(screen.getByText('Sin probar en tela')).toBeInTheDocument();
+    expect(screen.queryByText(/Muestra registrada/)).not.toBeInTheDocument();
   });
 });
 

@@ -51,6 +51,16 @@ describe('createHttpApiClient (contratos-v0.1)', () => {
     expect(urls).toEqual(['/api/v1/projects/p1/revisions', '/api/v1/projects/p1/jobs']);
   });
 
+  it('registra la muestra física con POST /projects/{id}/sewouts y su Idempotency-Key', async () => {
+    const fetchImpl = vi.fn(async () => json({}, 201));
+    await clientWith(fetchImpl as unknown as typeof fetch).recordSewout('p1', { revision_id: 'r1' } as never, 'k-sewout');
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe('/api/v1/projects/p1/sewouts');
+    expect(init.method).toBe('POST');
+    expect((init.headers as Record<string, string>)['Idempotency-Key']).toBe('k-sewout');
+    expect(JSON.parse(init.body as string)).toEqual({ revision_id: 'r1' });
+  });
+
   it('traduce application/problem+json al código del contrato y a un mensaje en español', async () => {
     const problem = {
       schema_version: '0.1', type: 'urn:embroidery:problem:forbidden', title: 'Forbidden', status: 403,

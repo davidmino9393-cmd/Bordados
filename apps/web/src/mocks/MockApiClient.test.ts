@@ -210,6 +210,57 @@ describe('MockApiClient (SIMULADO, forma de contratos-v0.1)', () => {
     expect((await api.getJob(job.job_id)).settings_snapshot.target.width_mm).toBe(130);
   });
 
+  it('la muestra física actualiza solo sewout_status; el estado digital no cambia', async () => {
+    const { project, job } = await start('logo.png');
+    clock += WELL_PAST_END;
+    const before = await api.getJob(job.job_id);
+    expect(before.status).toBe(JobStatus.ReadyForSewout);
+    expect(before.sewout_status).toBe('untested');
+    expect(before.sewout_record).toBeNull();
+
+    const saved = await api.recordSewout(project.project_id, {
+      schema_version: '0.1',
+      revision_id: job.revision_id,
+      status: 'approved',
+      tested_at: '2026-11-01T11:00:00.000Z',
+      fabric_profile: 'gabardina_inicial',
+      stabilizer: 'Cut-away',
+      thread: 'Poliéster 40',
+      observations: 'Sin arrugas.',
+      photo_asset_ids: [],
+    });
+    expect(saved).toMatchObject({ project_id: project.project_id, revision_id: job.revision_id, status: 'approved' });
+    expect(saved.sewout_id).toBeTruthy();
+    expect(saved.recorded_at).toBeTruthy();
+
+    const after = await api.getJob(job.job_id);
+    expect(after.status).toBe(JobStatus.ReadyForSewout);
+    expect(after.sewout_status).toBe('approved');
+    expect(after.sewout_record).toMatchObject({ sewout_id: saved.sewout_id, revision_id: job.revision_id, status: 'approved' });
+  });
+
+  it('rechaza una muestra que viola el contrato (resultado sin fecha, revisión ajena)', async () => {
+    const { project, job } = await start('logo.png');
+    const base = {
+      schema_version: '0.1',
+      revision_id: job.revision_id,
+      fabric_profile: 'gabardina_inicial',
+      stabilizer: 's',
+      thread: 't',
+      observations: 'o',
+      photo_asset_ids: [],
+    };
+    await expect(
+      api.recordSewout(project.project_id, { ...base, status: 'approved', tested_at: null }),
+    ).rejects.toMatchObject({ code: ErrorCode.InvalidRequest });
+    await expect(
+      api.recordSewout(project.project_id, { ...base, status: 'untested', tested_at: '2026-11-01T11:00:00.000Z' }),
+    ).rejects.toMatchObject({ code: ErrorCode.InvalidRequest });
+    await expect(
+      api.recordSewout(project.project_id, { ...base, revision_id: 'rev_ajena', status: 'untested', tested_at: null }),
+    ).rejects.toMatchObject({ code: ErrorCode.NotFound });
+  });
+
   it('rechaza formatos no admitidos y proveedores no disponibles', async () => {
     const project = await api.createProject('P');
     await expect(api.uploadAsset(project.project_id, file('x.gif', 'image/gif'))).rejects.toMatchObject({

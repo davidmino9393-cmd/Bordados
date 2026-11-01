@@ -50,7 +50,7 @@ export function JobPage() {
       {job.status === JobStatus.Failed && <FailedNotice job={job} />}
       {job.status === JobStatus.Cancelled && <CancelledNotice job={job} />}
       {job.status === JobStatus.NeedsReview && <ReviewPanel job={job} asset={asset} />}
-      {job.status === JobStatus.ReadyForSewout && <ReadyResult job={job} asset={asset} />}
+      {job.status === JobStatus.ReadyForSewout && <ReadyResult job={job} asset={asset} onJobChanged={replace} />}
     </>
   );
 }

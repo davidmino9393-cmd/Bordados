@@ -173,5 +173,5 @@ export function simulateJob(job: SimulatedJob, now: number, stageMs: number, sew
     response = terminalResponse(job, stageMs, null);
   }
   response.cancellation_requested = requested !== null;
-  return response;
+  return withSewout(response);
 }
