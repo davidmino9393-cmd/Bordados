@@ -17,6 +17,7 @@ class ApiConfig:
     engine_version: str
     signing_key: str
     public_base_url: str
+    inkscape_executable: Path | None = None
     service_token: str | None = None
     basic_username: str | None = None
     basic_password: str | None = None
@@ -31,6 +32,8 @@ class ApiConfig:
     def __post_init__(self):
         for name in ("data_root", "profiles_path", "python_executable", "inkstitch_executable", "worker_script"):
             object.__setattr__(self, name, Path(getattr(self, name)).resolve())
+        if self.inkscape_executable is not None:
+            object.__setattr__(self, "inkscape_executable", Path(self.inkscape_executable).resolve())
         object.__setattr__(self, "worker_python_paths", tuple(Path(p).resolve() for p in self.worker_python_paths))
         if not self.service_token and not (self.basic_username and self.basic_password):
             raise ValueError("Configure service_token or basic_username/basic_password")
