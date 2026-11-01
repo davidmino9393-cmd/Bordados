@@ -167,6 +167,7 @@ export const es = {
     stageDuration: (s: string) => `${s} s medidos`,
     cancel: 'Cancelar generación',
     cancelling: 'Cancelando…',
+    retryingIn: (s: number) => `Reintentando en ${s} s…`,
     cancelRequested: 'Cancelación solicitada. Esperando a que el servidor detenga el proceso…',
     summary: (done: number, total: number) => `${done} de ${total} etapas completas`,
   },
