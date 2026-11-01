@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { ApiError, ClientErrorCode } from './api/ApiClient';
 import { createHttpApiClient } from './api/HttpApiClient';
+import { ErrorCode } from './contracts/http';
 import type { ApiClient } from './api/ApiClient';
 import { createMockApiClient } from './mocks/MockApiClient';
 import { advance, generateFrom, instrument, pngFile, renderApp, setupUser, svgFile } from './test-utils';
@@ -522,6 +523,100 @@ describe('job completo con archivos pero en needs_review (SIMULADO, fixture job-
     const stamp = (url: string) => Number(url.split('#issued=')[1]);
     expect(clicked).toHaveLength(1);
     expect(stamp(clicked[0])).toBeGreaterThan(stamp(first));
+  });
+});
+
+describe('409 al pedir los archivos aunque el job traiga manifiesto', () => {
+  const MESSAGE = /No se pudieron obtener los archivos\. Reintentá\./;
+  const conflict = () => new ApiError(ErrorCode.ArtifactsUnavailable, 'Los archivos todavía no están disponibles.', 409, 'req_409');
+
+  /** getArtifacts responde 409 mientras `state.blocked` sea true. */
+  function withConflict(base: ApiClient, state: { blocked: boolean }): ApiClient {
+    return {
+      ...base,
+      async getArtifacts(jobId) {
+        if (state.blocked) throw conflict();
+        return base.getArtifacts(jobId);
+      },
+    };
+  }
+
+  it.each([
+    ['listo para prueba', pngFile('logo.png'), READY],
+    ['en revisión, con archivos', svgFile('logo-completo.svg'), 'Hay un elemento que necesita revisión'],
+  ])('%s: avisa, no bloquea el resto de la pantalla y reintenta reconsultando primero el job', async (_name, file, restOfScreen) => {
+    const user = setupUser();
+    const state = { blocked: true };
+    const { client, calls } = instrument(withConflict(createMockApiClient(), state));
+    renderApp(client);
+    await generateFrom(user, file);
+    await advance(FULL_RUN_MS);
+
+    expect(await screen.findByText(MESSAGE)).toBeInTheDocument();
+    expect(screen.getByText(/Código de incidencia: ARTIFACTS_UNAVAILABLE · solicitud req_409/)).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Descargar/ })).not.toBeInTheDocument();
+    // El resto sigue usable.
+    expect((await screen.findAllByText(restOfScreen)).length).toBeGreaterThan(0);
+    expect(screen.getByRole('heading', { name: 'Registrar muestra física' })).toBeInTheDocument();
+
+    state.blocked = false;
+    calls.length = 0;
+    await user.click(screen.getByRole('button', { name: 'Reintentar' }));
+    await advance(100);
+
+    // Primero GET /jobs/{id}, después GET /jobs/{id}/artifacts.
+    const order = calls.map((c) => c.method).filter((m) => m === 'getJob' || m === 'getArtifacts');
+    expect(order.slice(0, 2)).toEqual(['getJob', 'getArtifacts']);
+    expect(screen.queryByText(MESSAGE)).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /Descargar/ }).length).toBeGreaterThan(0);
+  });
+
+  it('si el 409 persiste, el mensaje y el botón siguen disponibles', async () => {
+    const user = setupUser();
+    renderApp(withConflict(createMockApiClient(), { blocked: true }));
+    await generateFrom(user, pngFile('logo.png'));
+    await advance(FULL_RUN_MS);
+    await screen.findByText(MESSAGE);
+
+    await user.click(screen.getByRole('button', { name: 'Reintentar' }));
+    await advance(100);
+    expect(screen.getByText(MESSAGE)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeEnabled();
+    expect(screen.getAllByText(READY).length).toBeGreaterThan(0);
+  });
+
+  it('si al reintentar falla la reconsulta del job, lo informa con su código y se puede volver a intentar', async () => {
+    const user = setupUser();
+    const state = { blocked: true };
+    const base = createMockApiClient();
+    let failJob = false;
+    const client = withConflict(
+      {
+        ...base,
+        async getJob(jobId) {
+          if (failJob) throw new ApiError(ClientErrorCode.Timeout, 'El servidor tardó demasiado en responder.');
+          return base.getJob(jobId);
+        },
+      },
+      state,
+    );
+    renderApp(client);
+    await generateFrom(user, pngFile('logo.png'));
+    await advance(FULL_RUN_MS);
+    await screen.findByText(MESSAGE);
+
+    failJob = true;
+    await user.click(screen.getByRole('button', { name: 'Reintentar' }));
+    await advance(100);
+    expect(screen.getAllByText(/Código de incidencia: TIMEOUT/).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeEnabled();
+
+    failJob = false;
+    state.blocked = false;
+    await user.click(screen.getByRole('button', { name: 'Reintentar' }));
+    await advance(100);
+    expect(screen.queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /Descargar/ }).length).toBeGreaterThan(0);
   });
 });
 

@@ -26,7 +26,7 @@ export function ReviewResult({ job, asset, onJobChanged }: ReviewResultProps) {
           <Notice tone={NoticeTone.Warning} title={es.review.filesNotReadyTitle}>
             <p>{es.review.filesNotReadyText}</p>
           </Notice>
-          <JobFiles job={job} asset={asset} showIssues={false} />
+          <JobFiles job={job} asset={asset} onJobChanged={onJobChanged} showIssues={false} />
         </>
       )}
       <PhysicalSewout job={job} onJobChanged={onJobChanged} />

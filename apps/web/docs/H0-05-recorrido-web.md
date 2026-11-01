@@ -25,6 +25,7 @@ Contratos: **tag `contratos-v0.1` (commit `ad958db`)**, congelados. Tipos en `sr
 - Nada se conserva más allá de `expires_at`; las URLs no son identidad del archivo.
 - **Por qué el margen es dinámico** (`src/shared/utils/expiry.ts`): con el TTL real de 300 s se renueva 10 s antes de vencer. El margen es como máximo el 20 % de la vida del enlace y la espera nunca baja de 0,5 s. Con un margen fijo de 10 s, un TTL corto (el mock de pruebas usa 1 s) renovaba sin pausa y generaba un bucle de consultas. Para el contrato (300 s fijos) el comportamiento no cambia.
 - **Cuándo hay archivos:** `GET /jobs/{id}/artifacts` responde 200 en `ready_for_sewout` y en `needs_review` (los archivos ya existen); responde 409 `ARTIFACTS_UNAVAILABLE` en `queued`/`digitizing`/`validating` (todavía no existen) y en `failed`/`cancelled` (nunca existirán). La web solo consulta los archivos si el job trae `artifact_manifest`, así que no pide algo que sabe que dará 409.
+- **409 aunque el job traiga `artifact_manifest`** (bug, carrera con una cancelación, despliegue parcial): la web muestra «No se pudieron obtener los archivos. Reintentá.» con el código de incidencia, quita los enlaces anteriores y deja usable el resto de la pantalla. El botón «Reintentar» reconsulta primero `GET /jobs/{id}` (el estado pudo cambiar) y después los archivos.
 
 ## Reintentos ante errores transitorios
 
@@ -83,7 +84,6 @@ La franja «Datos simulados» aparece siempre que el cliente sea simulado. Sin `
 
 ## Deuda menor (H1 completo)
 
-- **409 con `artifact_manifest` presente:** el backend podría responder `GET /jobs/{id}/artifacts` 409 aunque el `JobResponse` traiga manifiesto (bug, carrera con una cancelación o despliegue parcial). Hoy la web muestra el error con su código de incidencia y el resto de la pantalla sigue disponible, pero no ofrece reintento. Manejo previsto: mensaje «no se pudieron obtener los archivos, reintentá» y un botón que reconsulte primero `GET /jobs/{id}` y luego los archivos, sin bloquear el resto. No implementado.
 - **Paginación:** primera página de proyectos, assets y trabajos; falta «ver más».
 - **Fotos de la muestra:** `photo_asset_ids` queda vacío hasta H2/H3.
 - **Test cruzado con el backend:** que el backend valide con Pydantic los fixtures que consume la web, cuando exista el servicio real.

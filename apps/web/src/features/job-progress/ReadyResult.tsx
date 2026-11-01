@@ -23,7 +23,7 @@ export function ReadyResult({ job, asset, onJobChanged }: ReadyResultProps) {
         <p>{es.result.readyText}</p>
       </Notice>
       <PhysicalSewout job={job} onJobChanged={onJobChanged} />
-      <JobFiles job={job} asset={asset} />
+      <JobFiles job={job} asset={asset} onJobChanged={onJobChanged} />
       <VariantForm job={job} />
     </>
   );
