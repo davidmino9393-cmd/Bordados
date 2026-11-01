@@ -23,6 +23,8 @@ Contratos: **tag `contratos-v0.1` (commit `ad958db`)**, congelados. Tipos en `sr
 - `GET /jobs/{id}/artifacts` se vuelve a pedir ~10 s antes de `expires_at` (`useArtifacts`); el original se renueva con `GET /projects/{id}`.
 - Si el usuario descarga un enlace vencido o por vencer, se reconsulta y se usa el nuevo.
 - Nada se conserva más allá de `expires_at`; las URLs no son identidad del archivo.
+- **Por qué el margen es dinámico** (`src/shared/utils/expiry.ts`): con el TTL real de 300 s se renueva 10 s antes de vencer. El margen es como máximo el 20 % de la vida del enlace y la espera nunca baja de 0,5 s. Con un margen fijo de 10 s, un TTL corto (el mock de pruebas usa 1 s) renovaba sin pausa y generaba un bucle de consultas. Para el contrato (300 s fijos) el comportamiento no cambia.
+- **Cuándo hay archivos:** `GET /jobs/{id}/artifacts` responde 200 en `ready_for_sewout` y en `needs_review` (los archivos ya existen); responde 409 `ARTIFACTS_UNAVAILABLE` en `queued`/`digitizing`/`validating` (todavía no existen) y en `failed`/`cancelled` (nunca existirán). La web solo consulta los archivos si el job trae `artifact_manifest`, así que no pide algo que sabe que dará 409.
 
 ## Reintentos ante errores transitorios
 
