@@ -1,0 +1,39 @@
+{
+  "schema_version": "0.1",
+  "simulated": true,
+  "case": "generation-from-svg",
+  "model": "JobCreate",
+  "direction": "request",
+  "endpoint": "POST /api/v1/projects/{id}/jobs",
+  "payload": {
+    "schema_version": "0.1",
+    "asset_id": "asset_mock_svg",
+    "revision_id": "rev_mock_1",
+    "input_kind": "prepared_svg",
+    "settings": {
+      "schema_version": "0.1",
+      "target": {
+        "width_mm": 150.0,
+        "height_mm": 150.0,
+        "fit": "contain"
+      },
+      "machine_profile": "janome_mc550e",
+      "machine_profile_version": "0.1",
+      "hoop_profile": "sq20b",
+      "hoop": {
+        "profile_id": "sq20b",
+        "profile_version": "0.1",
+        "width_mm": 200.0,
+        "height_mm": 200.0,
+        "jef_hoop_code": 4
+      },
+      "fabric_profile": "gabardina_inicial",
+      "fabric_profile_version": "0.1",
+      "thread_profile": "embroidery_thread_initial",
+      "color_limit": 3,
+      "ai_provider": "none",
+      "ai_model": null
+    }
+  },
+  "contract_revision": "B2"
+}

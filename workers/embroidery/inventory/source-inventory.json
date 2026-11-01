@@ -1,0 +1,162 @@
+{
+  "inventory_version": "0.1",
+  "method": "static reads and AST parsing only; originals never imported or executed",
+  "sources": [
+    {
+      "path": "Anime_Socks_Bordado/herramientas/auditar.py",
+      "sha256": "1caa14e6bfb59925a92ab971a596828640f9d3864c3545ccab6e888801b0d8af",
+      "bytes": 7983,
+      "functions": [
+        "audit",
+        "xy"
+      ]
+    },
+    {
+      "path": "Anime_Socks_Bordado/herramientas/digitalizar.py",
+      "sha256": "350e80559494ef666ba4a58635a500790b9aa38cca04605697265c233449c62b",
+      "bytes": 26159,
+      "functions": [
+        "gaussian_filter1d",
+        "approximate_polygon",
+        "polygon_area",
+        "inside",
+        "boundaries",
+        "map_coordinates",
+        "fmt",
+        "polyline",
+        "bezier",
+        "trace_box",
+        "add",
+        "art",
+        "circle",
+        "sampled",
+        "rails_from_reference",
+        "root",
+        "layer",
+        "write",
+        "embroidery"
+      ]
+    },
+    {
+      "path": "Anime_Socks_Bordado/herramientas/exportar_validar.py",
+      "sha256": "dfd73a93bcf1ae72fe6a05494fd5c00788101411f1314ad77cccd089fc0995a4",
+      "bytes": 4013,
+      "functions": [
+        "run",
+        "metrics",
+        "png"
+      ]
+    },
+    {
+      "path": "Anime_Socks_Bordado/herramientas/informe.py",
+      "sha256": "96315304eb34eda19268a4316e1842ed86a3c365882a7b3761cea1ba848728b7",
+      "bytes": 11790,
+      "functions": [
+        "row",
+        "percent"
+      ]
+    },
+    {
+      "path": "Anime_Socks_Bordado/herramientas/reparar_rellenos.py",
+      "sha256": "b6659077472f8a32bcf8a1bcac1c1014a658b9808b4626f1b4acea4de10a610b",
+      "bytes": 1387,
+      "functions": []
+    },
+    {
+      "path": "Anime_Socks_Bordado/herramientas/reproducir.mjs",
+      "sha256": "27cd7dbc832e96a8a4f65988cbce42bc3022335657bf8ade17e8225a7b503e54",
+      "bytes": 1727,
+      "functions": []
+    },
+    {
+      "path": "Anime_Socks_Bordado/herramientas/requirements.txt",
+      "sha256": "959a58e6b7104b3304e969cf1f82042baa4841309c7d437df6d51114ea85dd9d",
+      "bytes": 64,
+      "functions": []
+    },
+    {
+      "path": "Anime_Socks_Bordado_13x12/herramientas/crear_version_pequena.py",
+      "sha256": "4b42734ebb846b37f2e90aa85d5e300d247cc5f7c72da142e3da7ccd00873981",
+      "bytes": 11666,
+      "functions": [
+        "scaled",
+        "engine",
+        "audit",
+        "xy"
+      ]
+    }
+  ],
+  "reference_sha256": {
+    "Anime_Socks_Bordado/Anime_Socks_Bordado_Entrega.zip": "2ce0938652055aa0e0e8caa7963f9cc5f92f6ab7def53b82d605d4e9fdd223a1",
+    "Anime_Socks_Bordado/Anime_Socks_Con_Circulo.jef": "c67718bd3a26575f59a77b55a70a28a77303f195990f99ae74f78b63de73922e",
+    "Anime_Socks_Bordado/Anime_Socks_Con_Circulo.svg": "f98cc432174d650427d630c3589e7c74ac4413fe55c96fe8257a9861001e5fad",
+    "Anime_Socks_Bordado/Anime_Socks_Informe.md": "e003452fcf7eba11e23daf156f443054bc7f3f6e7b866f30206cf054018d33fd",
+    "Anime_Socks_Bordado/Anime_Socks_InkStitch.svg": "23f52af8909602833c8ed45e06a0051eed9fd229b81b4876e712a4cc41f3d1a1",
+    "Anime_Socks_Bordado/Anime_Socks_Optimizado.jef": "60a185b27c542cb5a12a4ed97779a5bfb00c5811696f4c1da81f2584e71da80d",
+    "Anime_Socks_Bordado/Anime_Socks_Preview.png": "6831bff24c87db92d947cb70950f9ae81001fef38183588d969bd739f8ceed2f",
+    "Anime_Socks_Bordado/Anime_Socks_Simulacion.html": "dc9eda8b92fca14b08bd568b9318851619a2fefa99b2984b0204a10f98c178ad",
+    "Anime_Socks_Bordado/Anime_Socks_Vector.svg": "b63b12a250cfbac8d35f6b320e6dd5e2a1dd169e4c4a95ff1dd210ce6e63307d",
+    "Anime_Socks_Bordado/Entorno_Verificado.json": "7f4a5dfbc1386e2fcae7c8921e013bf3d04283315be2388ad3c6581c46cc1d9b",
+    "Anime_Socks_Bordado/herramientas/auditar.py": "1caa14e6bfb59925a92ab971a596828640f9d3864c3545ccab6e888801b0d8af",
+    "Anime_Socks_Bordado/herramientas/digitalizar.py": "350e80559494ef666ba4a58635a500790b9aa38cca04605697265c233449c62b",
+    "Anime_Socks_Bordado/herramientas/exportar_validar.py": "dfd73a93bcf1ae72fe6a05494fd5c00788101411f1314ad77cccd089fc0995a4",
+    "Anime_Socks_Bordado/herramientas/informe.py": "96315304eb34eda19268a4316e1842ed86a3c365882a7b3761cea1ba848728b7",
+    "Anime_Socks_Bordado/herramientas/reparar_rellenos.py": "b6659077472f8a32bcf8a1bcac1c1014a658b9808b4626f1b4acea4de10a610b",
+    "Anime_Socks_Bordado/herramientas/reproducir.mjs": "27cd7dbc832e96a8a4f65988cbce42bc3022335657bf8ade17e8225a7b503e54",
+    "Anime_Socks_Bordado/herramientas/requirements.txt": "959a58e6b7104b3304e969cf1f82042baa4841309c7d437df6d51114ea85dd9d",
+    "Anime_Socks_Bordado/herramientas/vendor/.gitkeep": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+    "Anime_Socks_Bordado/LEEME.md": "ed0624b28a8b1b2d7bf785c79fccde27b4a3d2363203cc1e5f408b1d2955a45a",
+    "Anime_Socks_Bordado/trabajo/.gitkeep": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+    "Anime_Socks_Bordado/trabajo/Anime_Socks_Con_Circulo.jef.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Anime_Socks_Bordado/trabajo/Anime_Socks_Con_Circulo.svg": "f98cc432174d650427d630c3589e7c74ac4413fe55c96fe8257a9861001e5fad",
+    "Anime_Socks_Bordado/trabajo/Anime_Socks_Con_Circulo_Auditoria.json": "23f1b1a6984736a6d2613aa84f122d2fa5ad848d8a406a8b4a3c5785af8c67ed",
+    "Anime_Socks_Bordado/trabajo/Anime_Socks_Con_Circulo_Preview.png": "80050d181650d0743f2e1cdf4ba3bb23d314b94657e0bb3ea5a05472e5143af1",
+    "Anime_Socks_Bordado/trabajo/Anime_Socks_Con_Circulo_Reparacion.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Anime_Socks_Bordado/trabajo/Anime_Socks_Inicial.jef": "8092f3f9e7800c8274f4867e78c374a749433d8b627b672c63d3d112d23b95af",
+    "Anime_Socks_Bordado/trabajo/Anime_Socks_Inicial.jef.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Anime_Socks_Bordado/trabajo/Anime_Socks_Inicial.svg": "756c236190d07a86ac7d4b62946bf04ab27348a8fca03db4db7ddd445830d843",
+    "Anime_Socks_Bordado/trabajo/Anime_Socks_Inicial_Auditoria.json": "63518e662df148cdbeb4d3434f2bbeb8edad6bd9dbd68371bcacd5ee2b4d7eb6",
+    "Anime_Socks_Bordado/trabajo/Anime_Socks_Inicial_Reparacion.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Anime_Socks_Bordado/trabajo/Anime_Socks_InkStitch_Reparacion.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Anime_Socks_Bordado/trabajo/Anime_Socks_Optimizado.jef.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Anime_Socks_Bordado/trabajo/Anime_Socks_Optimizado.json": "229a0fa388f086a556ae4ba422cf4828d515485f317d4a41d28e98ca3d64df98",
+    "Anime_Socks_Bordado/trabajo/Anime_Socks_Optimizado.json.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Anime_Socks_Bordado/trabajo/Anime_Socks_Optimizado_Auditoria.json": "b65a3c7cf59536255bab2c158cbb7f68200bde0821a4d26d66931b38b48270ad",
+    "Anime_Socks_Bordado/trabajo/Anime_Socks_Plan.svg": "3501220e3ac69344f1f3bbe4bb14973df0d0c17c37ab2f280b7142ad5d551b45",
+    "Anime_Socks_Bordado/trabajo/Anime_Socks_Plan.svg.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Anime_Socks_Bordado/trabajo/Auditoria_Comparativa.json": "28cef12fa94a69dd44c7e427fe2c64d59e179b8bf8e749b25fa4c7632c87357f",
+    "Anime_Socks_Bordado/trabajo/Flor_inferior_detalle.png": "647bae9513e431aba21f5459f833fc2daab872e918cc1b6858c7adaa832b21fc",
+    "Anime_Socks_Bordado/trabajo/Flor_superior_detalle.png": "53d468de77e4ca320709630a715808f1a72a78e60a3f34fc9127bef1cfe7293c",
+    "Anime_Socks_Bordado/trabajo/Geometria.json": "5078e52199fb9a62833ebcc7b1f2bc418e4b7ce20670c1f88bfeba5ae598ffe5",
+    "Anime_Socks_Bordado/trabajo/Metricas_Circulo.json": "9e7bb4318d2aec4f14fc23abab92b313cbced2e389660e416089375720ad22c6",
+    "Anime_Socks_Bordado/trabajo/Metricas_Inicial.json": "33aad499de41a7dcac2e7cab010ad72c7fc3408b9eb230865aae8e317771e975",
+    "Anime_Socks_Bordado/trabajo/Metricas_Optimizado.json": "9c13f11b552bd7f276363d04af808911ada85320cbdb710f2dd96f04a1665cec",
+    "Anime_Socks_Bordado/trabajo/Referencia.png": "78c30948478de017b321403807d8be0f03b3c057a05518c1c1a5a25dd1b9ea7c",
+    "Anime_Socks_Bordado/trabajo/Reparacion_Rellenos.json": "26b28d411bd1a5e518886f56882349ab5dac634bc2b88165863bb7e21d3cd12e",
+    "Anime_Socks_Bordado/trabajo/Texto_detalle.png": "0b604465f763d5e213e6ce1c82a0f69d7b214c49db929c0675f0fcb0c98ef936",
+    "Anime_Socks_Bordado/trabajo/Troubleshoot.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Anime_Socks_Bordado/trabajo/Troubleshoot.svg": "2366e721a5366d2cb917ff79e4bfa58eefeb178c3dad97d40d0b8f7362c6bf96",
+    "Anime_Socks_Bordado/trabajo/Validacion_InkStitch.json": "f560e2269004d997f447786a17af425792a998cda303b59d78ab95ac5d097b7e",
+    "Anime_Socks_Bordado/trabajo/Vector_preview.png": "6c9a91b671b2256bc70a52173d8e468142af24ac1942039d3748e86096df2e58",
+    "Anime_Socks_Bordado_13x12/Anime_Socks_13x12.jef": "d0f45dc5bf6dd63c26289dde233cf5907e46b24a223b7132f6681f17c4775e40",
+    "Anime_Socks_Bordado_13x12/Anime_Socks_13x12_Con_Circulo.jef": "149ccca849d89483ba2fa91102f676f6f99c17ece51789ab681545ff4cca8536",
+    "Anime_Socks_Bordado_13x12/Anime_Socks_13x12_Con_Circulo.svg": "43733f84e112527b9e8429455146034aa12ed24d1b5c2b03ee32273443eab619",
+    "Anime_Socks_Bordado_13x12/Anime_Socks_13x12_Con_Circulo_Preview.png": "be99bfba5b650e8f7fdc620fd278169886a6d0e06e21a8ed29269af5985f23d5",
+    "Anime_Socks_Bordado_13x12/Anime_Socks_13x12_Entrega.zip": "9113d59188caf8e340f5aeb5a638735602dde300fc0b0a25fcc7dbdfb9270590",
+    "Anime_Socks_Bordado_13x12/Anime_Socks_13x12_Informe.md": "1c494b942ae8bbacfa1226939fdda2437b87a12053e2b09c37c3ddf22528a7b8",
+    "Anime_Socks_Bordado_13x12/Anime_Socks_13x12_InkStitch.svg": "1acdf4f0f60575bd9991465d3c0e1ea7ab099e5bb05c5e67b65b801eac5efe87",
+    "Anime_Socks_Bordado_13x12/Anime_Socks_13x12_Preview.png": "1a647d1997625b96a795da84872d5edd0186b23b46d0731934ec89c5c6377612",
+    "Anime_Socks_Bordado_13x12/Anime_Socks_13x12_Vector.svg": "ad0e3e461d6b3f4c81e9ae83cf4fc835a55e53d9705a6f421e35e19e92eee3d2",
+    "Anime_Socks_Bordado_13x12/herramientas/crear_version_pequena.py": "4b42734ebb846b37f2e90aa85d5e300d247cc5f7c72da142e3da7ccd00873981",
+    "Anime_Socks_Bordado_13x12/LEEME.md": "04ebda4611309350c4fac9e3d2624a7a383e225b1da90b57c0aed3a1c7ce10f6",
+    "Anime_Socks_Bordado_13x12/trabajo/Anime_Socks_13x12.jef.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Anime_Socks_Bordado_13x12/trabajo/Anime_Socks_13x12_Auditoria.json": "883abdfe5268dde614f303d9a577010b80673fdaf5f544010b9337fd7e248752",
+    "Anime_Socks_Bordado_13x12/trabajo/Anime_Socks_13x12_Con_Circulo.jef.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Anime_Socks_Bordado_13x12/trabajo/Anime_Socks_13x12_Con_Circulo_Auditoria.json": "1bf83ef0c2bc2078da9dfe49c3ebda8553f8b94eae89ce5551bceffcdbddb874",
+    "Anime_Socks_Bordado_13x12/trabajo/Anime_Socks_13x12_Plan.svg": "f58268e0c23cf38dbe3081bd940a0d94bef0c83c1feace46fd5454116a967070",
+    "Anime_Socks_Bordado_13x12/trabajo/Anime_Socks_13x12_Plan.svg.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Anime_Socks_Bordado_13x12/trabajo/Troubleshoot.svg": "83165b7c77f13d4f71bc8a2ff241ac1afaf28a6789fd6dff9c733603aa0dea99",
+    "Anime_Socks_Bordado_13x12/trabajo/Troubleshoot.svg.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Anime_Socks_Bordado_13x12/trabajo/Validacion_13x12.json": "d5975e7105c28ca3bbaaeced6af9887603a8fa8ec4d9ed6d09d97d81c3f5dbbe"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": "0.1",
+  "simulated": true,
+  "case": "physical-sewout",
+  "model": "SewoutRecord",
+  "direction": "request",
+  "endpoint": "POST /api/v1/projects/{id}/sewouts",
+  "payload": {
+    "schema_version": "0.1",
+    "revision_id": "rev_mock_1",
+    "status": "approved",
+    "tested_at": "2026-11-01T11:00:00Z",
+    "fabric_profile": "gabardina_inicial",
+    "stabilizer": "SIMULATED cut-away sample",
+    "thread": "SIMULATED three-tone thread",
+    "observations": "SIMULATED physical record for interface development. No real sample was sewn.",
+    "photo_asset_ids": []
+  },
+  "contract_revision": "B2"
+}

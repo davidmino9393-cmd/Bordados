@@ -1,0 +1,2 @@
+# Contract validation only in H0-02. The HTTP service belongs to H1.
+pydantic==2.14.1

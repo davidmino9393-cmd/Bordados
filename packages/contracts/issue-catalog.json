@@ -1,0 +1,211 @@
+{
+  "contract_revision": "B2",
+  "http_errors": {
+    "ARTIFACTS_UNAVAILABLE": {
+      "status": 409,
+      "type": "urn:embroidery:problem:artifacts-unavailable"
+    },
+    "FORBIDDEN": {
+      "status": 403,
+      "type": "urn:embroidery:problem:forbidden"
+    },
+    "IDEMPOTENCY_CONFLICT": {
+      "status": 409,
+      "type": "urn:embroidery:problem:idempotency-conflict"
+    },
+    "INTERNAL_ERROR": {
+      "status": 500,
+      "type": "urn:embroidery:problem:internal-error"
+    },
+    "INVALID_REQUEST": {
+      "status": 422,
+      "type": "urn:embroidery:problem:invalid-request"
+    },
+    "MALFORMED_REQUEST": {
+      "status": 400,
+      "type": "urn:embroidery:problem:malformed-request"
+    },
+    "NOT_FOUND": {
+      "status": 404,
+      "type": "urn:embroidery:problem:not-found"
+    },
+    "PAYLOAD_TOO_LARGE": {
+      "status": 413,
+      "type": "urn:embroidery:problem:payload-too-large"
+    },
+    "RATE_LIMITED": {
+      "status": 429,
+      "type": "urn:embroidery:problem:rate-limited"
+    },
+    "REVISION_CONFLICT": {
+      "status": 409,
+      "type": "urn:embroidery:problem:revision-conflict"
+    },
+    "SERVICE_UNAVAILABLE": {
+      "status": 503,
+      "type": "urn:embroidery:problem:service-unavailable"
+    },
+    "UNAUTHENTICATED": {
+      "status": 401,
+      "type": "urn:embroidery:problem:unauthenticated"
+    },
+    "UNSUPPORTED_MEDIA_TYPE": {
+      "status": 415,
+      "type": "urn:embroidery:problem:unsupported-media-type"
+    }
+  },
+  "issues": {
+    "ANALYSIS_INCOMPLETE": {
+      "meaning": "Provider response is incomplete",
+      "severity": "blocking_error",
+      "stage": "analysis"
+    },
+    "ANALYSIS_REFUSED": {
+      "meaning": "Provider refused the analysis",
+      "severity": "blocking_error",
+      "stage": "analysis"
+    },
+    "ANALYSIS_REGION_INCOHERENT": {
+      "meaning": "Region inconsistent with image",
+      "severity": "review_required",
+      "stage": "analysis"
+    },
+    "ANALYSIS_SCHEMA_INVALID": {
+      "meaning": "Provider response violates schema",
+      "severity": "blocking_error",
+      "stage": "analysis"
+    },
+    "DENSITY_REVIEW_REQUIRED": {
+      "meaning": "Local density requires calibrated review",
+      "severity": "review_required",
+      "stage": "routing"
+    },
+    "DIMENSIONS_EXCEEDED": {
+      "meaning": "Reread bounds exceed target tolerance",
+      "severity": "blocking_error",
+      "stage": "dimensions"
+    },
+    "ENGINE_DIAGNOSTIC_UNCLASSIFIED": {
+      "meaning": "Unclassified diagnostic must be inspected",
+      "severity": "review_required",
+      "stage": "geometry"
+    },
+    "GEOMETRY_HOLES_CHANGED": {
+      "meaning": "Repair changed holes",
+      "severity": "review_required",
+      "stage": "geometry"
+    },
+    "GEOMETRY_INVALID": {
+      "meaning": "Invalid or degenerate geometry",
+      "severity": "review_required",
+      "stage": "geometry"
+    },
+    "GEOMETRY_REPAIR_AMBIGUOUS": {
+      "meaning": "Repair may change identity",
+      "severity": "review_required",
+      "stage": "geometry"
+    },
+    "HOOP_INCOMPATIBLE": {
+      "meaning": "Hoop dimensions/code incompatible with profile",
+      "severity": "blocking_error",
+      "stage": "hoop"
+    },
+    "INPUT_TOO_LARGE": {
+      "meaning": "Configured byte/pixel limit exceeded",
+      "severity": "blocking_error",
+      "stage": "input"
+    },
+    "INPUT_UNREADABLE": {
+      "meaning": "Input cannot be decoded",
+      "severity": "blocking_error",
+      "stage": "input"
+    },
+    "INPUT_UNSUPPORTED_FORMAT": {
+      "meaning": "Unsupported input format",
+      "severity": "blocking_error",
+      "stage": "input"
+    },
+    "JEF_INVALID": {
+      "meaning": "Invalid header/table/records/end marker",
+      "severity": "blocking_error",
+      "stage": "file"
+    },
+    "JEF_UNKNOWN_COMMAND": {
+      "meaning": "Unknown binary command",
+      "severity": "blocking_error",
+      "stage": "file"
+    },
+    "JOB_CANCELLED": {
+      "meaning": "Associated processes stopped after cancellation",
+      "severity": "info",
+      "stage": "worker"
+    },
+    "LOCAL_MODEL_UNAVAILABLE": {
+      "meaning": "Selected local vision model unavailable",
+      "severity": "blocking_error",
+      "stage": "analysis"
+    },
+    "PHYSICAL_ADJUSTMENT_REQUIRED": {
+      "meaning": "Physical sample requires a new revision",
+      "severity": "review_required",
+      "stage": "sewout"
+    },
+    "PROVIDER_RATE_LIMITED": {
+      "meaning": "Provider service limit reached",
+      "severity": "blocking_error",
+      "stage": "analysis"
+    },
+    "PROVIDER_UNAVAILABLE": {
+      "meaning": "Selected provider unavailable",
+      "severity": "blocking_error",
+      "stage": "analysis"
+    },
+    "ROUTING_PRECEDENCE_VIOLATION": {
+      "meaning": "Required precedence violated",
+      "severity": "blocking_error",
+      "stage": "routing"
+    },
+    "ROUTING_VISIBLE_TRAVEL": {
+      "meaning": "Visible connecting travel",
+      "severity": "review_required",
+      "stage": "routing"
+    },
+    "SATIN_PAIRED_NODES_VERIFIED": {
+      "meaning": "Paired-node construction verified for object",
+      "severity": "info",
+      "stage": "satin"
+    },
+    "SATIN_RAILS_UNVERIFIED": {
+      "meaning": "Rail correspondence is unverified",
+      "severity": "review_required",
+      "stage": "satin"
+    },
+    "SATIN_RUNG_WARNING": {
+      "meaning": "Missing guides require object-level review",
+      "severity": "review_required",
+      "stage": "satin"
+    },
+    "SATIN_WIDTH_UNSUPPORTED": {
+      "meaning": "Physical width outside calibrated profile",
+      "severity": "review_required",
+      "stage": "satin"
+    },
+    "VISUAL_MISMATCH": {
+      "meaning": "Original/vector/JEF mismatch requires review",
+      "severity": "review_required",
+      "stage": "visual"
+    },
+    "WORKER_EXPORT_FAILED": {
+      "meaning": "Export process failed",
+      "severity": "blocking_error",
+      "stage": "worker"
+    },
+    "WORKER_TIMEOUT": {
+      "meaning": "Configured processing deadline exceeded",
+      "severity": "blocking_error",
+      "stage": "worker"
+    }
+  },
+  "review_status": "candidate_for_freeze",
+  "schema_version": "0.1"
+}
