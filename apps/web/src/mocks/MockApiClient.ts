@@ -164,6 +164,7 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
         id: nextId('asset'),
         project_id: projectId,
         sha256: MOCK_SHA,
+        original_filename: file.name,
         format: assetFormat(file),
         width_px: size.width,
         height_px: size.height,

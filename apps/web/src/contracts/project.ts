@@ -15,6 +15,8 @@ export interface SourceAsset {
   id: string;
   project_id: string;
   sha256: string;
+  /** Cambio propuesto: nombre del archivo subido, para mostrarlo al usuario. */
+  original_filename: string;
   format: AssetFormat;
   /** Píxeles de la imagen original. No es tamaño físico de bordado. */
   width_px: number;
