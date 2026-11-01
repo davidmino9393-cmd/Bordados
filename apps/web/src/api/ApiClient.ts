@@ -14,6 +14,7 @@ import type { ProfileCatalog } from '../contracts/settings';
 /** Códigos propios del cliente, además de los ErrorCode del contrato. */
 export const ClientErrorCode = {
   Network: 'NETWORK',
+  Timeout: 'TIMEOUT',
   NotImplemented: 'NOT_IMPLEMENTED',
   Unexpected: 'UNEXPECTED',
 } as const;
@@ -29,6 +30,19 @@ export class ApiError extends Error {
     super(message);
     this.name = 'ApiError';
   }
+}
+
+const TRANSIENT_CODES: readonly string[] = [
+  ClientErrorCode.Network,
+  ClientErrorCode.Timeout,
+  'SERVICE_UNAVAILABLE',
+  'INTERNAL_ERROR',
+  'RATE_LIMITED',
+];
+
+/** Errores que pueden resolverse solos: tiene sentido reintentar la consulta. */
+export function isTransientError(error: unknown): boolean {
+  return error instanceof ApiError && TRANSIENT_CODES.includes(error.code);
 }
 
 /**

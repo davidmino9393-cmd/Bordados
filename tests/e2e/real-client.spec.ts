@@ -20,7 +20,7 @@ interface Recorded {
   body: unknown;
 }
 
-function stubBackend(page: Page, options: { jobsStatus: 202 | 501 }) {
+function stubBackend(page: Page, options: { jobsStatus: 202 | 501; result?: 'ready' | 'failed' }) {
   const recorded: Recorded[] = [];
   const project = { schema_version: '0.1', project_id: 'project_stub_1', name: 'Prueba real', created_at: '2026-11-01T10:00:00Z' };
   let asset: Record<string, unknown> | null = null;
@@ -42,7 +42,16 @@ function stubBackend(page: Page, options: { jobsStatus: 202 | 501 }) {
     const ready = fixture('valid-result');
     return { ...ready, job_id: JOB_ID, project_id: project.project_id, revision_id: 'rev_stub_1', asset_id: 'asset_stub_1', settings_snapshot: settings, status };
   };
+  const failedJob = () => ({
+    ...fixture('failure'),
+    job_id: JOB_ID,
+    project_id: project.project_id,
+    revision_id: 'rev_stub_1',
+    asset_id: 'asset_stub_1',
+    settings_snapshot: settings,
+  });
   const readyJob = () => {
+    if (options.result === 'failed') return failedJob();
     const job = jobBase('ready_for_sewout');
     job.artifact_manifest = { ...job.artifact_manifest, job_id: JOB_ID, revision_id: 'rev_stub_1', artifacts: job.artifact_manifest.artifacts.map((a: object) => ({ ...a, job_id: JOB_ID })) };
     job.validation_report = { ...job.validation_report, job_id: JOB_ID, revision_id: 'rev_stub_1' };
@@ -120,6 +129,7 @@ test('sin datos simulados: el cliente real sigue el flujo inicial y tolera 501 e
 
   await expect(page.getByRole('note')).toHaveCount(0);
   await expect(page.getByText(/todavía no ofrece esta operación/)).toBeVisible();
+  await expect(page.getByText(/Código de incidencia: NOT_IMPLEMENTED/)).toBeVisible();
   const posts = backend.recorded.filter((r) => r.method === 'POST');
   expect(posts.map((r) => r.path)).toEqual([
     '/projects',
@@ -146,4 +156,16 @@ test('con respuestas del contrato: muestra el resultado digital y descarga con U
   await expect(page.getByText('Medidas del archivo generado')).toBeVisible();
   expect(backend.recorded.some((r) => r.method === 'GET' && r.path === `/jobs/${JOB_ID}/artifacts`)).toBe(true);
   await expect(page.getByRole('link', { name: /Descargar\s*Archivo de bordado/ })).toHaveAttribute('href', 'data:text/plain,jef');
+});
+
+test('fallo del worker: muestra la etapa y el código de incidencia que informa el contrato', async ({ page }) => {
+  const backend = stubBackend(page, { jobsStatus: 202, result: 'failed' });
+  await backend.install();
+  await fillAndGenerate(page);
+
+  await expect(page.getByText('No se pudo generar el bordado')).toBeVisible();
+  await expect(page.getByText('Código de incidencia: WORKER_EXPORT_FAILED')).toBeVisible();
+  await expect(page.getByText(/Falló en la etapa: Generación de puntadas/)).toBeVisible();
+  await expect(page.getByRole('link', { name: /Descargar/ })).toHaveCount(0);
+  expect(backend.recorded.some((r) => r.path.endsWith('/artifacts'))).toBe(false);
 });

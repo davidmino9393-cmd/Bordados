@@ -59,6 +59,7 @@ export function FailedNotice({ job }: { job: JobResponse }) {
       <Notice tone={NoticeTone.Error} title={es.result.failedTitle}>
         {failure && <p>{issueTitle(failure.code, failure.message)}</p>}
         {stage && <p>{es.result.failedAt(stage)}</p>}
+        {failure && <p className="field__hint">{es.result.incidentCode(failure.code)}</p>}
         {suggestion && <p className="field__hint">{suggestion}</p>}
       </Notice>
       <RetryButton job={job} />

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, screen } from '@testing-library/react';
+import { ApiError, ClientErrorCode } from './api/ApiClient';
 import { createHttpApiClient } from './api/HttpApiClient';
 import type { ApiClient } from './api/ApiClient';
 import { createMockApiClient } from './mocks/MockApiClient';
@@ -76,6 +77,7 @@ describe('recorrido principal (cliente SIMULADO)', () => {
     expect(await screen.findByText('No se pudo generar el bordado')).toBeInTheDocument();
     expect(screen.getByText('Falló la exportación del bordado')).toBeInTheDocument();
     expect(screen.getByText(/Falló en la etapa: Generación de puntadas/)).toBeInTheDocument();
+    expect(screen.getByText('Código de incidencia: WORKER_EXPORT_FAILED')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Descargar/ })).not.toBeInTheDocument();
     expect(screen.queryByText(READY)).not.toBeInTheDocument();
   });
@@ -285,11 +287,59 @@ describe('recorrido principal (cliente SIMULADO)', () => {
   });
 });
 
+describe('errores esperables al consultar un trabajo', () => {
+  it('un corte transitorio no detiene el seguimiento: avisa con el código y se recupera', async () => {
+    const user = setupUser();
+    const base = createMockApiClient();
+    let failures = 0;
+    const client: ApiClient = {
+      ...base,
+      async getJob(jobId) {
+        const job = await base.getJob(jobId);
+        // Tras la primera consulta, las dos siguientes caen por timeout.
+        if (job.status !== 'queued' && failures < 2) {
+          failures += 1;
+          throw new ApiError(ClientErrorCode.Timeout, 'El servidor tardó demasiado en responder.');
+        }
+        return job;
+      },
+    };
+    renderApp(client);
+    await generateFrom(user, pngFile('logo.png'));
+    await advance(1500);
+    expect(await screen.findByText(/Código de incidencia: TIMEOUT/)).toBeInTheDocument();
+    await advance(FULL_RUN_MS);
+    expect((await screen.findAllByText(READY)).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Código de incidencia: TIMEOUT/)).not.toBeInTheDocument();
+  });
+
+  it('un 404 al consultar el trabajo se informa con su código y no se reintenta', async () => {
+    const user = setupUser();
+    const base = createMockApiClient();
+    let failedCalls = 0;
+    const client: ApiClient = {
+      ...base,
+      async getJob(jobId) {
+        const job = await base.getJob(jobId);
+        if (job.status === 'queued') return job;
+        failedCalls += 1;
+        throw new ApiError('NOT_FOUND', 'No encontramos lo que buscabas.', 404);
+      },
+    };
+    renderApp(client);
+    await generateFrom(user, pngFile('logo.png'));
+    await advance(10_000);
+    expect(failedCalls).toBe(1);
+    expect(screen.getByText(/Código de incidencia: NOT_FOUND/)).toBeInTheDocument();
+  });
+});
+
 describe('cliente real (HttpApiClient)', () => {
   it('si el servidor aún responde 501 informa que la operación no está ofrecida y no marca datos simulados', async () => {
     const api = createHttpApiClient({ fetchImpl: (async () => new Response('', { status: 501 })) as unknown as typeof fetch });
     renderApp(api);
     expect(await screen.findByRole('alert')).toHaveTextContent('todavía no ofrece esta operación');
+    expect(screen.getByRole('alert')).toHaveTextContent('Código de incidencia: NOT_IMPLEMENTED');
     expect(screen.queryByRole('note')).not.toBeInTheDocument();
   });
 });

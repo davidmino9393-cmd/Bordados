@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { ApiError } from '../../api/ApiClient';
 import { es } from '../../copy/es';
 
 export interface AsyncState<T> {
@@ -8,7 +9,9 @@ export interface AsyncState<T> {
   reload: () => void;
 }
 
+/** Mensaje para el usuario; los errores de la API llevan además el código de incidencia. */
 export function errorMessage(error: unknown): string {
+  if (error instanceof ApiError) return `${error.message} ${es.errors.incident(error.code, error.requestId)}`;
   return error instanceof Error && error.message ? error.message : es.errors.generic;
 }
 

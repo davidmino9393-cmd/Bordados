@@ -179,6 +179,7 @@ export const es = {
     cancelledTitle: 'Generación cancelada',
     cancelledText: 'Se detuvo antes de terminar. No hay archivos para descargar de este trabajo.',
     failedTitle: 'No se pudo generar el bordado',
+    incidentCode: (code: string) => `Código de incidencia: ${code}`,
     failedAt: (stage: string) => `Falló en la etapa: ${stage}.`,
     retrySame: 'Reintentar con los mismos ajustes',
     compareTitle: 'Comparación',
@@ -229,6 +230,9 @@ export const es = {
   errors: {
     generic: 'Ocurrió un problema. Probá de nuevo en unos instantes.',
     notFound: 'No encontramos lo que buscabas.',
+    timeout: 'El servidor tardó demasiado en responder. Probá de nuevo en unos instantes.',
+    incident: (code: string, requestId?: string) =>
+      `(Código de incidencia: ${code}${requestId ? ` · solicitud ${requestId}` : ''})`,
     network: 'No pudimos comunicarnos con el servidor. Revisá la conexión y probá de nuevo.',
     notImplemented: 'El servidor todavía no ofrece esta operación. El resto de la pantalla sigue disponible.',
     byCode: {

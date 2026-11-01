@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { isTransientError } from '../../api/ApiClient';
 import { useApi } from '../../api/ApiProvider';
 import { TERMINAL_STATUSES, type JobResponse } from '../../contracts/job';
 import { errorMessage } from './useAsync';
@@ -23,7 +24,10 @@ export function useJobPolling(jobId: string) {
         setError(null);
         if (!TERMINAL_STATUSES.includes(next.status)) timer = setTimeout(tick, JOB_POLL_INTERVAL_MS);
       } catch (e) {
-        if (active) setError(errorMessage(e));
+        if (!active) return;
+        // Un corte de red o un 5xx puntual no corta el seguimiento; un 403/404 sí.
+        setError(errorMessage(e));
+        if (isTransientError(e)) timer = setTimeout(tick, JOB_POLL_INTERVAL_MS);
       }
     };
     void tick();
