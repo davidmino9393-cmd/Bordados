@@ -30,7 +30,7 @@ Contratos: **tag `contratos-v0.1` (commit `ad958db`)**, congelados. Tipos en `sr
 
 ## Muestra física
 
-Formulario visible solo con el trabajo en `ready_for_sewout`. Envía un `SewoutRecord` (`POST /projects/{id}/sewouts`) sobre la `revision_id` del trabajo y, al volver `201`, pide de nuevo `GET /jobs/{id}`: `sewout_status` y `sewout_record` son la proyección del servidor y el estado digital no cambia.
+Formulario visible con el trabajo en `ready_for_sewout` **o `needs_review`** (decisión del integrador: se puede registrar una muestra aunque los controles digitales no hayan pasado); no se ofrece en fallos, cancelaciones ni trabajos en curso. Envía un `SewoutRecord` (`POST /projects/{id}/sewouts`) sobre la `revision_id` del trabajo y, al volver `201`, pide de nuevo `GET /jobs/{id}`: `sewout_status` y `sewout_record` son la proyección del servidor y el estado digital no cambia.
 
 | Campo del formulario | Campo del contrato | Nota |
 |---|---|---|
@@ -46,7 +46,7 @@ Formulario visible solo con el trabajo en `ready_for_sewout`. Envía un `SewoutR
 |---|---|
 | `queued`…`validating` | Etapas observadas, cancelar |
 | `ready_for_sewout` | «Listo para prueba (digital)»; `sewout_status` aparte (`untested` por defecto) |
-| `needs_review` | Causa y objetos/zonas del servidor; corrección → `POST revisions` (202) con job nuevo |
+| `needs_review` | Causa y objetos/zonas del servidor; corrección → `POST revisions` (202) con job nuevo. Si el servidor ya generó archivos (`artifact_manifest`), se muestran con el aviso «no están listos para prueba»; la muestra física también se puede registrar |
 | `failed` | Etapa y causa de `failure`; reintento = job nuevo sobre la misma revisión |
 | `cancelled` | Sin descargas. La cancelación (202) solo registra la solicitud: se muestra «Cancelación solicitada» hasta que el servidor publica `cancelled` |
 
@@ -58,10 +58,13 @@ Reglas: la UI nunca envía estados; el progreso sale de etapas observadas (`skip
 |---|---|
 | Fixtures copiados de `packages/contracts/fixtures` (+ `profiles.json`, derivado del ejemplo de `openapi.json`) | `apps/web/mocks/*.json` (`simulated: true`) |
 | Cliente en memoria | `src/mocks/MockApiClient.ts` — activo solo con `VITE_USE_MOCKS=true` |
-| Guiones por nombre de archivo | `*fallo*` → falla en `digitizing`; `*revision*` → `needs_review`; SVG → omite análisis y vectorización |
+| Guiones por nombre de archivo | `*fallo*` → falla en `digitizing`; `*revision*` → `needs_review`; SVG → omite análisis y vectorización; SVG `*completo*` → fixture `job-completed-real.json` (`needs_review` con archivos y 14 incidencias de satén) |
+| Opciones por URL (solo con mocks) | `?mockDownloadTtlMs=1500` acorta el TTL de las descargas; `?mockTrace=1` anota las operaciones en `window.__mockApiCalls` |
 | Cliente real | `src/api/HttpApiClient.ts` — activo por defecto (sin la variable) |
 
 La franja «Datos simulados» aparece siempre que el cliente sea simulado. Sin `VITE_USE_MOCKS=true`, la web habla con `/api/v1` del mismo origen (en desarrollo, `API_PROXY_TARGET` reenvía `/api`).
+
+> `job-completed-real.json` **no es una exportación real**: es la forma de un job con archivos y controles digitales sin aprobar (`digital_checks_passed=false`). Sus medidas (150 × 142,8 mm, 6.789 puntadas) son las del inventario histórico, y los hashes son ficticios. Conserva `simulated: true`.
 
 ## Supuestos a confirmar en H1
 

@@ -1,5 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 
+declare global {
+  interface Window {
+    __mockApiCalls?: string[];
+  }
+}
+
 // Recorridos contra el cliente SIMULADO. Se identifican por el nombre del archivo subido.
 const PNG_1X1 = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
@@ -65,4 +71,50 @@ test('revisión localizada: corrige y regenera', async ({ page }) => {
   await page.getByLabel(/Qué querés hacer \(object_mock_satin\)/).selectOption({ label: 'Excluir del bordado' });
   await page.getByRole('button', { name: 'Aplicar y regenerar' }).click();
   await expect(page.getByText('Listo para prueba (digital)').first()).toBeVisible({ timeout: RUN_TIMEOUT_MS });
+});
+
+// --- Job completo (SIMULADO): SVG preparado en needs_review, con archivos y 14 incidencias de satén ---
+const SVG_VALIDO = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>');
+const SATIN_ISSUES = 14;
+const SHORT_TTL_MS = 1500;
+const stampOf = (url: string) => Number(url.split('#issued=')[1]);
+
+test('job completo en needs_review: incidencias, muestra física, descarga del JEF y enlace vencido', async ({ page }) => {
+  await page.goto(`/?mockDownloadTtlMs=${SHORT_TTL_MS}&mockTrace=1`);
+  await page.getByLabel('Nombre del proyecto').fill('Prueba completo');
+  await page.getByRole('button', { name: 'Crear proyecto' }).click();
+  await page.getByLabel('Elegir archivo').setInputFiles({ name: 'logo-completo.svg', mimeType: 'image/svg+xml', buffer: SVG_VALIDO });
+  await expect(page.getByAltText('Imagen original: logo-completo.svg')).toBeVisible();
+  await page.getByRole('button', { name: 'Generar bordado' }).click();
+
+  // needs_review: nunca "listo para prueba", pero con archivos y muestra física.
+  await expect(page.getByText('Hay un elemento que necesita revisión')).toBeVisible({ timeout: RUN_TIMEOUT_MS });
+  await expect(page.locator('.issue')).toHaveCount(SATIN_ISSUES);
+  await expect(page.getByText('object_mock_satin_01').first()).toBeVisible();
+  await expect(page.getByText('object_mock_satin_14').first()).toBeVisible();
+  await expect(page.getByText('Archivos para revisar: no están listos para prueba')).toBeVisible();
+  await expect(page.getByText('Listo para prueba (digital)')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Registrar muestra física' })).toBeVisible();
+  await expect(page.getByText('150,0 × 142,8 mm')).toBeVisible();
+  await expectNoHorizontalScroll(page);
+
+  // El JEF está habilitado; lo bajamos con el enlace vigente.
+  const jef = page.getByRole('link', { name: /Descargar\s*Archivo de bordado/ });
+  await expect(jef).toBeEnabled();
+  const firstHref = (await jef.getAttribute('href'))!;
+  const artifactCalls = () => page.evaluate(() => (window.__mockApiCalls ?? []).filter((m) => m === 'getArtifacts').length);
+  const callsAtStart = await artifactCalls();
+  expect(callsAtStart).toBeGreaterThanOrEqual(1);
+
+  // Pasa el TTL: la web vuelve a pedir GET artifacts y el enlace cambia por uno nuevo.
+  await page.waitForTimeout(SHORT_TTL_MS + 1500);
+  expect(await artifactCalls()).toBeGreaterThan(callsAtStart);
+  const freshHref = (await jef.getAttribute('href'))!;
+  expect(stampOf(freshHref)).toBeGreaterThan(stampOf(firstHref));
+
+  const download = page.waitForEvent('download');
+  await jef.click();
+  const file = await download;
+  expect(file.suggestedFilename()).toMatch(/-output\.jef$/);
+  expect(stampOf(file.url())).toBeGreaterThanOrEqual(stampOf(freshHref));
 });
