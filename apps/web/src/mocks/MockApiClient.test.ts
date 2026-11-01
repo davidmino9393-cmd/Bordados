@@ -261,6 +261,42 @@ describe('MockApiClient (SIMULADO, forma de contratos-v0.1)', () => {
     ).rejects.toMatchObject({ code: ErrorCode.NotFound });
   });
 
+  it('un SVG "completo" devuelve el job del fixture: needs_review, 14 incidencias de satén y archivos', async () => {
+    const { job } = await start('logo-completo.svg', 'image/svg+xml');
+    expect(job.input_kind).toBe('prepared_svg');
+    clock += WELL_PAST_END;
+    const done = await api.getJob(job.job_id);
+    expect(done.status).toBe(JobStatus.NeedsReview);
+    expect(done.issues).toHaveLength(14);
+    expect(done.review?.object_ids).toHaveLength(14);
+    expect(done.validation_report?.digital_checks_passed).toBe(false);
+    expect(done.artifact_manifest?.reread_metrics.stitch_bounds_mm).toMatchObject({ max_x_mm: 150, max_y_mm: 142.8 });
+    expect(done.artifact_manifest?.reread_metrics).toMatchObject({ needle_stitches: 6789, thread_blocks: 3 });
+
+    const manifest = await api.getArtifacts(job.job_id);
+    const names = manifest.artifacts.map((a) => a.filename.replace(`${job.job_id}-`, '')).sort();
+    expect(names).toEqual(['editable.svg', 'output.jef', 'preview.png', 'raw-commands.json']);
+    expect(manifest.artifacts.every((a) => a.job_id === job.job_id && a.download)).toBe(true);
+    expect(manifest.artifacts.find((a) => a.kind === 'jef')?.byte_size).toBe(14816);
+  });
+
+  it('el nombre "completo" solo aplica a un SVG preparado', async () => {
+    const { job } = await start('logo-completo.png');
+    clock += WELL_PAST_END;
+    expect((await api.getJob(job.job_id)).status).toBe(JobStatus.ReadyForSewout);
+  });
+
+  it('el TTL de las descargas es configurable solo para pruebas (300 s por defecto)', async () => {
+    const short = createMockApiClient({ now: () => clock, stageMs: STAGE_MS, downloadTtlMs: 1000 });
+    const project = await short.createProject('P');
+    const asset = await short.uploadAsset(project.project_id, file('a.svg', 'image/svg+xml'));
+    expect(asset.original_download && Date.parse(asset.original_download.expires_at) - Date.parse(asset.original_download.issued_at)).toBe(1000);
+    const calls: string[] = [];
+    const traced = createMockApiClient({ onCall: (m) => calls.push(m) });
+    await traced.getProfiles();
+    expect(calls).toEqual(['getProfiles']);
+  });
+
   it('rechaza formatos no admitidos y proveedores no disponibles', async () => {
     const project = await api.createProject('P');
     await expect(api.uploadAsset(project.project_id, file('x.gif', 'image/gif'))).rejects.toMatchObject({

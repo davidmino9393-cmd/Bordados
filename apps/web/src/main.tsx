@@ -5,13 +5,16 @@ import { App } from './App';
 import { ApiProvider } from './api/ApiProvider';
 import { createHttpApiClient } from './api/HttpApiClient';
 import { createMockApiClient } from './mocks/MockApiClient';
+import { mockOptionsFromUrl } from './mocks/mockOptionsFromUrl';
 import './styles/tokens.css';
 import './styles/app.css';
 
 // Las respuestas simuladas solo se usan si se piden explícitamente (VITE_USE_MOCKS=true);
 // sin esa variable se habla con el backend real del mismo origen.
 const useMocks = import.meta.env.VITE_USE_MOCKS === 'true';
-const client = useMocks ? createMockApiClient() : createHttpApiClient({ baseUrl: import.meta.env.VITE_API_BASE_URL ?? '' });
+const client = useMocks
+  ? createMockApiClient(mockOptionsFromUrl(window.location.search))
+  : createHttpApiClient({ baseUrl: import.meta.env.VITE_API_BASE_URL ?? '' });
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

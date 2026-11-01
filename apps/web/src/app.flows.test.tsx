@@ -435,6 +435,96 @@ describe('muestra física (POST /sewouts)', () => {
   });
 });
 
+describe('job completo con archivos pero en needs_review (SIMULADO, fixture job-completed-real)', () => {
+  const FORM = 'Registrar muestra física';
+  const ID = (n: number) => `object_mock_satin_${String(n).padStart(2, '0')}`;
+
+  it('muestra las 14 incidencias con sus object_ids, el aviso de no apto, la muestra física y las descargas', async () => {
+    const user = setupUser();
+    renderApp();
+    await generateFrom(user, svgFile('logo-completo.svg'));
+    await advance(FULL_RUN_MS);
+
+    expect(await screen.findByText('Hay un elemento que necesita revisión')).toBeInTheDocument();
+    // 14 filas de incidencia (el aviso superior repite el título de la primera).
+    const rows = screen.getAllByText(/Faltan guías en una columna de satén/).filter((el) => el.closest('.issue'));
+    expect(rows).toHaveLength(14);
+    for (let n = 1; n <= 14; n++) {
+      expect(screen.getByLabelText(new RegExp(`Qué querés hacer \\(${ID(n)}\\)`))).toBeInTheDocument();
+      expect(screen.getAllByText(new RegExp(`Elementos: ${ID(n)}`)).length).toBeGreaterThan(0);
+    }
+
+    // Estado digital: nunca "listo para prueba"; los archivos se avisan como no aptos.
+    expect(screen.getAllByText('Necesita tu revisión').length).toBeGreaterThan(0);
+    expect(screen.queryByText(READY)).not.toBeInTheDocument();
+    expect(screen.getByText('Archivos para revisar: no están listos para prueba')).toBeInTheDocument();
+
+    // Muestra física permitida en needs_review, con el estado físico aparte.
+    expect(screen.getByRole('heading', { name: FORM })).toBeInTheDocument();
+    expect(screen.getByText('Sin probar en tela')).toBeInTheDocument();
+
+    // Medidas y archivos del fixture.
+    expect(screen.getByText('150,0 × 142,8 mm')).toBeInTheDocument();
+    expect(screen.getByText('6.789')).toBeInTheDocument();
+    const jef = screen.getByRole('link', { name: /Descargar Archivo de bordado/ });
+    expect(jef.getAttribute('download')).toMatch(/-output\.jef$/);
+    expect(jef.getAttribute('href')).toMatch(/^data:/);
+    expect(screen.getByRole('link', { name: /Descargar SVG editable/ }).getAttribute('download')).toMatch(/-editable\.svg$/);
+  });
+
+  it('registrar una muestra aquí no cambia el estado digital', async () => {
+    const user = setupUser();
+    renderApp();
+    await generateFrom(user, svgFile('logo-completo.svg'));
+    await advance(FULL_RUN_MS);
+    await screen.findByRole('heading', { name: FORM });
+    await user.click(screen.getByRole('radio', { name: 'Requiere ajustes' }));
+    fireEvent.change(screen.getByLabelText('Fecha de la muestra'), { target: { value: '2026-10-01T11:00' } });
+    await user.type(screen.getByLabelText('Estabilizador'), 'Cut-away');
+    await user.type(screen.getByLabelText('Hilo'), 'Poliéster 40');
+    await user.type(screen.getByLabelText('Observaciones'), 'Satén fruncido.');
+    await user.click(screen.getByRole('button', { name: 'Registrar muestra' }));
+    expect(await screen.findByText('La muestra requiere ajustes')).toBeInTheDocument();
+    expect(screen.getAllByText('Necesita tu revisión').length).toBeGreaterThan(0);
+    expect(screen.queryByText(READY)).not.toBeInTheDocument();
+  });
+
+  it('con TTL de 1 s, si el enlace vence y la renovación automática falló, al descargar re-pide GET artifacts y usa el nuevo', async () => {
+    const user = setupUser();
+    const base = createMockApiClient({ downloadTtlMs: 1000 });
+    let calls = 0;
+    const client: ApiClient = {
+      ...base,
+      async getArtifacts(jobId) {
+        calls += 1;
+        // La 2.ª consulta (renovación automática) cae: el enlace queda vencido en pantalla.
+        if (calls === 2) throw new ApiError(ClientErrorCode.Timeout, 'El servidor tardó demasiado en responder.');
+        return base.getArtifacts(jobId);
+      },
+    };
+    const clicked: string[] = [];
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      clicked.push(this.href);
+    });
+    renderApp(client);
+    await generateFrom(user, svgFile('logo-completo.svg'));
+    await advance(FULL_RUN_MS);
+    const first = (await screen.findByRole('link', { name: /Descargar Archivo de bordado/ })).getAttribute('href')!;
+    expect(calls).toBeGreaterThanOrEqual(1);
+    await advance(2000); // pasa el TTL de 1 s
+    expect(await screen.findByText(/Código de incidencia: TIMEOUT/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Descargar Archivo de bordado/ }).getAttribute('href')).toBe(first);
+
+    const before = calls;
+    await user.click(screen.getByRole('link', { name: /Descargar Archivo de bordado/ }));
+    await advance(100);
+    expect(calls).toBe(before + 1);
+    const stamp = (url: string) => Number(url.split('#issued=')[1]);
+    expect(clicked).toHaveLength(1);
+    expect(stamp(clicked[0])).toBeGreaterThan(stamp(first));
+  });
+});
+
 describe('errores esperables al consultar un trabajo', () => {
   it('un corte transitorio no detiene el seguimiento: avisa con el código y se recupera', async () => {
     const user = setupUser();
