@@ -2,8 +2,20 @@
 # Installed by devagent-kit â€” keep kit files local, do not commit.
 .agents/
 .ai-kit.lock
-.codex/
 .kit-data/
+# <<< ai-kit (managed) <<<
+
+# Configuración de agentes (incluida explícitamente)
 AGENTS.md
 WORKFLOW.md
-# <<< ai-kit (managed) <<<
+.codex/config.toml
+.codex/hooks.json
+.codex/.aikit.json
+.codex/.aikit-ignore
+.codex/agents/
+.codex/output-styles/
+.codex/runtime/
+.codex/agent-memory/
+# Dentro de .codex, ignorar logs y credenciales
+.codex/hooks/.logs/
+.codex/hooks/notifications/.env
