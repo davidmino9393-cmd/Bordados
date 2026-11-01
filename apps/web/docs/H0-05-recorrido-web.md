@@ -11,7 +11,7 @@ Contratos: **tag `contratos-v0.1` (commit `ad958db`)**, congelados. Tipos en `sr
 |---|---|---|
 | `/` | Proyectos (lista, alta) | `GET/POST /projects` |
 | `/proyectos/:id` | Carga, ajustes, historial | `GET /projects/{id}`, `GET /profiles`, `POST assets` |
-| `/trabajos/:id` | Progreso → resultado, revisión, falla o cancelación | `GET /jobs/{id}`, `GET /jobs/{id}/artifacts`, `POST cancel` |
+| `/trabajos/:id` | Progreso → resultado, revisión, falla o cancelación | `GET /jobs/{id}`, `GET /jobs/{id}/artifacts`, `POST cancel`, `POST /projects/{id}/sewouts` |
 
 ## Flujo inicial
 
@@ -23,6 +23,22 @@ Contratos: **tag `contratos-v0.1` (commit `ad958db`)**, congelados. Tipos en `sr
 - `GET /jobs/{id}/artifacts` se vuelve a pedir ~10 s antes de `expires_at` (`useArtifacts`); el original se renueva con `GET /projects/{id}`.
 - Si el usuario descarga un enlace vencido o por vencer, se reconsulta y se usa el nuevo.
 - Nada se conserva más allá de `expires_at`; las URLs no son identidad del archivo.
+
+## Reintentos ante errores transitorios
+
+`useJobPolling` reintenta con backoff exponencial: 1, 2, 4, 8, 16 s y tope de 30 s, con ±20 % de jitter (nunca más de 30 s). Se muestra «Reintentando en X s». El contador vuelve a 1 s al recibir una respuesta correcta o al cambiar de trabajo. Solo se reintentan `NETWORK`, `TIMEOUT`, `RATE_LIMITED`, `INTERNAL_ERROR` y `SERVICE_UNAVAILABLE`; 400, 403, 404, 422 y 501 se informan una vez, con su código de incidencia.
+
+## Muestra física
+
+Formulario visible solo con el trabajo en `ready_for_sewout`. Envía un `SewoutRecord` (`POST /projects/{id}/sewouts`) sobre la `revision_id` del trabajo y, al volver `201`, pide de nuevo `GET /jobs/{id}`: `sewout_status` y `sewout_record` son la proyección del servidor y el estado digital no cambia.
+
+| Campo del formulario | Campo del contrato | Nota |
+|---|---|---|
+| Resultado | `status` | `approved`, `needs_adjustment` o `untested` |
+| Fecha de la muestra | `tested_at` | Obligatoria salvo en `untested` (que no la admite); no puede ser futura |
+| Tela usada | `fabric_profile` | Es un id de perfil: se elige del catálogo, no es texto libre |
+| Estabilizador, Hilo, Observaciones | `stabilizer`, `thread`, `observations` | Texto obligatorio (máx. 2000) |
+| — | `photo_asset_ids` | Se envía vacío; sin subida de fotos todavía |
 
 ## Estados
 
@@ -55,7 +71,10 @@ La franja «Datos simulados» aparece siempre que el cliente sea simulado. Sin `
 4. **Revisión sin cajas:** `review` trae `object_ids`/`region_ids`, no píxeles; no se dibuja overlay sobre el original.
 5. **Textos del servidor:** `description`/`message` llegan en inglés; la web traduce por `code` (catálogo) y usa el texto del servidor solo como respaldo.
 6. **Paginación:** se muestra la primera página con un aviso si hay `next_cursor`; falta «ver más».
-7. **Muestra física:** se muestra el estado; falta el formulario de `POST /sewouts` (exige fecha y observaciones para `approved`/`needs_adjustment`).
+7. **Muestra física, varias por revisión:** el contrato no dice si una revisión admite más de un registro ni cuál manda; la web permite registrar otro y muestra la proyección que devuelve el servidor.
+8. **Fecha con hora:** `tested_at` es `AwareDatetime`; el selector es `datetime-local` (hora local) y se envía en UTC.
+9. **Fotos de la muestra:** `photo_asset_ids` existe en el contrato, pero no define cómo subir una foto como asset. Queda pendiente (cambio propuesto: indicar el flujo de subida).
+10. **Quién puede registrar:** el contrato habla de «usuario autorizado»; si no lo es, el 403 se muestra con su código.
 
 ## Ejecución
 

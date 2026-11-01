@@ -26,6 +26,7 @@ function stubBackend(page: Page, options: { jobsStatus: 202 | 501; result?: 'rea
   let asset: Record<string, unknown> | null = null;
   let settings: unknown = null;
   let jobCreated = false;
+  let sewout: Record<string, unknown> | null = null;
 
   const send = (route: Route, status: number, body: unknown) =>
     route.fulfill({
@@ -53,6 +54,18 @@ function stubBackend(page: Page, options: { jobsStatus: 202 | 501; result?: 'rea
   const readyJob = () => {
     if (options.result === 'failed') return failedJob();
     const job = jobBase('ready_for_sewout');
+    if (sewout) {
+      // Proyección de solo lectura (SewoutProjection): el estado digital no cambia.
+      job.sewout_status = sewout.status;
+      job.sewout_record = {
+        sewout_id: sewout.sewout_id,
+        revision_id: sewout.revision_id,
+        status: sewout.status,
+        tested_at: sewout.tested_at,
+        observations: sewout.observations,
+        photo_asset_ids: sewout.photo_asset_ids,
+      };
+    }
     job.artifact_manifest = { ...job.artifact_manifest, job_id: JOB_ID, revision_id: 'rev_stub_1', artifacts: job.artifact_manifest.artifacts.map((a: object) => ({ ...a, job_id: JOB_ID })) };
     job.validation_report = { ...job.validation_report, job_id: JOB_ID, revision_id: 'rev_stub_1' };
     return job;
@@ -93,6 +106,15 @@ function stubBackend(page: Page, options: { jobsStatus: 202 | 501; result?: 'rea
             schema_version: '0.1', revision_id: 'rev_stub_1', project_id: project.project_id, base_revision_id: null,
             reason: 'Ajustes iniciales', created_at: '2026-11-01T10:00:00Z', kind: 'initial', parent_job_id: null, job_id: null,
           });
+        }
+        if (method === 'POST' && path.endsWith('/sewouts')) {
+          sewout = {
+            ...(JSON.parse(request.postData()!) as object),
+            sewout_id: 'sewout_stub_1',
+            project_id: project.project_id,
+            recorded_at: new Date().toISOString(),
+          };
+          return send(route, 201, sewout);
         }
         if (method === 'POST' && path.endsWith('/jobs')) {
           if (options.jobsStatus === 501) return route.fulfill({ status: 501, body: '' });
@@ -168,4 +190,41 @@ test('fallo del worker: muestra la etapa y el código de incidencia que informa 
   await expect(page.getByText(/Falló en la etapa: Generación de puntadas/)).toBeVisible();
   await expect(page.getByRole('link', { name: /Descargar/ })).toHaveCount(0);
   expect(backend.recorded.some((r) => r.path.endsWith('/artifacts'))).toBe(false);
+});
+
+test('muestra física: registra con POST /sewouts, cambia solo el estado físico y no toca el digital', async ({ page }) => {
+  const backend = stubBackend(page, { jobsStatus: 202 });
+  await backend.install();
+  await fillAndGenerate(page);
+
+  await expect(page.getByRole('heading', { name: 'Registrar muestra física' })).toBeVisible();
+  await expect(page.getByText('Sin probar en tela')).toBeVisible();
+
+  await page.getByRole('radio', { name: 'Aprobada' }).check();
+  await page.getByLabel('Fecha de la muestra').fill('2026-10-01T11:00');
+  await page.getByLabel('Estabilizador').fill('Cut-away');
+  await page.getByLabel('Hilo').fill('Poliéster 40');
+  await page.getByLabel('Observaciones').fill('Sin arrugas.');
+  await page.getByRole('button', { name: 'Registrar muestra' }).click();
+
+  await expect(page.getByText(/Muestra registrada/)).toBeVisible();
+  await expect(page.getByText('Muestra física aprobada')).toBeVisible();
+  await expect(page.getByText('Listo para prueba (digital)').first()).toBeVisible();
+
+  const post = backend.recorded.find((r) => r.method === 'POST' && r.path.endsWith('/sewouts'))!;
+  expect(post.path).toBe('/projects/project_stub_1/sewouts');
+  expect(post.idempotencyKey).toBeTruthy();
+  expect(Object.keys(post.body as object).sort()).toEqual(Object.keys(fixture('physical-sewout')).sort());
+  expect(post.body).toMatchObject({ revision_id: 'rev_stub_1', status: 'approved', fabric_profile: 'gabardina_inicial', photo_asset_ids: [] });
+  // El estado se vuelve a pedir al servidor después de registrar; la web no lo deduce.
+  const lastJobRead = backend.recorded.map((r) => `${r.method} ${r.path}`).lastIndexOf('GET /jobs/job_stub_1');
+  expect(lastJobRead).toBeGreaterThan(backend.recorded.indexOf(post));
+});
+
+test('muestra física: no se ofrece cuando el trabajo falló', async ({ page }) => {
+  const backend = stubBackend(page, { jobsStatus: 202, result: 'failed' });
+  await backend.install();
+  await fillAndGenerate(page);
+  await expect(page.getByText('No se pudo generar el bordado')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Registrar muestra física' })).toHaveCount(0);
 });
