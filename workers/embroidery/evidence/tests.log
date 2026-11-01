@@ -1,0 +1,21 @@
+test_initial_flow_auth_cancel_and_download_policy (test_b2.B2ContractTests.test_initial_flow_auth_cancel_and_download_policy) ... ok
+test_profile_reads_history_and_typed_revisions (test_b2.B2ContractTests.test_profile_reads_history_and_typed_revisions) ... ok
+test_server_views_hoop_and_artifact_guards (test_b2.B2ContractTests.test_server_views_hoop_and_artifact_guards) ... ok
+test_invalid_size_and_client_assigned_states_are_rejected (test_contracts.ContractTests.test_invalid_size_and_client_assigned_states_are_rejected) ... ok
+test_physical_approval_is_not_a_digital_state (test_contracts.ContractTests.test_physical_approval_is_not_a_digital_state) ... ok
+test_ready_requires_coherent_digital_evidence_references (test_contracts.ContractTests.test_ready_requires_coherent_digital_evidence_references) ... ok
+test_six_versioned_simulated_examples_validate (test_contracts.ContractTests.test_six_versioned_simulated_examples_validate) ... ok
+test_transitions_reject_skip_and_terminal_restart (test_contracts.ContractTests.test_transitions_reject_skip_and_terminal_restart) ... ok
+test_catalog_covers_enums_and_prevents_issue_downgrading (test_openapi.OpenAPIContractTests.test_catalog_covers_enums_and_prevents_issue_downgrading) ... ok
+test_committed_schema_and_catalog_are_generated_from_models (test_openapi.OpenAPIContractTests.test_committed_schema_and_catalog_are_generated_from_models) ... ok
+test_twelve_operations_refs_and_examples_are_coherent (test_openapi.OpenAPIContractTests.test_twelve_operations_refs_and_examples_are_coherent) ... ok
+test_exit_zero_with_no_payload_is_not_success (test_worker.WorkerTests.test_exit_zero_with_no_payload_is_not_success) ... ok
+test_invalid_svg_is_controlled_before_execution (test_worker.WorkerTests.test_invalid_svg_is_controlled_before_execution) ... ok
+test_missing_binary_is_controlled_and_logged (test_worker.WorkerTests.test_missing_binary_is_controlled_and_logged) ... ok
+test_reader_cannot_hide_missing_or_invalid_end (test_worker.WorkerTests.test_reader_cannot_hide_missing_or_invalid_end) ... ok
+test_timeout_stops_real_process (test_worker.WorkerTests.test_timeout_stops_real_process) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 1.697s
+
+OK

@@ -1,0 +1,6 @@
+Processing .\workers\embroidery\.tools\inkex.zip
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+ERROR: Requested inkex==1.4.1 from file:///C:/dev/wt-motor/workers/embroidery/.tools/inkex.zip (from -r workers/embroidery/.tools/requirements-probe.txt (line 20)) has invalid metadata: Expected matching RIGHT_PARENTHESIS for LEFT_PARENTHESIS, after version specifier
+    lxml (>=4.5.0,<5.0.0 || >=5.0.0,<6.0.0)
+         ~~~~~~~~~~~~~~~~^
