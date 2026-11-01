@@ -81,6 +81,13 @@ La franja «Datos simulados» aparece siempre que el cliente sea simulado. Sin `
 9. **Fotos de la muestra:** `photo_asset_ids` existe en el contrato, pero no define cómo subir una foto como asset. Queda pendiente (cambio propuesto: indicar el flujo de subida).
 10. **Quién puede registrar:** el contrato habla de «usuario autorizado»; si no lo es, el 403 se muestra con su código.
 
+## Deuda menor (H1 completo)
+
+- **409 con `artifact_manifest` presente:** el backend podría responder `GET /jobs/{id}/artifacts` 409 aunque el `JobResponse` traiga manifiesto (bug, carrera con una cancelación o despliegue parcial). Hoy la web muestra el error con su código de incidencia y el resto de la pantalla sigue disponible, pero no ofrece reintento. Manejo previsto: mensaje «no se pudieron obtener los archivos, reintentá» y un botón que reconsulte primero `GET /jobs/{id}` y luego los archivos, sin bloquear el resto. No implementado.
+- **Paginación:** primera página de proyectos, assets y trabajos; falta «ver más».
+- **Fotos de la muestra:** `photo_asset_ids` queda vacío hasta H2/H3.
+- **Test cruzado con el backend:** que el backend valide con Pydantic los fixtures que consume la web, cuando exista el servicio real.
+
 ## Ejecución
 
 ```bash
