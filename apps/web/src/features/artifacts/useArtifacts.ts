@@ -3,7 +3,7 @@ import { useApi } from '../../api/ApiProvider';
 import type { AuthorizedArtifactManifest } from '../../contracts/artifacts';
 import { errorMessage } from '../../shared/hooks/useAsync';
 import { useRenewBeforeExpiry } from '../../shared/hooks/useRenewBeforeExpiry';
-import { earliestExpiry } from '../../shared/utils/expiry';
+import { earliestDownload } from '../../shared/utils/expiry';
 
 /**
  * GET /jobs/{id}/artifacts emite URLs nuevas que vencen a los 300 s. Se renuevan
@@ -30,7 +30,6 @@ export function useArtifacts(jobId: string) {
     void refresh();
   }, [refresh]);
 
-  const expiresAt = earliestExpiry((manifest?.artifacts ?? []).map((a) => a.download?.expires_at));
-  useRenewBeforeExpiry(expiresAt, refresh);
+  useRenewBeforeExpiry(earliestDownload((manifest?.artifacts ?? []).map((a) => a.download)), refresh);
   return { manifest, error, refresh };
 }

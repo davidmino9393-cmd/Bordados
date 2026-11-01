@@ -3,7 +3,7 @@ import { ArtifactKind, type Artifact, type AuthorizedArtifactManifest } from '..
 import { artifactKindLabel, es } from '../../copy/es';
 import { Card } from '../../shared/components/Card';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
-import { RENEW_MARGIN_MS, isExpired } from '../../shared/utils/expiry';
+import { isExpired, renewMargin } from '../../shared/utils/expiry';
 import { formatBytes, shortHash } from '../../shared/utils/format';
 
 const TECHNICAL_KINDS: ArtifactKind[] = [
@@ -33,7 +33,8 @@ export function ArtifactsPanel({ artifacts, hadMismatch, refresh }: ArtifactsPan
 
   // Un enlace vencido (o por vencer) no se usa: se reconsulta y se descarga el nuevo.
   const onDownload = async (event: MouseEvent, artifact: Artifact) => {
-    if (!isExpired(artifact.download?.expires_at, Date.now(), RENEW_MARGIN_MS)) return;
+    const download = artifact.download;
+    if (download && !isExpired(download.expires_at, Date.now(), renewMargin(download))) return;
     event.preventDefault();
     setRenewing(true);
     const fresh = await refresh();

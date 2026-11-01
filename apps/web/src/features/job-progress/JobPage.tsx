@@ -24,7 +24,7 @@ export function JobPage() {
 
   const asset = project.data?.assets.find((a) => a.asset_id === job?.asset_id);
   // El original se sirve con un enlace temporal: se renueva consultando de nuevo el proyecto.
-  useRenewBeforeExpiry(asset?.original_download?.expires_at, project.reload);
+  useRenewBeforeExpiry(asset?.original_download ?? undefined, project.reload);
 
   if (error && !job) {
     return (

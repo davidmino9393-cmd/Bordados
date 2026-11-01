@@ -202,6 +202,7 @@ describe('recorrido principal (cliente SIMULADO)', () => {
     await generateFrom(user, pngFile('logo.png'));
     await advance(FULL_RUN_MS);
     await screen.findByText('Medidas del archivo generado');
+    await advance(600); // la renovación automática (2.ª respuesta) también llega vencida
 
     await user.click(screen.getByRole('link', { name: /Descargar Archivo de bordado/ }));
     await advance(100);

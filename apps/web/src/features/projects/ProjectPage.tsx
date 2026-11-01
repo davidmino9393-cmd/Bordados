@@ -9,7 +9,7 @@ import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { errorMessage, useAsync } from '../../shared/hooks/useAsync';
 import { useIdempotencyKey } from '../../shared/hooks/useIdempotencyKey';
 import { useRenewBeforeExpiry } from '../../shared/hooks/useRenewBeforeExpiry';
-import { earliestExpiry } from '../../shared/utils/expiry';
+import { earliestDownload } from '../../shared/utils/expiry';
 import { SettingsForm } from '../settings/SettingsForm';
 import { UploadPanel } from '../upload/UploadPanel';
 import { JobHistory } from './JobHistory';
@@ -29,7 +29,7 @@ export function ProjectPage() {
   const selected = assets.find((a) => a.asset_id === pickedId) ?? assets.at(-1);
 
   // Los originales se sirven con enlaces temporales: se renuevan antes de vencer.
-  useRenewBeforeExpiry(earliestExpiry(assets.map((a) => a.original_download?.expires_at)), project.reload);
+  useRenewBeforeExpiry(earliestDownload(assets.map((a) => a.original_download)), project.reload);
 
   const onUploaded = (asset: SourceAsset) => {
     setPickedId(asset.asset_id);
