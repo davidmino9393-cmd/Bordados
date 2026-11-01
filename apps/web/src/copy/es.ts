@@ -105,6 +105,7 @@ export const es = {
     needAsset: 'Primero subí una imagen.',
   },
   jobs: {
+    title: 'Generación del bordado',
     history: 'Trabajos anteriores',
     historyEmpty: 'Todavía no se generó ningún trabajo.',
     variantOf: 'Derivado de otro trabajo',

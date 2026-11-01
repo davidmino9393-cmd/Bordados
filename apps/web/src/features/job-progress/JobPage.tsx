@@ -29,7 +29,7 @@ export function JobPage() {
       <p>
         <Link to={`/proyectos/${job.project_id}`}>← {project.data?.project.name ?? es.back}</Link>
       </p>
-      <h1>{es.progress.title}</h1>
+      <h1>{es.jobs.title}</h1>
       {error && <Notice tone={NoticeTone.Warning}>{error}</Notice>}
       <JobProgress job={job} onJobChanged={replace} />
       {job.status === JobStatus.Failed && <FailedNotice job={job} />}
