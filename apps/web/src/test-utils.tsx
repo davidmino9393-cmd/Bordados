@@ -28,6 +28,20 @@ export async function advance(ms: number) {
   });
 }
 
+/** Envuelve un cliente para registrar el orden y el contenido de cada llamada. */
+export function instrument(base: ApiClient = createMockApiClient()) {
+  const calls: Array<{ method: string; args: unknown[] }> = [];
+  const client = { ...base } as Record<string, unknown>;
+  for (const [name, value] of Object.entries(base)) {
+    if (typeof value !== 'function') continue;
+    client[name] = (...args: unknown[]) => {
+      calls.push({ method: name, args });
+      return (value as (...a: unknown[]) => unknown)(...args);
+    };
+  }
+  return { client: client as unknown as ApiClient, calls, count: (m: string) => calls.filter((c) => c.method === m).length };
+}
+
 export const pngFile = (name: string) => new File(['x'], name, { type: 'image/png' });
 export const svgFile = (name: string) => new File(['<svg/>'], name, { type: 'image/svg+xml' });
 
@@ -39,5 +53,5 @@ export async function generateFrom(user: ReturnType<typeof setupUser>, file: Fil
   await user.upload(input, file);
   await screen.findByAltText(`Imagen original: ${file.name}`);
   await user.click(screen.getByRole('button', { name: 'Generar bordado' }));
-  await screen.findByRole('heading', { name: 'Progreso' });
+  await screen.findByRole('heading', { name: 'Generación del bordado' });
 }

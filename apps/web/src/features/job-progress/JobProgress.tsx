@@ -1,19 +1,20 @@
 import { useState } from 'react';
 import { useApi } from '../../api/ApiProvider';
-import { CANCELLABLE_STATUSES, StageState, type Job } from '../../contracts/job';
-import { es, stageLabel, stageStateLabel } from '../../copy/es';
+import { ACTIVE_STATUSES, StageOutcome, type JobResponse } from '../../contracts/job';
+import { es, stageLabel, stageOutcomeLabel } from '../../copy/es';
 import { Card } from '../../shared/components/Card';
 import { JobStatusBadge } from '../../shared/components/Badges';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { errorMessage } from '../../shared/hooks/useAsync';
 import { formatSeconds } from '../../shared/utils/format';
+import { newIdempotencyKey } from '../../shared/utils/idempotency';
 import { summarizeProgress } from './progress';
 
 const PERCENT = 100;
 
 interface JobProgressProps {
-  job: Job;
-  onJobChanged: (job: Job) => void;
+  job: JobResponse;
+  onJobChanged: (job: JobResponse) => void;
 }
 
 export function JobProgress({ job, onJobChanged }: JobProgressProps) {
@@ -21,13 +22,14 @@ export function JobProgress({ job, onJobChanged }: JobProgressProps) {
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState<string>();
   const { done, total } = summarizeProgress(job.stages);
-  const cancellable = CANCELLABLE_STATUSES.includes(job.status);
+  const active = ACTIVE_STATUSES.includes(job.status);
 
   const cancel = async () => {
     setCancelling(true);
     setError(undefined);
     try {
-      onJobChanged(await api.cancelJob(job.id));
+      // 202: solo registra la solicitud. El estado `cancelled` llega por la consulta periódica.
+      onJobChanged(await api.cancelJob(job.job_id, newIdempotencyKey()));
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -55,21 +57,22 @@ export function JobProgress({ job, onJobChanged }: JobProgressProps) {
         </div>
         <ol className="stages">
           {job.stages.map((s) => (
-            <li key={s.stage} className={`stage stage--${s.state}`}>
+            <li key={s.stage} className={`stage stage--${s.outcome}`}>
               <span>{stageLabel[s.stage]}</span>
               <span>
-                {stageStateLabel[s.state]}
-                {s.state === StageState.Done && s.duration_ms !== undefined && (
-                  <span className="field__hint"> · {es.progress.stageDuration(formatSeconds(s.duration_ms))}</span>
+                {stageOutcomeLabel[s.outcome]}
+                {s.outcome === StageOutcome.Completed && s.measured_duration_ms !== null && (
+                  <span className="field__hint"> · {es.progress.stageDuration(formatSeconds(s.measured_duration_ms))}</span>
                 )}
               </span>
             </li>
           ))}
         </ol>
-        {cancellable && job.estimated_remaining_s !== null && (
+        {active && job.estimated_remaining_s !== null && !job.cancellation_requested && (
           <p className="field__hint">{es.progress.estimate(job.estimated_remaining_s)}</p>
         )}
-        {cancellable && (
+        {active && job.cancellation_requested && <Notice tone={NoticeTone.Info}>{es.progress.cancelRequested}</Notice>}
+        {active && !job.cancellation_requested && (
           <div className="row">
             <button type="button" className="danger" onClick={cancel} disabled={cancelling}>
               {cancelling ? es.progress.cancelling : es.progress.cancel}

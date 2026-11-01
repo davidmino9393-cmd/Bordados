@@ -1,78 +1,114 @@
 import { describe, expect, it } from 'vitest';
-import { StageState, type StageProgress } from '../contracts/job';
-import { ArtifactKind, type ArtifactManifest } from '../contracts/artifacts';
-import { AiProvider } from '../contracts/settings';
+import catalogFixture from '../../mocks/profiles.json';
+import { ArtifactKind, type Artifact, type ArtifactManifest } from '../contracts/artifacts';
+import { StageOutcome, type StageRecord } from '../contracts/job';
+import { AiProvider, type ProfileCatalog } from '../contracts/settings';
+import { earliestExpiry, isExpired } from '../shared/utils/expiry';
 import { estimateContain } from '../shared/utils/fit';
 import { guardArtifacts } from './artifacts/artifactGuard';
 import { summarizeProgress } from './job-progress/progress';
 import { toJobSettings, validateSettings, type SettingsFormValues } from './settings/validateSettings';
 
-const machine = { id: 'm', label: 'M', hoops: [], max_colors: 12 };
+const catalog = catalogFixture.payload as ProfileCatalog;
+const machine = catalog.machines[0];
 const values: SettingsFormValues = {
   width_mm: '130',
   height_mm: '120',
-  machine_profile: 'm',
-  hoop_profile: 'h',
-  fabric_profile: 'f',
+  machine_profile: 'janome_mc550e',
+  hoop_profile: 'sq20b',
+  fabric_profile: 'gabardina_inicial',
+  thread_profile: 'embroidery_thread_initial',
   color_limit: '3',
   ai_provider: AiProvider.OpenAI,
 };
 
+const stage = (name: StageRecord['stage'], outcome: StageRecord['outcome']): StageRecord => ({
+  stage: name,
+  outcome,
+  reason: outcome === StageOutcome.Skipped ? 'motivo' : null,
+  measured_duration_ms: null,
+});
+
 describe('summarizeProgress', () => {
   it('no cuenta las etapas omitidas', () => {
-    const stages: StageProgress[] = [
-      { stage: 'analyzing', state: StageState.Skipped },
-      { stage: 'vectorizing', state: StageState.Skipped },
-      { stage: 'digitizing', state: StageState.Done },
-      { stage: 'validating', state: StageState.Running },
+    const stages = [
+      stage('analyzing', StageOutcome.Skipped),
+      stage('vectorizing', StageOutcome.Skipped),
+      stage('digitizing', StageOutcome.Completed),
+      stage('validating', StageOutcome.Running),
     ];
     expect(summarizeProgress(stages)).toEqual({ done: 1, total: 2 });
   });
 });
 
-describe('validateSettings', () => {
+describe('validateSettings / toJobSettings', () => {
   it('acepta valores válidos con coma decimal', () => {
     expect(validateSettings({ ...values, width_mm: '130,5' }, machine)).toEqual({});
-    expect(toJobSettings({ ...values, width_mm: '130,5' }).target).toEqual({
-      width_mm: 130.5,
-      height_mm: 120,
-      fit: 'contain',
-    });
   });
   it('rechaza tamaños y colores inválidos', () => {
-    const errors = validateSettings({ ...values, width_mm: '0', height_mm: 'abc', color_limit: '13' }, machine);
+    const errors = validateSettings({ ...values, width_mm: '0', height_mm: 'abc', color_limit: '17' }, machine);
     expect(errors).toEqual({ width_mm: 'positive', height_mm: 'positive', color_limit: 'range' });
+  });
+  it('arma las instantáneas de perfil desde el catálogo, sin valores fijos en la web', () => {
+    const settings = toJobSettings({ ...values, width_mm: '130,5' }, catalog);
+    expect(settings.target).toEqual({ width_mm: 130.5, height_mm: 120, fit: 'contain' });
+    expect(settings.hoop).toEqual({
+      profile_id: 'sq20b',
+      profile_version: '0.1',
+      width_mm: 200,
+      height_mm: 200,
+      jef_hoop_code: 4,
+    });
+    expect(settings.hoop_profile).toBe(settings.hoop.profile_id);
+    expect(settings.machine_profile_version).toBe('0.1');
+    expect(settings.fabric_profile_version).toBe('0.1');
   });
 });
 
 describe('estimateContain', () => {
   it('conserva proporciones dentro del área', () => {
-    expect(estimateContain(200, 100, { width_mm: 100, height_mm: 100 })).toEqual({
-      width_mm: 100,
-      height_mm: 50,
-    });
+    expect(estimateContain(200, 100, { width_mm: 100, height_mm: 100 })).toEqual({ width_mm: 100, height_mm: 50 });
     expect(estimateContain(0, 100, { width_mm: 100, height_mm: 100 })).toBeNull();
   });
 });
 
 describe('guardArtifacts', () => {
-  const artifact = (job_id: string) => ({
+  const artifact = (job_id: string): Artifact => ({
+    artifact_id: `a_${job_id}`,
     kind: ArtifactKind.Jef,
     job_id,
     filename: 'a.jef',
+    media_type: 'application/octet-stream',
     sha256: 'x',
-    size_bytes: 1,
-    content_type: 'a',
-    download_url: 'u',
+    byte_size: 1,
+    derived_from: 'export',
+    download: null,
+    download_url: null,
+    expires_at: null,
   });
+  const manifest = (job_id: string, artifacts: Artifact[]): ArtifactManifest =>
+    ({ job_id, artifacts, reread_metrics: null }) as unknown as ArtifactManifest;
+
   it('descarta archivos de otro trabajo', () => {
-    const manifest: ArtifactManifest = { job_id: 'A', artifacts: [artifact('A'), artifact('B')], metrics: null };
-    const guarded = guardArtifacts(manifest, 'A');
+    const guarded = guardArtifacts(manifest('A', [artifact('A'), artifact('B')]), 'A');
     expect(guarded.artifacts).toHaveLength(1);
     expect(guarded.hadMismatch).toBe(true);
   });
   it('rechaza un manifiesto completo de otro trabajo', () => {
-    const manifest: ArtifactManifest = { job_id: 'B', artifacts: [artifact('B')], metrics: null };
-    expect(guardArtifacts(manifest, 'A')).toMatchObject({ artifacts: [], hadMismatch: true });
+    expect(guardArtifacts(manifest('B', [artifact('B')]), 'A')).toMatchObject({ artifacts: [], hadMismatch: true });
+  });
+});
+
+describe('vencimiento de enlaces', () => {
+  const now = Date.parse('2026-11-01T12:00:00Z');
+  it('detecta enlaces vencidos o por vencer', () => {
+    expect(isExpired('2026-11-01T11:59:59Z', now)).toBe(true);
+    expect(isExpired('2026-11-01T12:00:05Z', now, 10_000)).toBe(true);
+    expect(isExpired('2026-11-01T12:04:00Z', now, 10_000)).toBe(false);
+    expect(isExpired(null, now)).toBe(true);
+  });
+  it('elige el vencimiento más próximo', () => {
+    expect(earliestExpiry(['2026-11-01T12:05:00Z', null, '2026-11-01T12:01:00Z'])).toBe('2026-11-01T12:01:00Z');
+    expect(earliestExpiry([null])).toBeUndefined();
   });
 });

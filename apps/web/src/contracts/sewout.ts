@@ -1,4 +1,4 @@
-// BORRADOR v0.1 — aprobación física (sección 6). Independiente de ready_for_sewout.
+// Contrato v0.1 — jobs.py / job_views.py (aprobación física, independiente del estado digital).
 
 export const SewoutStatus = {
   Untested: 'untested',
@@ -6,3 +6,13 @@ export const SewoutStatus = {
   NeedsAdjustment: 'needs_adjustment',
 } as const;
 export type SewoutStatus = (typeof SewoutStatus)[keyof typeof SewoutStatus];
+
+/** Proyección de solo lectura dentro de JobResponse. */
+export interface SewoutProjection {
+  sewout_id: string;
+  revision_id: string;
+  status: SewoutStatus;
+  tested_at: string | null;
+  observations: string;
+  photo_asset_ids: string[];
+}

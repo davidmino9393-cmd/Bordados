@@ -1,10 +1,10 @@
-import type { Artifact, ArtifactManifest } from '../../contracts/artifacts';
+import type { Artifact, ArtifactManifest, RereadMetrics } from '../../contracts/artifacts';
 
 export interface GuardedArtifacts {
   artifacts: Artifact[];
   /** true si el servidor devolvió archivos de otro trabajo (se descartan). */
   hadMismatch: boolean;
-  metrics: ArtifactManifest['metrics'];
+  metrics: RereadMetrics | null;
 }
 
 /** Nunca mostrar ni descargar archivos que no pertenezcan al trabajo abierto. */
@@ -16,6 +16,6 @@ export function guardArtifacts(manifest: ArtifactManifest, jobId: string): Guard
   return {
     artifacts,
     hadMismatch: artifacts.length !== manifest.artifacts.length,
-    metrics: manifest.metrics,
+    metrics: manifest.reread_metrics,
   };
 }

@@ -1,5 +1,11 @@
 import { CONTRACT_SCHEMA_VERSION } from '../../contracts/version';
-import { AiProvider, FitMode, type JobSettings, type MachineProfile } from '../../contracts/settings';
+import {
+  AiProvider,
+  FitMode,
+  type JobSettings,
+  type MachineProfile,
+  type ProfileCatalog,
+} from '../../contracts/settings';
 
 export interface SettingsFormValues {
   width_mm: string;
@@ -7,6 +13,7 @@ export interface SettingsFormValues {
   machine_profile: string;
   hoop_profile: string;
   fabric_profile: string;
+  thread_profile: string;
   color_limit: string;
   ai_provider: AiProvider;
 }
@@ -34,18 +41,30 @@ export function validateSettings(values: SettingsFormValues, machine: MachinePro
   return errors;
 }
 
-export function toJobSettings(values: SettingsFormValues): JobSettings {
+/** Arma JobSettings con las instantáneas de perfil del catálogo; la web no fija valores. */
+export function toJobSettings(values: SettingsFormValues, catalog: ProfileCatalog): JobSettings {
+  const machine = catalog.machines.find((m) => m.profile_id === values.machine_profile);
+  const hoop = catalog.hoops.find((h) => h.profile_id === values.hoop_profile);
+  const fabric = catalog.fabrics.find((f) => f.profile_id === values.fabric_profile);
+  if (!machine || !hoop || !fabric) throw new Error('El perfil elegido ya no está en el catálogo.');
   return {
     schema_version: CONTRACT_SCHEMA_VERSION,
-    target: {
-      width_mm: parseMm(values.width_mm),
-      height_mm: parseMm(values.height_mm),
-      fit: FitMode.Contain,
+    target: { width_mm: parseMm(values.width_mm), height_mm: parseMm(values.height_mm), fit: FitMode.Contain },
+    machine_profile: machine.profile_id,
+    machine_profile_version: machine.profile_version,
+    hoop_profile: hoop.profile_id,
+    hoop: {
+      profile_id: hoop.profile_id,
+      profile_version: hoop.profile_version,
+      width_mm: hoop.width_mm,
+      height_mm: hoop.height_mm,
+      jef_hoop_code: hoop.jef_hoop_code,
     },
-    machine_profile: values.machine_profile,
-    hoop_profile: values.hoop_profile,
-    fabric_profile: values.fabric_profile,
+    fabric_profile: fabric.profile_id,
+    fabric_profile_version: fabric.profile_version,
+    thread_profile: values.thread_profile,
     color_limit: Number(values.color_limit),
     ai_provider: values.ai_provider,
+    ai_model: null,
   };
 }

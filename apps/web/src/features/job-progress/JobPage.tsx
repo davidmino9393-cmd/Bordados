@@ -5,6 +5,7 @@ import { es } from '../../copy/es';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { useAsync } from '../../shared/hooks/useAsync';
 import { useJobPolling } from '../../shared/hooks/useJobPolling';
+import { useRenewBeforeExpiry } from '../../shared/hooks/useRenewBeforeExpiry';
 import { ReviewPanel } from '../review/ReviewPanel';
 import { CancelledNotice, FailedNotice } from './FailureAndCancelled';
 import { JobProgress } from './JobProgress';
@@ -20,10 +21,13 @@ export function JobPage() {
     [api, projectId],
   );
 
+  const asset = project.data?.assets.find((a) => a.asset_id === job?.asset_id);
+  // El original se sirve con un enlace temporal: se renueva consultando de nuevo el proyecto.
+  useRenewBeforeExpiry(asset?.original_download?.expires_at, project.reload);
+
   if (error && !job) return <Notice tone={NoticeTone.Error}>{error}</Notice>;
   if (!job) return <p role="status">{es.loading}</p>;
 
-  const asset = project.data?.assets.find((a) => a.id === job.source_asset_id);
   return (
     <>
       <p>

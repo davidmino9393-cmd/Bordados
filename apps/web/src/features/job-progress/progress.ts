@@ -1,4 +1,4 @@
-import { StageState, type StageProgress } from '../../contracts/job';
+import { StageOutcome, type StageRecord } from '../../contracts/job';
 
 export interface ProgressSummary {
   done: number;
@@ -6,10 +6,10 @@ export interface ProgressSummary {
 }
 
 /** Progreso derivado solo de etapas observadas; las omitidas no cuentan. */
-export function summarizeProgress(stages: StageProgress[]): ProgressSummary {
-  const counted = stages.filter((s) => s.state !== StageState.Skipped);
+export function summarizeProgress(stages: StageRecord[]): ProgressSummary {
+  const counted = stages.filter((s) => s.outcome !== StageOutcome.Skipped);
   return {
-    done: counted.filter((s) => s.state === StageState.Done).length,
+    done: counted.filter((s) => s.outcome === StageOutcome.Completed).length,
     total: counted.length,
   };
 }

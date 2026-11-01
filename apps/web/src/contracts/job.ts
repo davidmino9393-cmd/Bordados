@@ -1,7 +1,8 @@
-// BORRADOR v0.1 — estados y forma de Job (sección 6). La forma de Job es cambio propuesto.
-import type { SewoutStatus } from './sewout';
+// Contrato v0.1 — jobs.py y states.py.
+import type { ArtifactManifest, ValidationReport } from './artifacts';
+import type { SewoutProjection, SewoutStatus } from './sewout';
 import type { JobSettings } from './settings';
-import type { ReviewRequest, ValidationIssue } from './validation';
+import type { FailureSummary, Issue, ReviewSummary } from './validation';
 
 export const JobStatus = {
   Queued: 'queued',
@@ -16,7 +17,7 @@ export const JobStatus = {
 } as const;
 export type JobStatus = (typeof JobStatus)[keyof typeof JobStatus];
 
-/** Etapas de la secuencia, en orden. `queued` es espera, no etapa. */
+/** Etapas con registro propio; `queued` es espera, no etapa. */
 export const PIPELINE_STAGES = [
   JobStatus.Analyzing,
   JobStatus.Vectorizing,
@@ -25,51 +26,62 @@ export const PIPELINE_STAGES = [
 ] as const;
 export type PipelineStage = (typeof PIPELINE_STAGES)[number];
 
-export const StageState = {
+export const StageOutcome = {
   Pending: 'pending',
   Running: 'running',
-  Done: 'done',
-  /** SVG ya preparado: análisis y vectorización se registran como omitidos. */
+  Completed: 'completed',
+  /** SVG ya preparado: análisis y vectorización se registran como omitidos, con motivo. */
   Skipped: 'skipped',
   Failed: 'failed',
+  Cancelled: 'cancelled',
 } as const;
-export type StageState = (typeof StageState)[keyof typeof StageState];
+export type StageOutcome = (typeof StageOutcome)[keyof typeof StageOutcome];
 
-export interface StageProgress {
+export interface StageRecord {
   stage: PipelineStage;
-  state: StageState;
-  /** Tiempo medido por el backend. Ausente mientras no terminó. */
-  duration_ms?: number;
+  outcome: StageOutcome;
+  reason: string | null;
+  /** Medido por el backend; ausente si no se midió. */
+  measured_duration_ms: number | null;
 }
 
-export interface JobFailure {
-  code: string;
-  message: string;
-  stage: PipelineStage | 'queued';
-}
+export type InputKind = 'prepared_svg' | 'raster_image';
 
-export interface Job {
-  id: string;
-  project_id: string;
-  source_asset_id: string;
-  status: JobStatus;
+export interface JobCreate {
+  schema_version: string;
+  asset_id: string;
+  revision_id: string;
+  input_kind: InputKind;
   settings: JobSettings;
-  stages: StageProgress[];
-  created_at: string;
-  updated_at: string;
-  /** Trabajo del que deriva una variante o corrección (sección 6: revisión relacionada). */
-  parent_job_id: string | null;
-  failure?: JobFailure;
-  review?: ReviewRequest;
-  /** Diagnóstico disponible (sección 5). */
-  diagnostics: ValidationIssue[];
-  /** Aprobación física, separada del estado digital. Cambio propuesto: exponerla en el trabajo. */
-  sewout_status: SewoutStatus;
-  /** Estimación, no medición. null si el backend no la ofrece. */
-  estimated_remaining_s: number | null;
 }
 
-/** Estados en los que el trabajo ya no cambia sin una acción nueva. */
+export interface JobResponse {
+  schema_version: string;
+  job_id: string;
+  project_id: string;
+  revision_id: string;
+  asset_id: string;
+  input_kind: InputKind;
+  settings_snapshot: JobSettings;
+  status: JobStatus;
+  stages: StageRecord[];
+  parent_job_id: string | null;
+  /** Estimación, nunca duración medida. */
+  estimated_remaining_s: number | null;
+  sewout_status: SewoutStatus;
+  sewout_record: SewoutProjection | null;
+  failure: FailureSummary | null;
+  review: ReviewSummary | null;
+  diagnostics: Issue[] | null;
+  /** true solo confirma la solicitud; el estado `cancelled` lo publica el servidor. */
+  cancellation_requested: boolean;
+  issues: Issue[];
+  validation_report: ValidationReport | null;
+  /** Instantánea: las URLs de descarga pueden ser null; usar GET artifacts para obtenerlas. */
+  artifact_manifest: ArtifactManifest | null;
+}
+
+/** Estados que no cambian sin una acción nueva (states.md). */
 export const TERMINAL_STATUSES: readonly JobStatus[] = [
   JobStatus.ReadyForSewout,
   JobStatus.NeedsReview,
@@ -77,7 +89,7 @@ export const TERMINAL_STATUSES: readonly JobStatus[] = [
   JobStatus.Cancelled,
 ];
 
-export const CANCELLABLE_STATUSES: readonly JobStatus[] = [
+export const ACTIVE_STATUSES: readonly JobStatus[] = [
   JobStatus.Queued,
   JobStatus.Analyzing,
   JobStatus.Vectorizing,

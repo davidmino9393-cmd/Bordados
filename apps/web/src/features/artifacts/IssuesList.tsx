@@ -1,9 +1,9 @@
-import type { ValidationIssue } from '../../contracts/validation';
-import { es, severityLabel } from '../../copy/es';
+import type { Issue } from '../../contracts/validation';
+import { es, issueTitle, severityLabel } from '../../copy/es';
 import { Card } from '../../shared/components/Card';
 
 /** Los avisos nunca se ocultan: cada uno indica severidad y objetos afectados. */
-export function IssuesList({ issues }: { issues: ValidationIssue[] }) {
+export function IssuesList({ issues }: { issues: Issue[] }) {
   return (
     <Card>
       <Card.Header>{es.result.issuesTitle}</Card.Header>
@@ -12,11 +12,10 @@ export function IssuesList({ issues }: { issues: ValidationIssue[] }) {
           <p>{es.result.noIssues}</p>
         ) : (
           issues.map((issue) => (
-            <div key={`${issue.code}-${issue.object_ids.join()}`} className="issue">
-              <strong>{severityLabel[issue.severity]}</strong>
-              <span>{issue.description}</span>
+            <div key={`${issue.code}-${issue.object_ids.join()}-${issue.region_ids.join()}`} className="issue">
+              <strong>{severityLabel[issue.severity]}: {issueTitle(issue.code, issue.description)}</strong>
               <span className="field__hint">
-                {es.review.objects}: {issue.object_ids.join(', ') || '—'}
+                {es.review.objects}: {[...issue.object_ids, ...issue.region_ids].join(', ') || '—'}
               </span>
             </div>
           ))

@@ -1,12 +1,15 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApi } from '../../api/ApiProvider';
+import { startGeneration } from '../../api/startGeneration';
 import type { SourceAsset } from '../../contracts/project';
 import type { JobSettings } from '../../contracts/settings';
 import { es } from '../../copy/es';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { errorMessage, useAsync } from '../../shared/hooks/useAsync';
-import { newIdempotencyKey } from '../../shared/utils/idempotency';
+import { useIdempotencyKey } from '../../shared/hooks/useIdempotencyKey';
+import { useRenewBeforeExpiry } from '../../shared/hooks/useRenewBeforeExpiry';
+import { earliestExpiry } from '../../shared/utils/expiry';
 import { SettingsForm } from '../settings/SettingsForm';
 import { UploadPanel } from '../upload/UploadPanel';
 import { JobHistory } from './JobHistory';
@@ -15,19 +18,21 @@ export function ProjectPage() {
   const { projectId = '' } = useParams();
   const api = useApi();
   const navigate = useNavigate();
+  const keyFor = useIdempotencyKey();
   const project = useAsync(() => api.getProject(projectId), [api, projectId]);
   const catalog = useAsync(() => api.getProfiles(), [api]);
   const [pickedId, setPickedId] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
-  // La misma clave se reutiliza si el envío falla y se reintenta.
-  const idempotencyKey = useRef(newIdempotencyKey());
 
   const assets = project.data?.assets ?? [];
-  const selected = assets.find((a) => a.id === pickedId) ?? assets.at(-1);
+  const selected = assets.find((a) => a.asset_id === pickedId) ?? assets.at(-1);
+
+  // Los originales se sirven con enlaces temporales: se renuevan antes de vencer.
+  useRenewBeforeExpiry(earliestExpiry(assets.map((a) => a.original_download?.expires_at)), project.reload);
 
   const onUploaded = (asset: SourceAsset) => {
-    setPickedId(asset.id);
+    setPickedId(asset.asset_id);
     project.reload();
   };
 
@@ -36,9 +41,10 @@ export function ProjectPage() {
     setBusy(true);
     setSubmitError(undefined);
     try {
-      const job = await api.createJob(projectId, selected.id, settings, idempotencyKey.current);
-      idempotencyKey.current = newIdempotencyKey();
-      navigate(`/trabajos/${job.id}`);
+      // Flujo inicial: revisión inicial (base_revision_id: null) y después el trabajo.
+      const baseKey = keyFor({ asset: selected.asset_id, settings });
+      const job = await startGeneration(api, selected, settings, baseKey);
+      navigate(`/trabajos/${job.job_id}`);
     } catch (e) {
       setSubmitError(errorMessage(e));
       setBusy(false);
@@ -62,7 +68,7 @@ export function ProjectPage() {
       />
       <SettingsForm catalog={catalog.data} asset={selected} busy={busy} onSubmit={generate} />
       {submitError && <Notice tone={NoticeTone.Error}>{submitError}</Notice>}
-      <JobHistory jobs={project.data.jobs} />
+      <JobHistory jobs={project.data.jobs} hasMore={project.data.jobs_next_cursor !== null} />
     </>
   );
 }

@@ -1,137 +1,170 @@
 // SIMULADO — calcula el estado de un trabajo a partir del tiempo transcurrido.
+// Las formas de respuesta salen de los fixtures copiados de packages/contracts/fixtures.
+import cancellationFixture from '../../mocks/cancellation.json';
+import failureFixture from '../../mocks/failure.json';
+import needsReviewFixture from '../../mocks/needs-review.json';
+import validResultFixture from '../../mocks/valid-result.json';
+import type { Artifact, ArtifactManifest } from '../contracts/artifacts';
 import {
   JobStatus,
   PIPELINE_STAGES,
-  StageState,
-  type Job,
+  StageOutcome,
+  type InputKind,
+  type JobResponse,
   type PipelineStage,
-  type StageProgress,
+  type StageRecord,
 } from '../contracts/job';
-import { SewoutStatus } from '../contracts/sewout';
 import type { JobSettings } from '../contracts/settings';
-import type { ReviewRequest } from '../contracts/validation';
-import { Severity } from '../contracts/validation';
 import { ScenarioOutcome, activeStages, type Scenario } from './scenarios/scenarios';
 
 export const QUEUE_MS = 500;
+/** El servidor tarda un poco en detener los procesos tras aceptar una cancelación. */
+export const CANCEL_STOP_MS = 400;
 const MS_PER_SECOND = 1000;
 
-export interface SimulatedJobRecord {
+export interface SimulatedJob {
   id: string;
   projectId: string;
+  revisionId: string;
   assetId: string;
+  inputKind: InputKind;
   settings: JobSettings;
   scenario: Scenario;
   parentJobId: string | null;
   createdAt: number;
-  assetWidthPx: number;
-  assetHeightPx: number;
-  cancelledAt: number | null;
+  /** Proporción del original; null si no se conoce (SVG sin píxeles). */
+  aspectRatio: number | null;
+  cancelRequestedAt: number | null;
 }
 
-function buildReview(record: SimulatedJobRecord): ReviewRequest {
-  const { assetWidthPx: w, assetHeightPx: h } = record;
-  return {
-    cause: 'Una columna de satin es demasiado angosta para la tela elegida.',
-    regions: [{ object_id: 'obj_007', x: w * 0.3, y: h * 0.4, width: w * 0.2, height: h * 0.15 }],
-    issues: [
-      {
-        code: 'satin_width_below_minimum',
-        severity: Severity.ReviewRequired,
-        stage: JobStatus.Validating,
-        object_ids: ['obj_007'],
-        description: 'El trazo mide menos de lo que admite un satin en este tamaño.',
-        evidence: 'Ancho físico medido: 0,8 mm (simulado).',
-        suggested_fix: 'Cambiar la técnica a puntada de línea o excluir el elemento.',
-      },
-    ],
-  };
-}
+const clone = <T>(value: T): T => structuredClone(value);
+const SKIP_REASON: Record<string, string> = {
+  analyzing: 'Prepared SVG: analysis omitted',
+  vectorizing: 'Prepared SVG: vectorization omitted',
+};
 
-function stageList(
-  record: SimulatedJobRecord,
-  runningIndex: number,
-  terminal: 'none' | 'done' | 'failed',
-  stageMs: number,
-): StageProgress[] {
-  const active = activeStages(record.scenario);
-  return PIPELINE_STAGES.map((stage): StageProgress => {
+function buildStages(job: SimulatedJob, runningIndex: number, terminal: 'none' | 'done' | 'failed', stageMs: number): StageRecord[] {
+  const active = activeStages(job.scenario);
+  const failPosition = job.scenario.failAt ? active.indexOf(job.scenario.failAt) : -1;
+  return PIPELINE_STAGES.map((stage: PipelineStage): StageRecord => {
     const position = active.indexOf(stage);
-    if (position === -1) return { stage, state: StageState.Skipped };
-    if (terminal === 'failed' && stage === record.scenario.failAt) {
-      return { stage, state: StageState.Failed };
+    const make = (outcome: StageRecord['outcome'], ms: number | null = null): StageRecord => ({
+      stage,
+      outcome,
+      reason: outcome === StageOutcome.Skipped ? SKIP_REASON[stage] : null,
+      measured_duration_ms: ms,
+    });
+    if (position === -1) return make(StageOutcome.Skipped);
+    if (terminal === 'failed') {
+      if (position < failPosition) return make(StageOutcome.Completed, stageMs);
+      return make(position === failPosition ? StageOutcome.Failed : StageOutcome.Pending, position === failPosition ? stageMs : null);
     }
-    const failPosition = record.scenario.failAt ? active.indexOf(record.scenario.failAt) : -1;
-    if (terminal === 'failed' && position > failPosition) return { stage, state: StageState.Pending };
-    if (terminal === 'done' || position < runningIndex) {
-      return { stage, state: StageState.Done, duration_ms: stageMs };
-    }
-    return { stage, state: position === runningIndex ? StageState.Running : StageState.Pending };
+    if (terminal === 'done' || position < runningIndex) return make(StageOutcome.Completed, stageMs);
+    return make(position === runningIndex ? StageOutcome.Running : StageOutcome.Pending);
   });
 }
 
-export function simulateJob(record: SimulatedJobRecord, now: number, stageMs: number): Job {
-  const base = {
-    id: record.id,
-    project_id: record.projectId,
-    source_asset_id: record.assetId,
-    settings: record.settings,
-    created_at: new Date(record.createdAt).toISOString(),
-    parent_job_id: record.parentJobId,
-    diagnostics: [],
-    sewout_status: SewoutStatus.Untested,
-  };
-  const active = activeStages(record.scenario);
-  const failPosition = record.scenario.failAt ? active.indexOf(record.scenario.failAt) : -1;
-  const lastIndex = record.scenario.outcome === ScenarioOutcome.Failed ? failPosition : active.length - 1;
-  const clock = record.cancelledAt ?? now;
-  const elapsed = clock - record.createdAt;
-  const runningIndex = Math.floor((elapsed - QUEUE_MS) / stageMs);
-  const updated_at = new Date(clock).toISOString();
-  const remainingMs = Math.max(0, QUEUE_MS + (lastIndex + 1) * stageMs - elapsed);
-  const estimated_remaining_s = Math.ceil(remainingMs / MS_PER_SECOND);
+function withIdentity(template: JobResponse, job: SimulatedJob, stages: StageRecord[]): JobResponse {
+  const response = clone(template);
+  response.job_id = job.id;
+  response.project_id = job.projectId;
+  response.revision_id = job.revisionId;
+  response.asset_id = job.assetId;
+  response.input_kind = job.inputKind;
+  response.settings_snapshot = clone(job.settings);
+  response.parent_job_id = job.parentJobId;
+  response.stages = stages;
+  response.sewout_status = 'untested';
+  response.sewout_record = null;
+  return response;
+}
 
-  if (record.cancelledAt !== null) {
-    const snapshot = elapsed < QUEUE_MS ? -1 : Math.min(runningIndex, lastIndex);
-    return {
-      ...base,
-      status: JobStatus.Cancelled,
-      stages: stageList(record, snapshot, 'none', stageMs).map((s) =>
-        s.state === StageState.Running ? { stage: s.stage, state: StageState.Pending } : s,
-      ),
-      updated_at,
-      estimated_remaining_s: null,
-    };
+function stitchedBounds(job: SimulatedJob) {
+  const { width_mm: maxW, height_mm: maxH } = job.settings.target;
+  const ratio = job.aspectRatio ?? maxW / maxH;
+  const width = Math.min(maxW, maxH * ratio);
+  return { min_x_mm: 0, min_y_mm: 0, max_x_mm: Number(width.toFixed(1)), max_y_mm: Number((width / ratio).toFixed(1)) };
+}
+
+/** Instantánea del manifiesto: las URLs vienen null; getArtifacts las emite frescas. */
+function readyManifest(job: SimulatedJob, template: ArtifactManifest): ArtifactManifest {
+  const manifest = clone(template);
+  manifest.job_id = job.id;
+  manifest.revision_id = job.revisionId;
+  manifest.reread_metrics.stitch_bounds_mm = stitchedBounds(job);
+  manifest.artifacts = manifest.artifacts.map((a): Artifact => ({
+    ...a,
+    job_id: job.id,
+    artifact_id: `${job.id}_${a.kind}`,
+    filename: `${job.id}-${a.filename}`,
+    download: null,
+    download_url: null,
+    expires_at: null,
+  }));
+  manifest.reread_metrics.raw_commands_artifact_id = `${job.id}_raw_commands_json`;
+  return manifest;
+}
+
+function terminalResponse(job: SimulatedJob, stageMs: number, cancelledAtIndex: number | null): JobResponse {
+  const { outcome } = job.scenario;
+  if (cancelledAtIndex !== null) {
+    const frozen = buildStages(job, cancelledAtIndex, 'none', stageMs).map((s) =>
+      s.outcome === StageOutcome.Running ? { ...s, outcome: StageOutcome.Cancelled } : s,
+    );
+    const response = withIdentity(cancellationFixture.payload as JobResponse, job, frozen);
+    response.cancellation_requested = true;
+    return response;
   }
+  if (outcome === ScenarioOutcome.Failed) {
+    return withIdentity(failureFixture.payload as JobResponse, job, buildStages(job, 0, 'failed', stageMs));
+  }
+  if (outcome === ScenarioOutcome.NeedsReview) {
+    return withIdentity(needsReviewFixture.payload as JobResponse, job, buildStages(job, 0, 'done', stageMs));
+  }
+  const response = withIdentity(validResultFixture.payload as JobResponse, job, buildStages(job, 0, 'done', stageMs));
+  const manifest = readyManifest(job, response.artifact_manifest as ArtifactManifest);
+  response.artifact_manifest = manifest;
+  if (response.validation_report) {
+    response.validation_report.job_id = job.id;
+    response.validation_report.revision_id = job.revisionId;
+    response.validation_report.metrics = manifest.reread_metrics;
+  }
+  return response;
+}
+
+function activeResponse(job: SimulatedJob, status: JobResponse['status'], stages: StageRecord[], remainingS: number | null): JobResponse {
+  const response = withIdentity(validResultFixture.payload as JobResponse, job, stages);
+  response.status = status;
+  response.estimated_remaining_s = remainingS;
+  response.validation_report = null;
+  response.artifact_manifest = null;
+  response.diagnostics = [];
+  response.issues = [];
+  return response;
+}
+
+export function simulateJob(job: SimulatedJob, now: number, stageMs: number): JobResponse {
+  const active = activeStages(job.scenario);
+  const failPosition = job.scenario.failAt ? active.indexOf(job.scenario.failAt) : -1;
+  const lastIndex = job.scenario.outcome === ScenarioOutcome.Failed ? failPosition : active.length - 1;
+  const requested = job.cancelRequestedAt;
+  const stopped = requested !== null && now >= requested + CANCEL_STOP_MS;
+  const clock = requested ?? now;
+  const elapsed = clock - job.createdAt;
+  const runningIndex = Math.floor((elapsed - QUEUE_MS) / stageMs);
+  if (stopped) return terminalResponse(job, stageMs, Math.min(runningIndex, lastIndex));
+
+  const remainingMs = Math.max(0, QUEUE_MS + (lastIndex + 1) * stageMs - elapsed);
+  const remainingS = Math.ceil(remainingMs / MS_PER_SECOND);
+
+  let response: JobResponse;
   if (elapsed < QUEUE_MS) {
-    return { ...base, status: JobStatus.Queued, stages: stageList(record, -1, 'none', stageMs), updated_at, estimated_remaining_s };
+    response = activeResponse(job, JobStatus.Queued, buildStages(job, -1, 'none', stageMs), remainingS);
+  } else if (runningIndex <= lastIndex) {
+    response = activeResponse(job, active[runningIndex], buildStages(job, runningIndex, 'none', stageMs), remainingS);
+  } else {
+    response = terminalResponse(job, stageMs, null);
   }
-  if (runningIndex <= lastIndex) {
-    return {
-      ...base,
-      status: active[runningIndex],
-      stages: stageList(record, runningIndex, 'none', stageMs),
-      updated_at,
-      estimated_remaining_s,
-    };
-  }
-  if (record.scenario.outcome === ScenarioOutcome.Failed) {
-    return {
-      ...base,
-      status: JobStatus.Failed,
-      stages: stageList(record, runningIndex, 'failed', stageMs),
-      failure: {
-        code: 'engine_export_failed',
-        message: 'No se pudo generar el archivo de bordado en esta etapa (error simulado).',
-        stage: record.scenario.failAt as PipelineStage,
-      },
-      updated_at,
-      estimated_remaining_s: null,
-    };
-  }
-  const outcome =
-    record.scenario.outcome === ScenarioOutcome.NeedsReview
-      ? { status: JobStatus.NeedsReview, review: buildReview(record) }
-      : { status: JobStatus.ReadyForSewout };
-  return { ...base, ...outcome, stages: stageList(record, runningIndex, 'done', stageMs), updated_at, estimated_remaining_s: null };
+  response.cancellation_requested = requested !== null;
+  return response;
 }

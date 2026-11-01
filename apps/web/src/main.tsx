@@ -3,14 +3,15 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
 import { ApiProvider } from './api/ApiProvider';
-import { httpApiClient } from './api/HttpApiClient';
+import { createHttpApiClient } from './api/HttpApiClient';
 import { createMockApiClient } from './mocks/MockApiClient';
 import './styles/tokens.css';
 import './styles/app.css';
 
-// SIMULADO por defecto: el cliente real sigue bloqueado hasta congelar contratos v0.1.
-const useMocks = import.meta.env.VITE_USE_MOCKS !== 'false';
-const client = useMocks ? createMockApiClient() : httpApiClient;
+// Las respuestas simuladas solo se usan si se piden explícitamente (VITE_USE_MOCKS=true);
+// sin esa variable se habla con el backend real del mismo origen.
+const useMocks = import.meta.env.VITE_USE_MOCKS === 'true';
+const client = useMocks ? createMockApiClient() : createHttpApiClient({ baseUrl: import.meta.env.VITE_API_BASE_URL ?? '' });
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

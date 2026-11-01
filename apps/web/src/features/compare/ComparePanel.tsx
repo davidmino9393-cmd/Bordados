@@ -10,12 +10,13 @@ interface ComparePanelProps {
 
 /** Las imágenes se muestran con <img>: un SVG subido nunca se inyecta como HTML. */
 export function ComparePanel({ asset, artifacts }: ComparePanelProps) {
-  const vector = artifacts.find((a) => a.kind === ArtifactKind.SvgEditable);
-  const preview = artifacts.find((a) => a.kind === ArtifactKind.JefPreview);
+  const vector = artifacts.find((a) => a.kind === ArtifactKind.EditableSvg);
+  // Solo vale como «relectura» la vista previa derivada del JEF releído.
+  const preview = artifacts.find((a) => a.kind === ArtifactKind.PreviewPng && a.derived_from === 'jef_reread');
   const items = [
-    { label: es.result.original, src: asset?.original_url },
-    { label: es.result.vector, src: vector?.download_url },
-    { label: es.result.jefPreview, src: preview?.download_url },
+    { label: es.result.original, src: asset?.original_download?.url },
+    { label: es.result.vector, src: vector?.download?.url },
+    { label: es.result.jefPreview, src: preview?.download?.url },
   ];
   return (
     <Card>

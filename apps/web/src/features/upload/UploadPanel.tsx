@@ -8,6 +8,7 @@ import { Field } from '../../shared/components/Field';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { errorMessage } from '../../shared/hooks/useAsync';
 import { formatMegabytes } from '../../shared/utils/format';
+import { newIdempotencyKey } from '../../shared/utils/idempotency';
 
 interface UploadPanelProps {
   projectId: string;
@@ -32,11 +33,11 @@ export function UploadPanel({ projectId, limits, assets, selected, onSelect, onU
     if (!file) return;
     setError(undefined);
     // Validación local solo como ayuda: la autoridad es el backend.
-    if (!limits.accepted_mime_types.includes(file.type)) return setError(es.upload.wrongType);
+    if (!(limits.accepted_mime_types as string[]).includes(file.type)) return setError(es.upload.wrongType);
     if (file.size > limits.max_bytes) return setError(es.upload.tooBig(maxMb));
     setUploading(true);
     try {
-      onUploaded(await api.uploadAsset(projectId, file));
+      onUploaded(await api.uploadAsset(projectId, file, newIdempotencyKey()));
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -44,6 +45,7 @@ export function UploadPanel({ projectId, limits, assets, selected, onSelect, onU
     }
   };
 
+  const originalUrl = selected?.original_download?.url;
   return (
     <Card>
       <Card.Header>{es.upload.title}</Card.Header>
@@ -55,18 +57,25 @@ export function UploadPanel({ projectId, limits, assets, selected, onSelect, onU
         {error && <Notice tone={NoticeTone.Error}>{error}</Notice>}
         {assets.length > 1 && (
           <Field label={es.upload.pickAsset}>
-            <select value={selected?.id ?? ''} onChange={(e) => onSelect(e.target.value)}>
+            <select value={selected?.asset_id ?? ''} onChange={(e) => onSelect(e.target.value)}>
               {assets.map((a) => (
-                <option key={a.id} value={a.id}>{a.original_filename}</option>
+                <option key={a.asset_id} value={a.asset_id}>{a.original_filename}</option>
               ))}
             </select>
           </Field>
         )}
         {selected ? (
           <figure className="region-view">
-            <img src={selected.original_url} alt={`Imagen original: ${selected.original_filename}`} />
+            {originalUrl ? (
+              <img src={originalUrl} alt={`Imagen original: ${selected.original_filename}`} />
+            ) : (
+              <p className="field__hint">{es.upload.unavailable}</p>
+            )}
             <figcaption className="field__hint">
-              {selected.original_filename} · {es.upload.pixels(selected.width_px, selected.height_px)}
+              {selected.original_filename} ·{' '}
+              {selected.original_width_px && selected.original_height_px
+                ? es.upload.pixels(selected.original_width_px, selected.original_height_px)
+                : es.upload.pixelsUnknown}
             </figcaption>
           </figure>
         ) : (

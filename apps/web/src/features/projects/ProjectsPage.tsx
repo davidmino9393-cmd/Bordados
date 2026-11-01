@@ -4,9 +4,9 @@ import { useApi } from '../../api/ApiProvider';
 import { es } from '../../copy/es';
 import { Card } from '../../shared/components/Card';
 import { Field } from '../../shared/components/Field';
-import { JobStatusBadge } from '../../shared/components/Badges';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { errorMessage, useAsync } from '../../shared/hooks/useAsync';
+import { newIdempotencyKey } from '../../shared/utils/idempotency';
 
 export function ProjectsPage() {
   const api = useApi();
@@ -26,14 +26,15 @@ export function ProjectsPage() {
     setNameError(undefined);
     setBusy(true);
     try {
-      const project = await api.createProject(name);
-      navigate(`/proyectos/${project.id}`);
+      const project = await api.createProject(name, newIdempotencyKey());
+      navigate(`/proyectos/${project.project_id}`);
     } catch (e) {
       setSubmitError(errorMessage(e));
       setBusy(false);
     }
   };
 
+  const items = projects.data?.items ?? [];
   return (
     <>
       <h1>{es.projects.title}</h1>
@@ -51,18 +52,18 @@ export function ProjectsPage() {
         </Card.Body>
       </Card>
       {projects.error && <Notice tone={NoticeTone.Error}>{projects.error}</Notice>}
-      {projects.data?.length === 0 && <p>{es.projects.empty}</p>}
+      {projects.data && items.length === 0 && <p>{es.projects.empty}</p>}
       <ul className="list">
-        {projects.data?.map((project) => (
-          <li key={project.id} className="list__item">
-            <Link to={`/proyectos/${project.id}`}>{project.name}</Link>
-            <span className="row">
-              {es.projects.jobs(project.job_count)}
-              {project.latest_job_status && <JobStatusBadge status={project.latest_job_status} />}
+        {items.map((project) => (
+          <li key={project.project_id} className="list__item">
+            <Link to={`/proyectos/${project.project_id}`}>{project.name}</Link>
+            <span className="field__hint">
+              {es.projects.createdOn(new Date(project.created_at).toLocaleDateString('es-AR'))}
             </span>
           </li>
         ))}
       </ul>
+      {projects.data?.next_cursor && <p className="field__hint">{es.projects.more}</p>}
     </>
   );
 }

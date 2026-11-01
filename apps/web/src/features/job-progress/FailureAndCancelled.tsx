@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '../../api/ApiProvider';
-import type { Job } from '../../contracts/job';
-import { es, stageLabel } from '../../copy/es';
+import type { JobResponse } from '../../contracts/job';
+import { CONTRACT_SCHEMA_VERSION } from '../../contracts/version';
+import { es, issueTitle, stageLabel } from '../../copy/es';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { errorMessage } from '../../shared/hooks/useAsync';
 import { newIdempotencyKey } from '../../shared/utils/idempotency';
 
-/** Reintento: crea un trabajo nuevo con la misma imagen y ajustes; no reutiliza el fallido. */
-function RetryButton({ job }: { job: Job }) {
+/**
+ * Reintento = intento nuevo y separado (states.md): mismo asset, misma revisión y
+ * mismos ajustes, con clave de idempotencia propia. No reanima el trabajo fallido.
+ */
+function RetryButton({ job }: { job: JobResponse }) {
   const api = useApi();
   const navigate = useNavigate();
   const [error, setError] = useState<string>();
@@ -18,8 +22,18 @@ function RetryButton({ job }: { job: Job }) {
     setBusy(true);
     setError(undefined);
     try {
-      const next = await api.createJob(job.project_id, job.source_asset_id, job.settings, newIdempotencyKey());
-      navigate(`/trabajos/${next.id}`);
+      const next = await api.createJob(
+        job.project_id,
+        {
+          schema_version: CONTRACT_SCHEMA_VERSION,
+          asset_id: job.asset_id,
+          revision_id: job.revision_id,
+          input_kind: job.input_kind,
+          settings: job.settings_snapshot,
+        },
+        newIdempotencyKey(),
+      );
+      navigate(`/trabajos/${next.job_id}`);
     } catch (e) {
       setError(errorMessage(e));
       setBusy(false);
@@ -36,20 +50,23 @@ function RetryButton({ job }: { job: Job }) {
   );
 }
 
-export function FailedNotice({ job }: { job: Job }) {
-  const stage = job.failure ? stageLabel[job.failure.stage] ?? job.failure.stage : undefined;
+export function FailedNotice({ job }: { job: JobResponse }) {
+  const failure = job.failure;
+  const stage = failure ? stageLabel[failure.stage] ?? failure.stage : undefined;
+  const suggestion = job.diagnostics?.[0]?.suggested_correction;
   return (
     <>
       <Notice tone={NoticeTone.Error} title={es.result.failedTitle}>
-        <p>{job.failure?.message}</p>
+        {failure && <p>{issueTitle(failure.code, failure.message)}</p>}
         {stage && <p>{es.result.failedAt(stage)}</p>}
+        {suggestion && <p className="field__hint">{suggestion}</p>}
       </Notice>
       <RetryButton job={job} />
     </>
   );
 }
 
-export function CancelledNotice({ job }: { job: Job }) {
+export function CancelledNotice({ job }: { job: JobResponse }) {
   return (
     <>
       <Notice tone={NoticeTone.Info} title={es.result.cancelledTitle}>

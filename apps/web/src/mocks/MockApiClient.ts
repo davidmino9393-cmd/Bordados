@@ -1,19 +1,28 @@
-// SIMULADO — cliente de API en memoria. Ninguna respuesta proviene del backend real.
-// Se activa con VITE_USE_MOCKS=true. El comportamiento por nombre de archivo está en docs.
-import { ApiError, ApiErrorCode, type ApiClient } from '../api/ApiClient';
-import { ArtifactKind, type Artifact, type ArtifactManifest } from '../contracts/artifacts';
-import { CANCELLABLE_STATUSES, JobStatus, type Job } from '../contracts/job';
-import { AssetFormat, type Project, type RevisionRequest, type SourceAsset } from '../contracts/project';
-import type { JobSettings } from '../contracts/settings';
+// SIMULADO — cliente de API en memoria con la forma de contratos-v0.1.
+// Ninguna respuesta proviene del backend real. Se activa con VITE_USE_MOCKS=true.
+// Las respuestas parten de los fixtures de apps/web/mocks (marcados simulated=true).
+import profilesFixture from '../../mocks/profiles.json';
+import { ApiError, type ApiClient } from '../api/ApiClient';
+import { ErrorCode } from '../contracts/http';
+import { ACTIVE_STATUSES, type JobCreate, type JobResponse } from '../contracts/job';
+import type { ArtifactDownload, AuthorizedArtifactManifest } from '../contracts/artifacts';
+import type {
+  DerivedRevisionRequest,
+  ProjectResponse,
+  RevisionResponse,
+  SourceAsset,
+} from '../contracts/project';
+import { AiProvider, MediaType, type JobSettings, type ProfileCatalog } from '../contracts/settings';
+import { es } from '../copy/es';
+import { newIdempotencyKey } from '../shared/utils/idempotency';
 import { mockStitchPreviewImage, mockTextFile, mockVectorImage } from './fixtures/media';
-import { buildMockProfiles } from './fixtures/profiles';
-import { simulateJob, type SimulatedJobRecord } from './jobSimulation';
+import { CANCEL_STOP_MS, simulateJob, type SimulatedJob } from './jobSimulation';
 import { pickScenario, ScenarioOutcome, type Scenario } from './scenarios/scenarios';
 
 const DEFAULT_STAGE_MS = 1500;
-const FALLBACK_ASSET_PX = { width: 800, height: 600 };
-const MOCK_SHA = 'simulado'.padEnd(64, '0');
-const STITCHES_PER_MM2 = 0.4;
+const FALLBACK_RASTER_PX = { width: 800, height: 600 };
+const DOWNLOAD_TTL_MS = 300_000;
+const MOCK_SHA = 'a'.repeat(64);
 
 export interface MockOptions {
   now?: () => number;
@@ -21,195 +30,250 @@ export interface MockOptions {
   ollamaAvailable?: boolean;
 }
 
+interface StoredAsset {
+  asset: SourceAsset;
+  scenario: Scenario;
+  objectUrl: string;
+}
+
 async function readImageSize(file: File): Promise<{ width: number; height: number }> {
-  if (typeof createImageBitmap !== 'function') return FALLBACK_ASSET_PX;
+  if (typeof createImageBitmap !== 'function') return FALLBACK_RASTER_PX;
   try {
     const bitmap = await createImageBitmap(file);
     return { width: bitmap.width, height: bitmap.height };
   } catch {
-    return FALLBACK_ASSET_PX;
+    return FALLBACK_RASTER_PX;
   }
 }
 
-function assetFormat(file: File): SourceAsset['format'] {
-  if (file.type === 'image/svg+xml') return AssetFormat.Svg;
-  return file.type === 'image/png' ? AssetFormat.Png : AssetFormat.Jpeg;
+function problem(code: string, detail?: string): ApiError {
+  return new ApiError(code, detail ?? es.errors.byCode[code] ?? es.errors.generic);
+}
+
+function liveUrl(kind: string): string {
+  if (kind === 'editable_svg' || kind === 'inkstitch_svg') return mockVectorImage();
+  if (kind === 'preview_png') return mockStitchPreviewImage();
+  return mockTextFile(kind);
 }
 
 export function createMockApiClient(options: MockOptions = {}): ApiClient {
   const now = options.now ?? Date.now;
   const stageMs = options.stageMs ?? DEFAULT_STAGE_MS;
-  const profiles = buildMockProfiles({ ollamaAvailable: options.ollamaAvailable ?? true });
-  const projects = new Map<string, Project>();
-  const assets = new Map<string, SourceAsset>();
-  const scenarios = new Map<string, Scenario>();
-  const records = new Map<string, SimulatedJobRecord>();
-  const idempotent = new Map<string, string>();
+  const catalog = structuredClone(profilesFixture.payload) as ProfileCatalog;
+  if (options.ollamaAvailable === false) {
+    const ollama = catalog.providers.find((p) => p.provider_id === AiProvider.Ollama);
+    if (ollama) {
+      ollama.available = false;
+      ollama.unavailable_reason = 'SIMULADO: el modelo local no está disponible en el servidor.';
+    }
+  }
+  const projects = new Map<string, ProjectResponse>();
+  const assets = new Map<string, StoredAsset>();
+  const revisions = new Map<string, RevisionResponse & { settings: JobSettings }>();
+  const jobs = new Map<string, SimulatedJob>();
+  const replays = new Map<string, { fingerprint: string; value: unknown }>();
   let counter = 0;
   const nextId = (prefix: string) => `${prefix}_sim_${String(++counter).padStart(3, '0')}`;
+  const iso = (ms: number) => new Date(ms).toISOString();
 
-  const view = (record: SimulatedJobRecord): Job => simulateJob(record, now(), stageMs);
-  const requireRecord = (jobId: string): SimulatedJobRecord => {
-    const record = records.get(jobId);
-    if (!record) throw new ApiError(ApiErrorCode.NotFound, 'No se encontró el trabajo.');
-    return record;
+  /** Misma clave y mismo contenido repite la respuesta; distinto contenido es conflicto. */
+  async function idempotent<T>(scope: string, key: string | undefined, fingerprint: unknown, produce: () => Promise<T>): Promise<T> {
+    const id = `${scope}:${key ?? newIdempotencyKey()}`;
+    const print = JSON.stringify(fingerprint);
+    const known = replays.get(id);
+    if (known) {
+      if (known.fingerprint !== print) throw problem(ErrorCode.IdempotencyConflict);
+      return structuredClone(known.value) as T;
+    }
+    const value = await produce();
+    replays.set(id, { fingerprint: print, value: structuredClone(value) });
+    return value;
+  }
+
+  const requireJob = (jobId: string): SimulatedJob => {
+    const job = jobs.get(jobId);
+    if (!job) throw problem(ErrorCode.NotFound);
+    return job;
   };
+  const view = (job: SimulatedJob): JobResponse => simulateJob(job, now(), stageMs);
 
-  const startJob = (
+  const freshDownload = (url: string): ArtifactDownload => ({
+    url,
+    issued_at: iso(now()),
+    expires_at: iso(now() + DOWNLOAD_TTL_MS),
+  });
+  const assetView = (stored: StoredAsset): SourceAsset => ({
+    ...stored.asset,
+    original_download: freshDownload(stored.objectUrl),
+  });
+
+  function startJob(
     projectId: string,
-    asset: SourceAsset,
+    revisionId: string,
+    stored: StoredAsset,
     settings: JobSettings,
     scenario: Scenario,
     parentJobId: string | null,
-  ): Job => {
-    const record: SimulatedJobRecord = {
+  ): JobResponse {
+    const { original_width_px: w, original_height_px: h } = stored.asset;
+    const job: SimulatedJob = {
       id: nextId('job'),
       projectId,
-      assetId: asset.id,
+      revisionId,
+      assetId: stored.asset.asset_id,
+      inputKind: stored.asset.media_type === MediaType.Svg ? 'prepared_svg' : 'raster_image',
       settings,
       scenario,
       parentJobId,
       createdAt: now(),
-      assetWidthPx: asset.width_px,
-      assetHeightPx: asset.height_px,
-      cancelledAt: null,
+      aspectRatio: w && h ? w / h : null,
+      cancelRequestedAt: null,
     };
-    records.set(record.id, record);
-    return view(record);
-  };
-
-  const artifactsFor = (job: Job): ArtifactManifest => {
-    if (job.status !== JobStatus.ReadyForSewout) {
-      return { job_id: job.id, artifacts: [], metrics: null };
-    }
-    const asset = assets.get(job.source_asset_id);
-    const { width_mm: maxW, height_mm: maxH } = job.settings.target;
-    const ratio = asset ? asset.width_px / asset.height_px : 1;
-    const widthMm = Math.min(maxW, maxH * ratio);
-    const heightMm = widthMm / ratio;
-    const make = (kind: ArtifactKind, filename: string, content_type: string, url: string): Artifact => ({
-      kind,
-      job_id: job.id,
-      filename,
-      sha256: MOCK_SHA,
-      size_bytes: 1024,
-      content_type,
-      download_url: url,
-    });
-    return {
-      job_id: job.id,
-      artifacts: [
-        make(ArtifactKind.SvgEditable, `${job.id}.svg`, 'image/svg+xml', mockVectorImage()),
-        make(ArtifactKind.SvgInkStitch, `${job.id}-inkstitch.svg`, 'image/svg+xml', mockVectorImage()),
-        make(ArtifactKind.Jef, `${job.id}.jef`, 'application/octet-stream', mockTextFile('JEF')),
-        make(ArtifactKind.JefPreview, `${job.id}-preview.svg`, 'image/svg+xml', mockStitchPreviewImage()),
-        make(ArtifactKind.Report, `${job.id}-informe.txt`, 'text/plain', mockTextFile('informe')),
-      ],
-      metrics: {
-        source: 'jef_reread',
-        width_mm: Number(widthMm.toFixed(1)),
-        height_mm: Number(heightMm.toFixed(1)),
-        needle_stitches: Math.round(widthMm * heightMm * STITCHES_PER_MM2),
-        thread_blocks: Math.min(job.settings.color_limit, 3),
-        color_changes: Math.max(0, Math.min(job.settings.color_limit, 3) - 1),
-        jumps: 12,
-        trims: 8,
-        counting_method: 'valores simulados',
-        processing_ms: stageMs * 4,
-      },
-    };
-  };
+    jobs.set(job.id, job);
+    return view(job);
+  }
 
   return {
     isSimulated: true,
     async getProfiles() {
-      return profiles;
+      return structuredClone(catalog);
     },
     async listProjects() {
-      return [...projects.values()].map((project) => {
-        const jobs = [...records.values()].filter((r) => r.projectId === project.id).map(view);
-        const latest = jobs.at(-1);
-        return {
-          ...project,
-          job_count: jobs.length,
-          latest_job_status: latest?.status ?? null,
-          latest_sewout_status: latest?.sewout_status ?? null,
-        };
-      });
+      return { schema_version: '0.1', items: [...projects.values()], next_cursor: null };
     },
-    async createProject(name) {
-      const project: Project = { id: nextId('proj'), name: name.trim(), created_at: new Date(now()).toISOString() };
-      projects.set(project.id, project);
-      return project;
+    createProject(name, key) {
+      return idempotent('project', key, { name }, async () => {
+        const project: ProjectResponse = {
+          schema_version: '0.1',
+          project_id: nextId('project'),
+          name: name.trim(),
+          created_at: iso(now()),
+        };
+        projects.set(project.project_id, project);
+        return project;
+      });
     },
     async getProject(projectId) {
       const project = projects.get(projectId);
-      if (!project) throw new ApiError(ApiErrorCode.NotFound, 'No se encontró el proyecto.');
+      if (!project) throw problem(ErrorCode.NotFound);
       return {
+        schema_version: '0.1',
         project,
-        assets: [...assets.values()].filter((a) => a.project_id === projectId),
-        jobs: [...records.values()].filter((r) => r.projectId === projectId).map(view),
+        assets: [...assets.values()].filter((a) => a.asset.project_id === projectId).map(assetView),
+        jobs: [...jobs.values()].filter((j) => j.projectId === projectId).map(view),
+        assets_next_cursor: null,
+        jobs_next_cursor: null,
       };
     },
-    async uploadAsset(projectId, file) {
-      if (!projects.has(projectId)) throw new ApiError(ApiErrorCode.NotFound, 'No se encontró el proyecto.');
-      const limits = profiles.upload_limits;
-      if (file.size > limits.max_bytes || !limits.accepted_mime_types.includes(file.type)) {
-        throw new ApiError(ApiErrorCode.InvalidInput, 'El archivo no es un formato o tamaño admitido.');
-      }
-      const size = await readImageSize(file);
-      const original_url =
-        typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : mockVectorImage();
-      const asset: SourceAsset = {
-        id: nextId('asset'),
-        project_id: projectId,
-        sha256: MOCK_SHA,
-        original_filename: file.name,
-        format: assetFormat(file),
-        width_px: size.width,
-        height_px: size.height,
-        original_url,
-      };
-      assets.set(asset.id, asset);
-      scenarios.set(asset.id, pickScenario(file.name, asset.format === AssetFormat.Svg));
-      return asset;
+    uploadAsset(projectId, file, key) {
+      return idempotent('asset', key, { projectId, name: file.name, size: file.size }, async () => {
+        if (!projects.has(projectId)) throw problem(ErrorCode.NotFound);
+        const limits = catalog.upload_limits;
+        if (file.size > limits.max_bytes) throw problem(ErrorCode.PayloadTooLarge);
+        if (!(limits.accepted_mime_types as string[]).includes(file.type)) throw problem(ErrorCode.UnsupportedMediaType);
+        const isSvg = file.type === MediaType.Svg;
+        const size = isSvg ? null : await readImageSize(file);
+        const objectUrl = typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : mockVectorImage();
+        const asset: SourceAsset = {
+          schema_version: '0.1',
+          asset_id: nextId('asset'),
+          project_id: projectId,
+          sha256: MOCK_SHA,
+          media_type: file.type as SourceAsset['media_type'],
+          original_filename: file.name,
+          original_download: null,
+          original_width_px: size?.width ?? null,
+          original_height_px: size?.height ?? null,
+          crop_px: null,
+          original_preserved: true,
+        };
+        const stored = { asset, scenario: pickScenario(file.name, isSvg), objectUrl };
+        assets.set(asset.asset_id, stored);
+        return assetView(stored);
+      });
     },
-    async createJob(projectId, assetId, settings, idempotencyKey) {
-      const existing = idempotent.get(idempotencyKey);
-      if (existing) return view(requireRecord(existing));
-      const asset = assets.get(assetId);
-      const scenario = scenarios.get(assetId);
-      if (!asset || !scenario || asset.project_id !== projectId) {
-        throw new ApiError(ApiErrorCode.NotFound, 'No se encontró la imagen del proyecto.');
-      }
-      if (!profiles.providers.find((p) => p.id === settings.ai_provider)?.available) {
-        throw new ApiError(ApiErrorCode.Unavailable, 'El proveedor de IA elegido no está disponible.');
-      }
-      const job = startJob(projectId, asset, settings, scenario, null);
-      idempotent.set(idempotencyKey, job.id);
-      return job;
+    createInitialRevision(projectId, request, key) {
+      return idempotent('revision', key, { projectId, request }, async () => {
+        if (!projects.has(projectId)) throw problem(ErrorCode.NotFound);
+        if (request.base_revision_id !== null) throw problem(ErrorCode.RevisionConflict);
+        const revision: RevisionResponse = {
+          schema_version: '0.1',
+          revision_id: nextId('rev'),
+          project_id: projectId,
+          base_revision_id: null,
+          reason: request.reason,
+          created_at: iso(now()),
+          kind: 'initial',
+          parent_job_id: null,
+          job_id: null,
+        };
+        revisions.set(revision.revision_id, { ...revision, settings: request.settings });
+        return revision;
+      });
+    },
+    createJob(projectId, request: JobCreate, key) {
+      return idempotent('job', key, { projectId, request }, async () => {
+        const stored = assets.get(request.asset_id);
+        const revision = revisions.get(request.revision_id);
+        if (!stored || !revision || stored.asset.project_id !== projectId || revision.project_id !== projectId) {
+          throw problem(ErrorCode.NotFound);
+        }
+        const provider = request.settings.ai_provider;
+        const isSvg = request.input_kind === 'prepared_svg';
+        const available = catalog.providers.find((p) => p.provider_id === provider)?.available ?? false;
+        if ((provider === AiProvider.None && !isSvg) || (provider !== AiProvider.None && !available)) {
+          throw problem(ErrorCode.InvalidRequest);
+        }
+        return startJob(projectId, revision.revision_id, stored, request.settings, stored.scenario, null);
+      });
     },
     async getJob(jobId) {
-      return view(requireRecord(jobId));
+      return view(requireJob(jobId));
     },
-    async getArtifacts(jobId) {
-      return artifactsFor(view(requireRecord(jobId)));
+    async getArtifacts(jobId): Promise<AuthorizedArtifactManifest> {
+      const manifest = view(requireJob(jobId)).artifact_manifest;
+      if (!manifest) throw problem(ErrorCode.ArtifactsUnavailable);
+      // Siempre URLs nuevas, con TTL de 300 s desde ahora.
+      manifest.artifacts = manifest.artifacts.map((a) => {
+        const download = freshDownload(liveUrl(a.kind));
+        return { ...a, download, download_url: download.url, expires_at: download.expires_at };
+      });
+      return manifest;
     },
-    async cancelJob(jobId) {
-      const record = requireRecord(jobId);
-      if (CANCELLABLE_STATUSES.includes(view(record).status)) record.cancelledAt = now();
-      return view(record);
+    cancelJob(jobId, key) {
+      return idempotent('cancel', key, { jobId }, async () => {
+        const job = requireJob(jobId);
+        if (ACTIVE_STATUSES.includes(view(job).status) && job.cancelRequestedAt === null) {
+          job.cancelRequestedAt = now();
+        }
+        return view(job);
+      });
     },
-    async createRevision(projectId, request: RevisionRequest) {
-      const parent = requireRecord(request.parent_job_id);
-      const asset = assets.get(parent.assetId);
-      if (!asset || parent.projectId !== projectId) {
-        throw new ApiError(ApiErrorCode.NotFound, 'No se encontró el trabajo de origen.');
-      }
-      const settings: JobSettings =
-        request.kind === 'size_variant' ? { ...parent.settings, target: request.target } : parent.settings;
-      const scenario: Scenario = { ...parent.scenario, outcome: ScenarioOutcome.Ready, failAt: undefined };
-      return startJob(projectId, asset, settings, scenario, parent.id);
+    createDerivedRevision(projectId, request: DerivedRevisionRequest, key) {
+      return idempotent('derived', key, { projectId, request }, async () => {
+        const parent = requireJob(request.parent_job_id);
+        const stored = assets.get(parent.assetId);
+        if (!stored || parent.projectId !== projectId) throw problem(ErrorCode.NotFound);
+        const settings: JobSettings =
+          request.kind === 'size_variant' ? { ...parent.settings, target: request.target } : parent.settings;
+        const revisionId = nextId('rev');
+        revisions.set(revisionId, {
+          schema_version: '0.1',
+          revision_id: revisionId,
+          project_id: projectId,
+          base_revision_id: parent.revisionId,
+          reason: request.kind,
+          created_at: iso(now()),
+          kind: request.kind,
+          parent_job_id: parent.id,
+          job_id: null,
+          settings,
+        });
+        const scenario: Scenario = { ...parent.scenario, outcome: ScenarioOutcome.Ready, failAt: undefined };
+        return startJob(projectId, revisionId, stored, settings, scenario, parent.id);
+      });
     },
   };
 }
+
+export { CANCEL_STOP_MS };

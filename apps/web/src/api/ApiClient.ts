@@ -1,49 +1,66 @@
-import type { ArtifactManifest } from '../contracts/artifacts';
-import type { Job } from '../contracts/job';
+import type { AuthorizedArtifactManifest } from '../contracts/artifacts';
+import type { JobCreate, JobResponse } from '../contracts/job';
 import type {
-  Project,
+  DerivedRevisionRequest,
+  InitialRevisionRequest,
   ProjectDetail,
-  ProjectSummary,
-  RevisionRequest,
+  ProjectList,
+  ProjectResponse,
+  RevisionResponse,
   SourceAsset,
 } from '../contracts/project';
-import type { JobSettings, ProfileCatalog } from '../contracts/settings';
+import type { ProfileCatalog } from '../contracts/settings';
 
-export const ApiErrorCode = {
-  NotFound: 'not_found',
-  InvalidInput: 'invalid_input',
-  Unavailable: 'unavailable',
-  ContractsNotFrozen: 'contracts_not_frozen',
+/** Códigos propios del cliente, además de los ErrorCode del contrato. */
+export const ClientErrorCode = {
+  Network: 'NETWORK',
+  NotImplemented: 'NOT_IMPLEMENTED',
+  Unexpected: 'UNEXPECTED',
 } as const;
-export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
 
 export class ApiError extends Error {
   constructor(
-    public readonly code: ApiErrorCode,
+    /** ErrorCode del contrato o ClientErrorCode. */
+    public readonly code: string,
     message: string,
+    public readonly status?: number,
+    public readonly requestId?: string,
   ) {
     super(message);
     this.name = 'ApiError';
   }
 }
 
-/** Superficie que la web consume. Las rutas corresponden a la sección 5 del contrato. */
+/**
+ * Superficie que la web consume (openapi.json). Todos los POST aceptan una clave
+ * de idempotencia; si se omite, el cliente genera una. Reutilizar la clave al
+ * reintentar el mismo envío evita duplicar proyectos, revisiones y trabajos.
+ */
 export interface ApiClient {
   /** true cuando las respuestas son simuladas. La UI lo muestra siempre. */
   readonly isSimulated: boolean;
   getProfiles(): Promise<ProfileCatalog>;
-  listProjects(): Promise<ProjectSummary[]>;
-  createProject(name: string): Promise<Project>;
+  listProjects(): Promise<ProjectList>;
+  createProject(name: string, idempotencyKey?: string): Promise<ProjectResponse>;
   getProject(projectId: string): Promise<ProjectDetail>;
-  uploadAsset(projectId: string, file: File): Promise<SourceAsset>;
-  createJob(
+  uploadAsset(projectId: string, file: File, idempotencyKey?: string): Promise<SourceAsset>;
+  /** Paso 3 del flujo inicial: `base_revision_id: null`. */
+  createInitialRevision(
     projectId: string,
-    assetId: string,
-    settings: JobSettings,
-    idempotencyKey: string,
-  ): Promise<Job>;
-  getJob(jobId: string): Promise<Job>;
-  getArtifacts(jobId: string): Promise<ArtifactManifest>;
-  cancelJob(jobId: string): Promise<Job>;
-  createRevision(projectId: string, request: RevisionRequest): Promise<Job>;
+    request: InitialRevisionRequest,
+    idempotencyKey?: string,
+  ): Promise<RevisionResponse>;
+  /** Paso 4: exige el `revision_id` creado antes; no hay revisión implícita. */
+  createJob(projectId: string, request: JobCreate, idempotencyKey?: string): Promise<JobResponse>;
+  getJob(jobId: string): Promise<JobResponse>;
+  /** Siempre emite URLs nuevas (vencen en 300 s). */
+  getArtifacts(jobId: string): Promise<AuthorizedArtifactManifest>;
+  /** 202: solo registra la solicitud; el estado `cancelled` lo publica el servidor. */
+  cancelJob(jobId: string, idempotencyKey?: string): Promise<JobResponse>;
+  /** Variante de tamaño o corrección: responde con el trabajo nuevo. */
+  createDerivedRevision(
+    projectId: string,
+    request: DerivedRevisionRequest,
+    idempotencyKey?: string,
+  ): Promise<JobResponse>;
 }

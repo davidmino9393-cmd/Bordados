@@ -1,58 +1,73 @@
-// BORRADOR v0.1 — SourceAsset (sección 1) y Project. Project y las lecturas son cambio propuesto.
-import type { Job } from './job';
-import type { SewoutStatus } from './sewout';
+// Contrato v0.1 — jobs.py (proyectos, revisiones), settings.py (SourceAsset), revisions.py, queries.py.
+import type { ArtifactDownload } from './artifacts';
+import type { JobResponse } from './job';
+import type { JobSettings, MediaType, TargetSize } from './settings';
 
-export interface Project {
-  id: string;
+export interface ProjectResponse {
+  schema_version: string;
+  project_id: string;
   name: string;
   created_at: string;
 }
 
-export const AssetFormat = { Png: 'png', Jpeg: 'jpeg', Svg: 'svg' } as const;
-export type AssetFormat = (typeof AssetFormat)[keyof typeof AssetFormat];
-
-export interface SourceAsset {
-  id: string;
-  project_id: string;
-  sha256: string;
-  /** Cambio propuesto: nombre del archivo subido, para mostrarlo al usuario. */
-  original_filename: string;
-  format: AssetFormat;
-  /** Píxeles de la imagen original. No es tamaño físico de bordado. */
+export interface BoundsPX {
+  x_px: number;
+  y_px: number;
   width_px: number;
   height_px: number;
-  /** URL para mostrar el original. */
-  original_url: string;
+}
+
+export interface SourceAsset {
+  schema_version: string;
+  asset_id: string;
+  project_id: string;
+  sha256: string;
+  media_type: MediaType;
+  /** Solo para mostrar. */
+  original_filename: string;
+  /** Enlace temporal (300 s): se renueva consultando de nuevo el proyecto. */
+  original_download: ArtifactDownload | null;
+  /** Un SVG puede no declarar píxeles. No es tamaño físico de bordado. */
+  original_width_px: number | null;
+  original_height_px: number | null;
+  crop_px: BoundsPX | null;
+  original_preserved: true;
+}
+
+export interface ProjectList {
+  schema_version: string;
+  items: ProjectResponse[];
+  next_cursor: string | null;
 }
 
 export interface ProjectDetail {
-  project: Project;
+  schema_version: string;
+  project: ProjectResponse;
   assets: SourceAsset[];
-  jobs: Job[];
+  jobs: JobResponse[];
+  assets_next_cursor: string | null;
+  jobs_next_cursor: string | null;
 }
 
-export interface ProjectSummary extends Project {
-  job_count: number;
-  latest_job_status: Job['status'] | null;
-  latest_sewout_status: SewoutStatus | null;
+/** Primera revisión del proyecto: `base_revision_id` siempre null (201). */
+export interface InitialRevisionRequest {
+  schema_version: string;
+  base_revision_id: null;
+  reason: string;
+  settings: JobSettings;
 }
 
-/** Cambio propuesto: cuerpo de POST /projects/{id}/revisions. */
-export type RevisionRequest =
-  | {
-      kind: 'size_variant';
-      parent_job_id: string;
-      target: { width_mm: number; height_mm: number; fit: 'contain' };
-    }
-  | {
-      kind: 'correction';
-      parent_job_id: string;
-      corrections: Correction[];
-    };
-
-export type Correction =
-  | { action: 'exclude_region'; object_id: string }
-  | { action: 'set_technique'; object_id: string; technique: Technique };
+export interface RevisionResponse {
+  schema_version: string;
+  revision_id: string;
+  project_id: string;
+  base_revision_id: string | null;
+  reason: string;
+  created_at: string;
+  kind: 'initial' | 'size_variant' | 'correction';
+  parent_job_id: string | null;
+  job_id: string | null;
+}
 
 export const Technique = {
   Running: 'running',
@@ -61,3 +76,26 @@ export const Technique = {
   Fill: 'fill',
 } as const;
 export type Technique = (typeof Technique)[keyof typeof Technique];
+
+/** exclude_region exige exactamente uno: object_id o region_id. */
+export type Correction =
+  | { action: 'exclude_region'; object_id: string }
+  | { action: 'exclude_region'; region_id: string }
+  | { action: 'set_technique'; object_id: string; technique: Technique };
+
+export interface SizeVariantRequest {
+  schema_version: string;
+  kind: 'size_variant';
+  parent_job_id: string;
+  target: TargetSize;
+}
+
+export interface CorrectionRequest {
+  schema_version: string;
+  kind: 'correction';
+  parent_job_id: string;
+  corrections: Correction[];
+}
+
+/** Variante o corrección: responde 202 con el trabajo nuevo. */
+export type DerivedRevisionRequest = SizeVariantRequest | CorrectionRequest;

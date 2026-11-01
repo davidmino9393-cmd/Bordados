@@ -1,26 +1,93 @@
-import { ApiError, ApiErrorCode, type ApiClient } from './ApiClient';
+import type { ProblemResponse } from '../contracts/http';
+import { es } from '../copy/es';
+import { newIdempotencyKey } from '../shared/utils/idempotency';
+import { ApiError, ClientErrorCode, type ApiClient } from './ApiClient';
 
-const BLOCKED_MESSAGE =
-  'El servicio real aún no está conectado: los contratos v0.1 no están congelados.';
+const API_PREFIX = '/api/v1';
+const PROBLEM_CONTENT_TYPE = 'application/problem+json';
+const HTTP_NOT_IMPLEMENTED = 501;
 
-function blocked(): never {
-  throw new ApiError(ApiErrorCode.ContractsNotFrozen, BLOCKED_MESSAGE);
+interface RequestOptions {
+  body?: unknown;
+  form?: FormData;
+  idempotent?: boolean;
+  key?: string;
+}
+
+export interface HttpClientConfig {
+  /** Vacío = mismo origen (despliegue previsto). */
+  baseUrl?: string;
+  fetchImpl?: typeof fetch;
+}
+
+async function toApiError(response: Response): Promise<ApiError> {
+  const requestId = response.headers.get('X-Request-ID') ?? undefined;
+  if (response.status === HTTP_NOT_IMPLEMENTED) {
+    return new ApiError(ClientErrorCode.NotImplemented, es.errors.notImplemented, response.status, requestId);
+  }
+  const isProblem = (response.headers.get('Content-Type') ?? '').includes(PROBLEM_CONTENT_TYPE);
+  if (isProblem) {
+    try {
+      const problem = (await response.json()) as ProblemResponse;
+      const message = es.errors.byCode[problem.code] ?? problem.detail;
+      return new ApiError(problem.code, message, response.status, problem.request_id);
+    } catch {
+      // cae al error genérico
+    }
+  }
+  return new ApiError(ClientErrorCode.Unexpected, es.errors.generic, response.status, requestId);
 }
 
 /**
- * Esqueleto del cliente real. NO se conecta hasta que el integrador confirme
- * que los contratos v0.1 concretos están congelados. Cada método falla a propósito.
+ * Cliente real del contrato v0.1 (openapi.json). Autenticación: el despliegue es de
+ * mismo origen y el navegador gestiona HTTP Basic; la web nunca guarda credenciales
+ * ni claves de proveedores.
  */
-export const httpApiClient: ApiClient = {
-  isSimulated: false,
-  getProfiles: async () => blocked(),
-  listProjects: async () => blocked(),
-  createProject: async () => blocked(),
-  getProject: async () => blocked(),
-  uploadAsset: async () => blocked(),
-  createJob: async () => blocked(),
-  getJob: async () => blocked(),
-  getArtifacts: async () => blocked(),
-  cancelJob: async () => blocked(),
-  createRevision: async () => blocked(),
-};
+export function createHttpApiClient(config: HttpClientConfig = {}): ApiClient {
+  const base = config.baseUrl ?? '';
+  const doFetch = config.fetchImpl ?? ((input, init) => fetch(input, init));
+
+  async function request<T>(method: string, path: string, options: RequestOptions = {}): Promise<T> {
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+    if (method === 'POST') headers['Idempotency-Key'] = options.key ?? newIdempotencyKey();
+    let response: Response;
+    try {
+      response = await doFetch(`${base}${API_PREFIX}${path}`, {
+        method,
+        headers,
+        body: options.form ?? (options.body !== undefined ? JSON.stringify(options.body) : undefined),
+        cache: 'no-store',
+        credentials: 'same-origin',
+      });
+    } catch {
+      throw new ApiError(ClientErrorCode.Network, es.errors.network);
+    }
+    if (!response.ok) throw await toApiError(response);
+    return (await response.json()) as T;
+  }
+
+  const id = encodeURIComponent;
+  return {
+    isSimulated: false,
+    getProfiles: () => request('GET', '/profiles'),
+    listProjects: () => request('GET', '/projects'),
+    createProject: (name, key) =>
+      request('POST', '/projects', { key, body: { schema_version: '0.1', name } }),
+    getProject: (projectId) => request('GET', `/projects/${id(projectId)}`),
+    uploadAsset: (projectId, file, key) => {
+      const form = new FormData();
+      form.append('file', file);
+      return request('POST', `/projects/${id(projectId)}/assets`, { key, form });
+    },
+    createInitialRevision: (projectId, body, key) =>
+      request('POST', `/projects/${id(projectId)}/revisions`, { key, body }),
+    createJob: (projectId, body, key) => request('POST', `/projects/${id(projectId)}/jobs`, { key, body }),
+    getJob: (jobId) => request('GET', `/jobs/${id(jobId)}`),
+    getArtifacts: (jobId) => request('GET', `/jobs/${id(jobId)}/artifacts`),
+    cancelJob: (jobId, key) =>
+      request('POST', `/jobs/${id(jobId)}/cancel`, { key, body: { schema_version: '0.1' } }),
+    createDerivedRevision: (projectId, body, key) =>
+      request('POST', `/projects/${id(projectId)}/revisions`, { key, body }),
+  };
+}

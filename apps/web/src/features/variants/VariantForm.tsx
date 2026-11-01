@@ -1,21 +1,25 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '../../api/ApiProvider';
+import type { JobResponse } from '../../contracts/job';
 import { FitMode } from '../../contracts/settings';
-import type { Job } from '../../contracts/job';
+import { CONTRACT_SCHEMA_VERSION } from '../../contracts/version';
 import { es } from '../../copy/es';
 import { Card } from '../../shared/components/Card';
 import { Field } from '../../shared/components/Field';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { errorMessage } from '../../shared/hooks/useAsync';
+import { useIdempotencyKey } from '../../shared/hooks/useIdempotencyKey';
 import { parseMm } from '../settings/validateSettings';
 
 /** Una variante es un trabajo nuevo regenerado desde la geometría; la web nunca escala puntadas. */
-export function VariantForm({ job }: { job: Job }) {
+export function VariantForm({ job }: { job: JobResponse }) {
   const api = useApi();
   const navigate = useNavigate();
-  const [width, setWidth] = useState(String(job.settings.target.width_mm));
-  const [height, setHeight] = useState(String(job.settings.target.height_mm));
+  const keyFor = useIdempotencyKey();
+  const target = job.settings_snapshot.target;
+  const [width, setWidth] = useState(String(target.width_mm));
+  const [height, setHeight] = useState(String(target.height_mm));
   const [errors, setErrors] = useState<{ width?: boolean; height?: boolean }>({});
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -30,12 +34,14 @@ export function VariantForm({ job }: { job: Job }) {
     setBusy(true);
     setError(undefined);
     try {
-      const variant = await api.createRevision(job.project_id, {
-        kind: 'size_variant',
-        parent_job_id: job.id,
+      const request = {
+        schema_version: CONTRACT_SCHEMA_VERSION,
+        kind: 'size_variant' as const,
+        parent_job_id: job.job_id,
         target: { width_mm: w, height_mm: h, fit: FitMode.Contain },
-      });
-      navigate(`/trabajos/${variant.id}`);
+      };
+      const variant = await api.createDerivedRevision(job.project_id, request, keyFor(request));
+      navigate(`/trabajos/${variant.job_id}`);
     } catch (e) {
       setError(errorMessage(e));
       setBusy(false);

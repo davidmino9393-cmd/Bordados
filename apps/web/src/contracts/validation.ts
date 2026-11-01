@@ -1,4 +1,4 @@
-// BORRADOR v0.1 — incidencias de validación (sección 7 del contrato).
+// Contrato v0.1 — issues.py y results.py (Issue). El catálogo de códigos vive en el backend.
 
 export const Severity = {
   Blocking: 'blocking_error',
@@ -7,28 +7,31 @@ export const Severity = {
 } as const;
 export type Severity = (typeof Severity)[keyof typeof Severity];
 
-export interface ValidationIssue {
-  code: string;
+/** Código del catálogo (issue-catalog.json). Se mantiene como texto: el backend es la autoridad. */
+export type IssueCode = string;
+
+export interface Issue {
+  code: IssueCode;
   severity: Severity;
   stage: string;
   object_ids: string[];
+  region_ids: string[];
   description: string;
-  evidence: string;
-  suggested_fix: string;
+  /** JSON estructurado del motor; no se muestra crudo al usuario. */
+  evidence: Record<string, unknown>;
+  suggested_correction: string;
 }
 
-/** Región en coordenadas de píxel de la imagen original (sección 2). */
-export interface PixelRegion {
-  object_id: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+export interface FailureSummary {
+  code: IssueCode;
+  message: string;
+  stage: 'queued' | 'analyzing' | 'vectorizing' | 'digitizing' | 'validating';
 }
 
-/** needs_review: causa y objetos/regiones concretos (sección 6). */
-export interface ReviewRequest {
+/** El contrato entrega ids de objetos/regiones, no cajas en píxeles. */
+export interface ReviewSummary {
   cause: string;
-  issues: ValidationIssue[];
-  regions: PixelRegion[];
+  issues: Issue[];
+  object_ids: string[];
+  region_ids: string[];
 }
