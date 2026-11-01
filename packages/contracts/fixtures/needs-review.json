@@ -1,0 +1,78 @@
+{
+  "schema_version": "0.1",
+  "simulated": true,
+  "case": "needs-review",
+  "model": "JobResponse",
+  "direction": "response",
+  "endpoint": "GET /api/v1/jobs/{id}",
+  "payload": {
+    "schema_version": "0.1",
+    "job_id": "job_mock_1",
+    "project_id": "project_mock_1",
+    "revision_id": "rev_mock_1",
+    "asset_id": "asset_mock_svg",
+    "input_kind": "prepared_svg",
+    "settings_snapshot": {
+      "schema_version": "0.1",
+      "target": {
+        "width_mm": 150,
+        "height_mm": 150,
+        "fit": "contain"
+      },
+      "machine_profile": "janome_mc550e",
+      "machine_profile_version": "0.1",
+      "hoop": {
+        "profile_id": "sq20b",
+        "profile_version": "0.1",
+        "width_mm": 200,
+        "height_mm": 200,
+        "jef_hoop_code": 4
+      },
+      "fabric_profile": "gabardina_inicial",
+      "fabric_profile_version": "0.1",
+      "thread_profile": "embroidery_thread_initial",
+      "color_limit": 3,
+      "ai_provider": "none"
+    },
+    "cancellation_requested": false,
+    "issues": [
+      {
+        "code": "SATIN_RAILS_UNVERIFIED",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin"
+        ],
+        "region_ids": [],
+        "description": "Rail correspondence requires review.",
+        "evidence": {
+          "simulated": true,
+          "reason": "No verified correspondence for this object"
+        },
+        "suggested_correction": "Review corresponding nodes or valid guides for this object."
+      }
+    ],
+    "status": "needs_review",
+    "stages": [
+      {
+        "stage": "analyzing",
+        "outcome": "skipped",
+        "reason": "Prepared SVG: analysis omitted"
+      },
+      {
+        "stage": "vectorizing",
+        "outcome": "skipped",
+        "reason": "Prepared SVG: vectorization omitted"
+      },
+      {
+        "stage": "digitizing",
+        "outcome": "failed",
+        "measured_duration_ms": 1000
+      },
+      {
+        "stage": "validating",
+        "outcome": "pending"
+      }
+    ]
+  }
+}
