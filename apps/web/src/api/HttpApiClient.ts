@@ -101,6 +101,7 @@ export function createHttpApiClient(config: HttpClientConfig = {}): ApiClient {
     getArtifacts: (jobId) => request('GET', `/jobs/${id(jobId)}/artifacts`),
     cancelJob: (jobId, key) =>
       request('POST', `/jobs/${id(jobId)}/cancel`, { key, body: { schema_version: '0.1' } }),
+    recordSewout: (projectId, body, key) => request('POST', `/projects/${id(projectId)}/sewouts`, { key, body }),
     createDerivedRevision: (projectId, body, key) =>
       request('POST', `/projects/${id(projectId)}/revisions`, { key, body }),
   };

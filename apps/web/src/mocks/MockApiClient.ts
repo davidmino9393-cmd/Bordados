@@ -12,6 +12,7 @@ import type {
   RevisionResponse,
   SourceAsset,
 } from '../contracts/project';
+import type { SewoutProjection, SewoutResponse } from '../contracts/sewout';
 import { AiProvider, MediaType, type JobSettings, type ProfileCatalog } from '../contracts/settings';
 import { es } from '../copy/es';
 import { newIdempotencyKey } from '../shared/utils/idempotency';
@@ -71,6 +72,7 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
   const assets = new Map<string, StoredAsset>();
   const revisions = new Map<string, RevisionResponse & { settings: JobSettings }>();
   const jobs = new Map<string, SimulatedJob>();
+  const sewouts = new Map<string, SewoutResponse[]>();
   const replays = new Map<string, { fingerprint: string; value: unknown }>();
   let counter = 0;
   const nextId = (prefix: string) => `${prefix}_sim_${String(++counter).padStart(3, '0')}`;
@@ -95,7 +97,19 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
     if (!job) throw problem(ErrorCode.NotFound);
     return job;
   };
-  const view = (job: SimulatedJob): JobResponse => simulateJob(job, now(), stageMs);
+  const latestSewout = (revisionId: string): SewoutProjection | null => {
+    const latest = sewouts.get(revisionId)?.at(-1);
+    if (!latest) return null;
+    return {
+      sewout_id: latest.sewout_id,
+      revision_id: latest.revision_id,
+      status: latest.status,
+      tested_at: latest.tested_at,
+      observations: latest.observations,
+      photo_asset_ids: latest.photo_asset_ids,
+    };
+  };
+  const view = (job: SimulatedJob): JobResponse => simulateJob(job, now(), stageMs, latestSewout(job.revisionId));
 
   const freshDownload = (url: string): ArtifactDownload => ({
     url,
@@ -247,6 +261,25 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
           job.cancelRequestedAt = now();
         }
         return view(job);
+      });
+    },
+    recordSewout(projectId, request, key) {
+      return idempotent('sewout', key, { projectId, request }, async () => {
+        if (!projects.has(projectId)) throw problem(ErrorCode.NotFound);
+        const revision = revisions.get(request.revision_id);
+        if (!revision || revision.project_id !== projectId) throw problem(ErrorCode.NotFound);
+        // Invariantes de SewoutRecord (jobs.py): resultado físico ⇔ fecha de la prueba.
+        const untested = request.status === 'untested';
+        const empty = [request.stabilizer, request.thread, request.observations].some((t) => !t.trim());
+        if (untested !== (request.tested_at === null) || empty) throw problem(ErrorCode.InvalidRequest);
+        const record: SewoutResponse = {
+          ...request,
+          sewout_id: nextId('sewout'),
+          project_id: projectId,
+          recorded_at: iso(now()),
+        };
+        sewouts.set(request.revision_id, [...(sewouts.get(request.revision_id) ?? []), record]);
+        return record;
       });
     },
     createDerivedRevision(projectId, request: DerivedRevisionRequest, key) {

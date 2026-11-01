@@ -16,3 +16,25 @@ export interface SewoutProjection {
   observations: string;
   photo_asset_ids: string[];
 }
+
+/** Cuerpo de POST /projects/{id}/sewouts (SewoutRecord). Fotos: opcionales, aún sin subida en la web. */
+export interface SewoutRecordRequest {
+  schema_version: string;
+  revision_id: string;
+  status: SewoutStatus;
+  /** Obligatorio si el resultado no es `untested`; debe ser null si es `untested`. */
+  tested_at: string | null;
+  /** Identificador de un perfil de tela del catálogo, no texto libre. */
+  fabric_profile: string;
+  stabilizer: string;
+  thread: string;
+  observations: string;
+  photo_asset_ids: string[];
+}
+
+/** Respuesta 201: el registro creado. */
+export interface SewoutResponse extends SewoutRecordRequest {
+  sewout_id: string;
+  project_id: string;
+  recorded_at: string;
+}

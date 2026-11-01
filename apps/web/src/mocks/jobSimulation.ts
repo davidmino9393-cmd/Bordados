@@ -14,6 +14,7 @@ import {
   type PipelineStage,
   type StageRecord,
 } from '../contracts/job';
+import type { SewoutProjection } from '../contracts/sewout';
 import type { JobSettings } from '../contracts/settings';
 import { ScenarioOutcome, activeStages, type Scenario } from './scenarios/scenarios';
 
@@ -143,16 +144,22 @@ function activeResponse(job: SimulatedJob, status: JobResponse['status'], stages
   return response;
 }
 
-export function simulateJob(job: SimulatedJob, now: number, stageMs: number): JobResponse {
+/** `sewout` es la proyección de la última muestra física registrada para la revisión del job. */
+export function simulateJob(job: SimulatedJob, now: number, stageMs: number, sewout: SewoutProjection | null = null): JobResponse {
   const active = activeStages(job.scenario);
   const failPosition = job.scenario.failAt ? active.indexOf(job.scenario.failAt) : -1;
   const lastIndex = job.scenario.outcome === ScenarioOutcome.Failed ? failPosition : active.length - 1;
   const requested = job.cancelRequestedAt;
   const stopped = requested !== null && now >= requested + CANCEL_STOP_MS;
+  const withSewout = (response: JobResponse): JobResponse => {
+    response.sewout_record = sewout;
+    response.sewout_status = sewout?.status ?? 'untested';
+    return response;
+  };
   const clock = requested ?? now;
   const elapsed = clock - job.createdAt;
   const runningIndex = Math.floor((elapsed - QUEUE_MS) / stageMs);
-  if (stopped) return terminalResponse(job, stageMs, Math.min(runningIndex, lastIndex));
+  if (stopped) return withSewout(terminalResponse(job, stageMs, Math.min(runningIndex, lastIndex)));
 
   const remainingMs = Math.max(0, QUEUE_MS + (lastIndex + 1) * stageMs - elapsed);
   const remainingS = Math.ceil(remainingMs / MS_PER_SECOND);

@@ -9,6 +9,7 @@ import type {
   RevisionResponse,
   SourceAsset,
 } from '../contracts/project';
+import type { SewoutRecordRequest, SewoutResponse } from '../contracts/sewout';
 import type { ProfileCatalog } from '../contracts/settings';
 
 /** Códigos propios del cliente, además de los ErrorCode del contrato. */
@@ -71,6 +72,8 @@ export interface ApiClient {
   getArtifacts(jobId: string): Promise<AuthorizedArtifactManifest>;
   /** 202: solo registra la solicitud; el estado `cancelled` lo publica el servidor. */
   cancelJob(jobId: string, idempotencyKey?: string): Promise<JobResponse>;
+  /** Registra la muestra física de una revisión; nunca cambia el estado digital del trabajo. */
+  recordSewout(projectId: string, request: SewoutRecordRequest, idempotencyKey?: string): Promise<SewoutResponse>;
   /** Variante de tamaño o corrección: responde con el trabajo nuevo. */
   createDerivedRevision(
     projectId: string,
