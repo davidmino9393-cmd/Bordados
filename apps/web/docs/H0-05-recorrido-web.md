@@ -45,7 +45,7 @@ La franja «Datos simulados» se muestra siempre que el cliente sea simulado.
 
 ## Cambios propuestos
 
-Ninguno está implementado en el backend; la web los asume en los tipos borrador.
+**Aprobados por el usuario el 2026-11-01** como propuesta para el contrato. Siguen pendientes de implementación por la IA del motor (`codex/motor`) y de congelamiento por el integrador; la web los asume en los tipos borrador y no se conecta al servicio real hasta entonces.
 
 | # | Cambio | Motivo |
 |---|---|---|
