@@ -1,6 +1,6 @@
 # Contratos v0.1 concretos
 
-Propósito: propuesta ejecutable **pendiente de revisión humana**, todavía no congelada. Tandas A/B: Pydantic, estados, mocks, OpenAPI y catálogo. No hay API ni worker ejecutable en esta entrega.
+Propósito: **contratos v0.1 candidatos a congelar**, revisión B2 pendiente de integrador humano. Pydantic, estados, mocks, OpenAPI y catálogos; sin API ni worker ejecutable.
 
 Contenido: [Uso](#uso), [documentos](#documentos), [reglas](#reglas), [relacionados](#relacionados).
 
@@ -27,10 +27,10 @@ Contenido: [Uso](#uso), [documentos](#documentos), [reglas](#reglas), [relaciona
 - `schema_version: "0.1"` identifica documentos; `/api/v1` identifica la API. Los IDs de perfiles son referencias propuestas, no perfiles calibrados incluidos.
 - Solo el servidor publicará `ready_for_sewout`. Pydantic comprueba coherencia de referencias, checks y métricas; NO comprueba existencia/bytes de archivos ni ejecución real del worker.
 - `approved` solo existe en SewoutRecord. Requiere fecha de muestra y observaciones; la autenticidad de la muestra la registra un usuario autorizado en H1.
-- `download` contiene URL privada temporal y vencimiento, nunca rutas internas. Las URLs de mocks usan `example.invalid` y no descargan archivos.
+- `download` y vistas planas coherentes: URL privada con TTL 300s/UTC. GET artifacts renueva siempre, no-store; ver [protocolo B2](B2-protocol.md). Mocks en example.invalid no descargan archivos.
 - Revisiones, permisos, almacenamiento, idempotencia y cancelación de procesos deben implementarse en H1. Los modelos no sustituyen esos controles.
 - Cambios incompatibles después de revisión requieren nueva versión y ejemplos/impacto acordados con web.
 
 ## Relacionados
 
-[Fixtures](fixtures/README.md), [estados](states.md), [unidades](units.md), [OpenAPI](openapi.json), [incidencias](incidences.md), [propuesta original](../../CONTRATOS_Y_CALIDAD.md).
+[Fixtures](fixtures/README.md), [mapa B2](B2-web-mapping.md), [estados](states.md), [unidades](units.md), [OpenAPI](openapi.json), [incidencias](incidences.md).

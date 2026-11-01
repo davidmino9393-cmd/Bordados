@@ -1,4 +1,5 @@
 """Digital reports and exported artifact references; no filesystem assertions."""
+from datetime import timedelta
 from typing import Annotated, Literal
 
 from pydantic import AnyHttpUrl, AwareDatetime, Field, JsonValue, model_validator
@@ -7,6 +8,7 @@ from .base import BoundsMM, ContractModel, Identifier, NonEmpty, Provenance, SHA
 from .issues import ISSUE_RULES, IssueCode, Severity, ValidationStage
 CheckKind = Literal["file", "dimensions", "hoop", "geometry", "satin", "routing", "visual"]
 REQUIRED_DIGITAL_CHECKS = frozenset({"file", "dimensions", "hoop", "geometry", "satin", "routing"})
+DOWNLOAD_TTL_SECONDS = 300
 
 
 class Issue(ContractModel):
@@ -79,11 +81,21 @@ class ValidationReport(Versioned):
 
 class ArtifactDownload(ContractModel):
     url: AnyHttpUrl
+    issued_at: AwareDatetime
     expires_at: AwareDatetime
+
+    @model_validator(mode="after")
+    def fixed_download_ttl(self):
+        if self.issued_at.utcoffset() != timedelta(0) or self.expires_at.utcoffset() != timedelta(0):
+            raise ValueError("Download timestamps must use UTC")
+        if self.expires_at - self.issued_at != timedelta(seconds=DOWNLOAD_TTL_SECONDS):
+            raise ValueError("Authorized download URLs expire exactly 300 seconds after issuance")
+        return self
 
 
 class Artifact(ContractModel):
     artifact_id: Identifier
+    job_id: Identifier
     kind: Literal[
         "jef", "editable_svg", "inkstitch_svg", "preview_png", "validation_json",
         "stitch_plan_json", "raw_commands_json", "provider_raw_json",
@@ -94,6 +106,20 @@ class Artifact(ContractModel):
     byte_size: Annotated[int, Field(gt=0)]
     derived_from: Literal["export", "jef_reread", "document", "validation", "provider"]
     download: ArtifactDownload | None = None
+    download_url: AnyHttpUrl | None = Field(default=None, json_schema_extra={"readOnly": True})
+    expires_at: AwareDatetime | None = Field(default=None, json_schema_extra={"readOnly": True})
+
+    @model_validator(mode="after")
+    def consistent_download_views(self):
+        for name, expected in (
+            ("download_url", self.download.url if self.download else None),
+            ("expires_at", self.download.expires_at if self.download else None),
+        ):
+            actual = getattr(self, name)
+            if name in self.model_fields_set and actual != expected:
+                raise ValueError("Flat download views must agree with the authorized nested download")
+            object.__setattr__(self, name, expected)
+        return self
 
 
 class ArtifactManifest(Versioned):
@@ -112,6 +138,8 @@ class ArtifactManifest(Versioned):
         ids = [artifact.artifact_id for artifact in self.artifacts]
         if len(set(ids)) != len(ids):
             raise ValueError("Artifact identifiers must be unique within a manifest")
+        if any(artifact.job_id != self.job_id for artifact in self.artifacts):
+            raise ValueError("Every artifact must belong to the manifest job")
         raw_id = self.reread_metrics.raw_commands_artifact_id
         if not any(a.artifact_id == raw_id and a.kind == "raw_commands_json" for a in self.artifacts):
             raise ValueError("Reread metrics must reference raw commands in this manifest")
@@ -124,6 +152,16 @@ class StitchCommand(ContractModel):
     command: Literal["stitch", "jump", "trim", "color_change", "stop", "end"]
     thread_block: Annotated[int, Field(ge=0)]
     object_id: Identifier | None = None
+
+
+class AuthorizedArtifactManifest(ArtifactManifest):
+    """GET artifacts response; unlike a worker snapshot, every item has a URL."""
+
+    @model_validator(mode="after")
+    def available_downloads(self):
+        if any(artifact.download is None for artifact in self.artifacts):
+            raise ValueError("GET artifacts success requires an authorized URL for each artifact")
+        return self
 
 
 class ThreadBlock(ContractModel):

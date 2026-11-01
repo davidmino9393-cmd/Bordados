@@ -25,7 +25,7 @@ Contenido: [Tabla](#tabla), [guardas](#guardas), [relacionados](#relacionados).
 - `needs_review`: al menos una incidencia review_required vinculada a objetos o regiones.
 - `failed`: al menos una incidencia blocking_error con diagnóstico controlado; no basta una lista vacía o informativa.
 - `ready_for_sewout`: digitizing/validating completados; reporte aprobado; checks de archivo, dimensiones, bastidor, geometría, satin y recorrido; métricas releídas coincidentes con manifest y misma procedencia.
-- No se permiten errores/revisiones pendientes en un resultado listo. Se requieren referencias JEF, preview derivada de JEF y reporte. El worker comprobará los archivos reales antes de construir esta respuesta.
+- No se permiten errores/revisiones pendientes en un resultado listo. Se requieren SVG editable/InkStitch, JEF, preview releída y reporte. El worker comprobará los archivos reales antes de construir esta respuesta.
 - `cancellation_requested=true` solo confirma solicitud. El servidor publica cancelled cuando haya detenido los procesos; un terminal no vuelve a correr por recibir cancelación.
 - StageRecord incluye resultados observados y duración medida opcional. No hay porcentajes ni ETA inventados.
 - Physical status (`untested`, `approved`, `needs_adjustment`) vive en SewoutRecord y no tiene transiciones sobre JobStatus.

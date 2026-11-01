@@ -4,6 +4,7 @@ from typing import Annotated, Literal
 from pydantic import Field, model_validator
 
 from .base import BoundsPX, ContractModel, Identifier, NonEmpty, PositiveMM, SHA256, Versioned
+from .results import ArtifactDownload
 
 
 class TargetSize(ContractModel):
@@ -24,6 +25,7 @@ class JobSettings(Versioned):
     target: TargetSize
     machine_profile: Identifier
     machine_profile_version: Identifier
+    hoop_profile: Identifier
     hoop: HoopSettings
     fabric_profile: Identifier
     fabric_profile_version: Identifier
@@ -32,12 +34,20 @@ class JobSettings(Versioned):
     ai_provider: Literal["none", "openai", "ollama"]
     ai_model: NonEmpty | None = None
 
+    @model_validator(mode="after")
+    def matching_hoop_profile(self):
+        if self.hoop_profile != self.hoop.profile_id:
+            raise ValueError("hoop_profile must match the immutable hoop profile snapshot")
+        return self
+
 
 class SourceAsset(Versioned):
     asset_id: Identifier
     project_id: Identifier
     sha256: SHA256
     media_type: Literal["image/png", "image/jpeg", "image/svg+xml"]
+    original_filename: Annotated[str, Field(min_length=1, max_length=255, pattern=r"^[^/\\\x00-\x1f]+$")]
+    original_download: ArtifactDownload | None = Field(default=None, json_schema_extra={"readOnly": True})
     original_width_px: Annotated[int, Field(gt=0)] | None = None
     original_height_px: Annotated[int, Field(gt=0)] | None = None
     crop_px: BoundsPX | None = None

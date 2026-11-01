@@ -15,25 +15,100 @@
     "settings_snapshot": {
       "schema_version": "0.1",
       "target": {
-        "width_mm": 150,
-        "height_mm": 150,
+        "width_mm": 150.0,
+        "height_mm": 150.0,
         "fit": "contain"
       },
       "machine_profile": "janome_mc550e",
       "machine_profile_version": "0.1",
+      "hoop_profile": "sq20b",
       "hoop": {
         "profile_id": "sq20b",
         "profile_version": "0.1",
-        "width_mm": 200,
-        "height_mm": 200,
+        "width_mm": 200.0,
+        "height_mm": 200.0,
         "jef_hoop_code": 4
       },
       "fabric_profile": "gabardina_inicial",
       "fabric_profile_version": "0.1",
       "thread_profile": "embroidery_thread_initial",
       "color_limit": 3,
-      "ai_provider": "none"
+      "ai_provider": "none",
+      "ai_model": null
     },
+    "status": "needs_review",
+    "stages": [
+      {
+        "stage": "analyzing",
+        "outcome": "skipped",
+        "reason": "Prepared SVG: analysis omitted",
+        "measured_duration_ms": null
+      },
+      {
+        "stage": "vectorizing",
+        "outcome": "skipped",
+        "reason": "Prepared SVG: vectorization omitted",
+        "measured_duration_ms": null
+      },
+      {
+        "stage": "digitizing",
+        "outcome": "failed",
+        "reason": null,
+        "measured_duration_ms": 1000
+      },
+      {
+        "stage": "validating",
+        "outcome": "pending",
+        "reason": null,
+        "measured_duration_ms": null
+      }
+    ],
+    "parent_job_id": null,
+    "estimated_remaining_s": null,
+    "sewout_status": "untested",
+    "sewout_record": null,
+    "failure": null,
+    "review": {
+      "cause": "Rail correspondence requires review.",
+      "issues": [
+        {
+          "code": "SATIN_RAILS_UNVERIFIED",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin"
+          ],
+          "region_ids": [],
+          "description": "Rail correspondence requires review.",
+          "evidence": {
+            "simulated": true,
+            "reason": "No verified correspondence for this object"
+          },
+          "suggested_correction": "Review corresponding nodes or valid guides for this object."
+        }
+      ],
+      "object_ids": [
+        "object_mock_satin"
+      ],
+      "region_ids": []
+    },
+    "diagnostics": [
+      {
+        "code": "SATIN_RAILS_UNVERIFIED",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin"
+        ],
+        "region_ids": [],
+        "description": "Rail correspondence requires review.",
+        "evidence": {
+          "simulated": true,
+          "reason": "No verified correspondence for this object"
+        },
+        "suggested_correction": "Review corresponding nodes or valid guides for this object."
+      }
+    ],
     "cancellation_requested": false,
     "issues": [
       {
@@ -52,27 +127,8 @@
         "suggested_correction": "Review corresponding nodes or valid guides for this object."
       }
     ],
-    "status": "needs_review",
-    "stages": [
-      {
-        "stage": "analyzing",
-        "outcome": "skipped",
-        "reason": "Prepared SVG: analysis omitted"
-      },
-      {
-        "stage": "vectorizing",
-        "outcome": "skipped",
-        "reason": "Prepared SVG: vectorization omitted"
-      },
-      {
-        "stage": "digitizing",
-        "outcome": "failed",
-        "measured_duration_ms": 1000
-      },
-      {
-        "stage": "validating",
-        "outcome": "pending"
-      }
-    ]
-  }
+    "validation_report": null,
+    "artifact_manifest": null
+  },
+  "contract_revision": "B2"
 }

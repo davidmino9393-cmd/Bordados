@@ -23,7 +23,7 @@ def validate_transition(previous: JobResponse, following: JobResponse) -> JobRes
     """Called by trusted server code, never a public set-status operation."""
     if following.status not in ALLOWED_TRANSITIONS[previous.status]:
         raise ValueError(f"Forbidden transition: {previous.status} -> {following.status}")
-    immutable_fields = ("job_id", "project_id", "revision_id", "asset_id", "input_kind", "settings_snapshot")
+    immutable_fields = ("job_id", "project_id", "revision_id", "asset_id", "input_kind", "settings_snapshot", "parent_job_id")
     if any(getattr(previous, name) != getattr(following, name) for name in immutable_fields):
         raise ValueError("A transition cannot mutate job identity or its settings revision")
     if previous.status == JobStatus.QUEUED and following.status == JobStatus.DIGITIZING:

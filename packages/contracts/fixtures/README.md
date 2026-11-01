@@ -1,6 +1,6 @@
 # Fixtures compartidos v0.1
 
-Propósito: ejemplos JSON para mocks de web y validación mínima del contrato. **Todos son simulados**, incluidos artefactos, hashes, tiempos y la supuesta muestra física. Propuesta pendiente de revisión humana.
+Propósito: ejemplos JSON para mocks y validación mínima. **Todos son simulados**, incluidos artefactos, hashes, tiempos y muestra física. v0.1 B2 candidato a congelar, pendiente de revisión humana.
 
 Contenido: [Casos](#casos), [copia](#copia), [relacionados](#relacionados).
 
@@ -17,7 +17,7 @@ Contenido: [Casos](#casos), [copia](#copia), [relacionados](#relacionados).
 
 ## Copia
 
-- Cada archivo tiene envelope: `schema_version`, `simulated: true`, `case`, `model`, `direction`, `endpoint` y `payload`.
+- Envelope: `schema_version: "0.1"`, `contract_revision: "B2"`, `simulated: true`, `case`, `model`, `direction`, `endpoint`, `payload`.
 - Claude Code copia los JSON a `apps/web/mocks/`. No necesita importar Python ni el paquete backend.
 - Usar `payload` como cuerpo request/response del mock. El envelope identifica datos de prueba y **no** se envía a la API real.
 - Mantener en web una señal visible de modo simulado; no borrar procedencia al mostrar mocks. El resultado incluye además provenance.simulated=true.
@@ -26,4 +26,4 @@ Contenido: [Casos](#casos), [copia](#copia), [relacionados](#relacionados).
 
 ## Relacionados
 
-[Modelos](../README.md), [estados](../states.md), [unidades](../units.md), [tests](../../../tests/engine/test_contracts.py).
+[Modelos](../README.md), [mapa B2](../B2-web-mapping.md), [protocolo](../B2-protocol.md), [tests](../../../tests/engine/test_contracts.py).

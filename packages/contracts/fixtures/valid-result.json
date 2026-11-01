@@ -15,49 +15,63 @@
     "settings_snapshot": {
       "schema_version": "0.1",
       "target": {
-        "width_mm": 150,
-        "height_mm": 150,
+        "width_mm": 150.0,
+        "height_mm": 150.0,
         "fit": "contain"
       },
       "machine_profile": "janome_mc550e",
       "machine_profile_version": "0.1",
+      "hoop_profile": "sq20b",
       "hoop": {
         "profile_id": "sq20b",
         "profile_version": "0.1",
-        "width_mm": 200,
-        "height_mm": 200,
+        "width_mm": 200.0,
+        "height_mm": 200.0,
         "jef_hoop_code": 4
       },
       "fabric_profile": "gabardina_inicial",
       "fabric_profile_version": "0.1",
       "thread_profile": "embroidery_thread_initial",
       "color_limit": 3,
-      "ai_provider": "none"
+      "ai_provider": "none",
+      "ai_model": null
     },
-    "cancellation_requested": false,
-    "issues": [],
     "status": "ready_for_sewout",
     "stages": [
       {
         "stage": "analyzing",
         "outcome": "skipped",
-        "reason": "Prepared SVG: analysis omitted"
+        "reason": "Prepared SVG: analysis omitted",
+        "measured_duration_ms": null
       },
       {
         "stage": "vectorizing",
         "outcome": "skipped",
-        "reason": "Prepared SVG: vectorization omitted"
+        "reason": "Prepared SVG: vectorization omitted",
+        "measured_duration_ms": null
       },
       {
         "stage": "digitizing",
         "outcome": "completed",
+        "reason": null,
         "measured_duration_ms": 1000
       },
       {
         "stage": "validating",
-        "outcome": "completed"
+        "outcome": "completed",
+        "reason": null,
+        "measured_duration_ms": null
       }
     ],
+    "parent_job_id": null,
+    "estimated_remaining_s": null,
+    "sewout_status": "untested",
+    "sewout_record": null,
+    "failure": null,
+    "review": null,
+    "diagnostics": [],
+    "cancellation_requested": false,
+    "issues": [],
     "validation_report": {
       "schema_version": "0.1",
       "report_id": "report_mock_1",
@@ -101,12 +115,13 @@
           "method": "SIMULATED fixture check"
         }
       ],
+      "issues": [],
       "digital_checks_passed": true,
       "metrics": {
         "stitch_bounds_mm": {
-          "min_x_mm": 0,
-          "min_y_mm": 0,
-          "max_x_mm": 150,
+          "min_x_mm": 0.0,
+          "min_y_mm": 0.0,
+          "max_x_mm": 150.0,
           "max_y_mm": 142.8
         },
         "needle_stitches": 6789,
@@ -121,8 +136,7 @@
         "count_method": "MOCK values based on historical inventory; not reread in H0-02",
         "raw_commands_artifact_id": "artifact_mock_commands",
         "physical_trim_execution_verified": false
-      },
-      "issues": []
+      }
     },
     "artifact_manifest": {
       "schema_version": "0.1",
@@ -141,6 +155,7 @@
       "artifacts": [
         {
           "artifact_id": "artifact_mock_jef",
+          "job_id": "job_mock_1",
           "kind": "jef",
           "filename": "mock.jef",
           "media_type": "application/octet-stream",
@@ -149,11 +164,15 @@
           "derived_from": "export",
           "download": {
             "url": "https://example.invalid/mock/mock.jef",
+            "issued_at": "2026-11-01T11:55:00Z",
             "expires_at": "2026-11-01T12:00:00Z"
-          }
+          },
+          "download_url": "https://example.invalid/mock/mock.jef",
+          "expires_at": "2026-11-01T12:00:00Z"
         },
         {
           "artifact_id": "artifact_mock_editable_svg",
+          "job_id": "job_mock_1",
           "kind": "editable_svg",
           "filename": "mock-vector.svg",
           "media_type": "image/svg+xml",
@@ -162,11 +181,15 @@
           "derived_from": "document",
           "download": {
             "url": "https://example.invalid/mock/mock-vector.svg",
+            "issued_at": "2026-11-01T11:55:00Z",
             "expires_at": "2026-11-01T12:00:00Z"
-          }
+          },
+          "download_url": "https://example.invalid/mock/mock-vector.svg",
+          "expires_at": "2026-11-01T12:00:00Z"
         },
         {
           "artifact_id": "artifact_mock_inkstitch_svg",
+          "job_id": "job_mock_1",
           "kind": "inkstitch_svg",
           "filename": "mock-inkstitch.svg",
           "media_type": "image/svg+xml",
@@ -175,11 +198,15 @@
           "derived_from": "document",
           "download": {
             "url": "https://example.invalid/mock/mock-inkstitch.svg",
+            "issued_at": "2026-11-01T11:55:00Z",
             "expires_at": "2026-11-01T12:00:00Z"
-          }
+          },
+          "download_url": "https://example.invalid/mock/mock-inkstitch.svg",
+          "expires_at": "2026-11-01T12:00:00Z"
         },
         {
           "artifact_id": "artifact_mock_preview_png",
+          "job_id": "job_mock_1",
           "kind": "preview_png",
           "filename": "mock-preview.png",
           "media_type": "image/png",
@@ -188,11 +215,15 @@
           "derived_from": "jef_reread",
           "download": {
             "url": "https://example.invalid/mock/mock-preview.png",
+            "issued_at": "2026-11-01T11:55:00Z",
             "expires_at": "2026-11-01T12:00:00Z"
-          }
+          },
+          "download_url": "https://example.invalid/mock/mock-preview.png",
+          "expires_at": "2026-11-01T12:00:00Z"
         },
         {
           "artifact_id": "artifact_mock_validation_json",
+          "job_id": "job_mock_1",
           "kind": "validation_json",
           "filename": "mock-validation.json",
           "media_type": "application/json",
@@ -201,11 +232,15 @@
           "derived_from": "validation",
           "download": {
             "url": "https://example.invalid/mock/mock-validation.json",
+            "issued_at": "2026-11-01T11:55:00Z",
             "expires_at": "2026-11-01T12:00:00Z"
-          }
+          },
+          "download_url": "https://example.invalid/mock/mock-validation.json",
+          "expires_at": "2026-11-01T12:00:00Z"
         },
         {
           "artifact_id": "artifact_mock_commands",
+          "job_id": "job_mock_1",
           "kind": "raw_commands_json",
           "filename": "mock-commands.json",
           "media_type": "application/json",
@@ -214,15 +249,18 @@
           "derived_from": "jef_reread",
           "download": {
             "url": "https://example.invalid/mock/mock-commands.json",
+            "issued_at": "2026-11-01T11:55:00Z",
             "expires_at": "2026-11-01T12:00:00Z"
-          }
+          },
+          "download_url": "https://example.invalid/mock/mock-commands.json",
+          "expires_at": "2026-11-01T12:00:00Z"
         }
       ],
       "reread_metrics": {
         "stitch_bounds_mm": {
-          "min_x_mm": 0,
-          "min_y_mm": 0,
-          "max_x_mm": 150,
+          "min_x_mm": 0.0,
+          "min_y_mm": 0.0,
+          "max_x_mm": 150.0,
           "max_y_mm": 142.8
         },
         "needle_stitches": 6789,
@@ -239,5 +277,6 @@
         "physical_trim_execution_verified": false
       }
     }
-  }
+  },
+  "contract_revision": "B2"
 }

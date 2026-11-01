@@ -7,9 +7,12 @@ from .jobs import (
     JobCreate, JobResponse, JobStatus, ProjectCreate, ProjectResponse,
     RevisionCreate, RevisionResponse, SewoutRecord, SewoutResponse,
 )
-from .results import ArtifactManifest, Issue, StitchPlan, ValidationReport
+from .results import ArtifactManifest, AuthorizedArtifactManifest, Issue, StitchPlan, ValidationReport
 from .settings import JobSettings, SourceAsset
 from .states import ALLOWED_TRANSITIONS, validate_transition
+from .profiles import ProfileCatalog
+from .queries import ProjectDetail, ProjectList, RevisionList
+from .revisions import CorrectionRevision, RevisionRequest, SizeVariantRevision
 
 __all__ = [
     "SCHEMA_VERSION", "AnalysisSpec", "EmbroideryDocument", "JobCreate", "JobResponse",
@@ -18,4 +21,7 @@ __all__ = [
     "ValidationReport", "JobSettings", "SourceAsset", "ALLOWED_TRANSITIONS", "validate_transition",
     "AssetUpload", "CancelRequest", "ErrorCode", "ProblemResponse", "ISSUE_RULES", "IssueCode",
     "Severity", "ValidationStage",
+    "ProfileCatalog", "ProjectDetail", "ProjectList", "RevisionList", "RevisionRequest",
+    "SizeVariantRevision", "CorrectionRevision",
+    "AuthorizedArtifactManifest",
 ]

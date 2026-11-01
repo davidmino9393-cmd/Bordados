@@ -37,13 +37,15 @@ class OpenAPIContractTests(unittest.TestCase):
             with self.subTest(filename=filename):
                 self.assertEqual((builder.CONTRACTS / filename).read_text(encoding="utf-8"), builder.render_json(generated))
 
-    def test_eight_operations_refs_and_examples_are_coherent(self):
+    def test_twelve_operations_refs_and_examples_are_coherent(self):
         document = builder.build_openapi()
         expected = {
             ("/api/v1/projects", "post"), ("/api/v1/projects/{id}/assets", "post"),
             ("/api/v1/projects/{id}/jobs", "post"), ("/api/v1/jobs/{id}", "get"),
             ("/api/v1/jobs/{id}/artifacts", "get"), ("/api/v1/jobs/{id}/cancel", "post"),
             ("/api/v1/projects/{id}/revisions", "post"), ("/api/v1/projects/{id}/sewouts", "post"),
+            ("/api/v1/projects", "get"), ("/api/v1/projects/{id}", "get"),
+            ("/api/v1/profiles", "get"), ("/api/v1/projects/{id}/revisions", "get"),
         }
         self.assertEqual({(path, method) for path, entry in document["paths"].items() for method in entry}, expected)
         self._check_references(document)
@@ -63,6 +65,8 @@ class OpenAPIContractTests(unittest.TestCase):
         payloads = []
         for node in nodes(document["paths"]):
             if not isinstance(node, dict) or "examples" not in node or "schema" not in node:
+                continue
+            if "$ref" not in node["schema"]:
                 continue
             model_name = node["schema"]["$ref"].rsplit("/", 1)[-1]
             for record in node["examples"].values():

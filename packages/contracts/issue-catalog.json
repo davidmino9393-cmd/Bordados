@@ -1,4 +1,5 @@
 {
+  "contract_revision": "B2",
   "http_errors": {
     "ARTIFACTS_UNAVAILABLE": {
       "status": 409,
@@ -205,6 +206,6 @@
       "stage": "worker"
     }
   },
-  "review_status": "pending_human_review",
+  "review_status": "candidate_for_freeze",
   "schema_version": "0.1"
 }

@@ -15,48 +15,65 @@
     "settings_snapshot": {
       "schema_version": "0.1",
       "target": {
-        "width_mm": 150,
-        "height_mm": 150,
+        "width_mm": 150.0,
+        "height_mm": 150.0,
         "fit": "contain"
       },
       "machine_profile": "janome_mc550e",
       "machine_profile_version": "0.1",
+      "hoop_profile": "sq20b",
       "hoop": {
         "profile_id": "sq20b",
         "profile_version": "0.1",
-        "width_mm": 200,
-        "height_mm": 200,
+        "width_mm": 200.0,
+        "height_mm": 200.0,
         "jef_hoop_code": 4
       },
       "fabric_profile": "gabardina_inicial",
       "fabric_profile_version": "0.1",
       "thread_profile": "embroidery_thread_initial",
       "color_limit": 3,
-      "ai_provider": "none"
+      "ai_provider": "none",
+      "ai_model": null
     },
-    "cancellation_requested": true,
-    "issues": [],
     "status": "cancelled",
     "stages": [
       {
         "stage": "analyzing",
         "outcome": "skipped",
-        "reason": "Prepared SVG: analysis omitted"
+        "reason": "Prepared SVG: analysis omitted",
+        "measured_duration_ms": null
       },
       {
         "stage": "vectorizing",
         "outcome": "skipped",
-        "reason": "Prepared SVG: vectorization omitted"
+        "reason": "Prepared SVG: vectorization omitted",
+        "measured_duration_ms": null
       },
       {
         "stage": "digitizing",
         "outcome": "cancelled",
+        "reason": null,
         "measured_duration_ms": 1000
       },
       {
         "stage": "validating",
-        "outcome": "pending"
+        "outcome": "pending",
+        "reason": null,
+        "measured_duration_ms": null
       }
-    ]
-  }
+    ],
+    "parent_job_id": null,
+    "estimated_remaining_s": null,
+    "sewout_status": "untested",
+    "sewout_record": null,
+    "failure": null,
+    "review": null,
+    "diagnostics": [],
+    "cancellation_requested": true,
+    "issues": [],
+    "validation_report": null,
+    "artifact_manifest": null
+  },
+  "contract_revision": "B2"
 }

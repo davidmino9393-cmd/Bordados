@@ -15,5 +15,6 @@
     "thread": "SIMULATED three-tone thread",
     "observations": "SIMULATED physical record for interface development. No real sample was sewn.",
     "photo_asset_ids": []
-  }
+  },
+  "contract_revision": "B2"
 }
