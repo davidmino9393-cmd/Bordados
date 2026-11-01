@@ -222,6 +222,9 @@ export const es = {
     apply: 'Aplicar y regenerar',
     nothingChosen: 'Elegí al menos una corrección para regenerar.',
     originalRef: 'Original para consultar',
+    filesNotReadyTitle: 'Archivos para revisar: no están listos para prueba',
+    filesNotReadyText:
+      'Los controles digitales no pasaron. Podés inspeccionarlos o registrar una muestra, pero resolvé las incidencias antes de usarlos como versión final.',
   },
   sewout: {
     title: 'Registrar muestra física',

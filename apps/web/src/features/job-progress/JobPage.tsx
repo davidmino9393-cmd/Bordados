@@ -7,7 +7,7 @@ import { RetryCountdown } from '../../shared/components/RetryCountdown';
 import { useAsync } from '../../shared/hooks/useAsync';
 import { useJobPolling } from '../../shared/hooks/useJobPolling';
 import { useRenewBeforeExpiry } from '../../shared/hooks/useRenewBeforeExpiry';
-import { ReviewPanel } from '../review/ReviewPanel';
+import { ReviewResult } from '../review/ReviewResult';
 import { CancelledNotice, FailedNotice } from './FailureAndCancelled';
 import { JobProgress } from './JobProgress';
 import { ReadyResult } from './ReadyResult';
@@ -49,7 +49,7 @@ export function JobPage() {
       <JobProgress job={job} onJobChanged={replace} />
       {job.status === JobStatus.Failed && <FailedNotice job={job} />}
       {job.status === JobStatus.Cancelled && <CancelledNotice job={job} />}
-      {job.status === JobStatus.NeedsReview && <ReviewPanel job={job} asset={asset} />}
+      {job.status === JobStatus.NeedsReview && <ReviewResult job={job} asset={asset} onJobChanged={replace} />}
       {job.status === JobStatus.ReadyForSewout && <ReadyResult job={job} asset={asset} onJobChanged={replace} />}
     </>
   );

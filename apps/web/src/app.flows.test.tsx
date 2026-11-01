@@ -317,13 +317,36 @@ describe('muestra física (POST /sewouts)', () => {
     expect(await screen.findByRole('heading', { name: FORM })).toBeInTheDocument();
   });
 
-  it.each([['logo-fallo.png'], ['logo-revision.png']])('no aparece con %s (falla o necesita revisión)', async (name) => {
+  it('no aparece si el trabajo falló', async () => {
     const user = setupUser();
     renderApp();
-    await generateFrom(user, pngFile(name));
+    await generateFrom(user, pngFile('logo-fallo.png'));
     await advance(FULL_RUN_MS);
-    await screen.findByText(/No se pudo generar|necesita revisión/);
+    await screen.findByText('No se pudo generar el bordado');
     expect(screen.queryByRole('heading', { name: FORM })).not.toBeInTheDocument();
+  });
+
+  it('no aparece si el trabajo se canceló', async () => {
+    const user = setupUser();
+    renderApp();
+    await generateFrom(user, pngFile('logo.png'));
+    await advance(1200);
+    await user.click(screen.getByRole('button', { name: 'Cancelar generación' }));
+    await advance(2000);
+    await screen.findByText('Generación cancelada');
+    expect(screen.queryByRole('heading', { name: FORM })).not.toBeInTheDocument();
+  });
+
+  it('también aparece en needs_review (decisión del integrador) y no cambia el estado digital', async () => {
+    const user = setupUser();
+    renderApp();
+    await generateFrom(user, pngFile('logo-revision.png'));
+    await advance(FULL_RUN_MS);
+    await screen.findByText('Hay un elemento que necesita revisión');
+    expect(screen.getByRole('heading', { name: FORM })).toBeInTheDocument();
+    // Sin archivos generados no hay descargas ni aviso de archivos no aptos.
+    expect(screen.queryByRole('link', { name: /Descargar/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/no están listos para prueba/)).not.toBeInTheDocument();
   });
 
   it('registra una muestra aprobada: cambia el estado físico y el digital queda igual', async () => {
