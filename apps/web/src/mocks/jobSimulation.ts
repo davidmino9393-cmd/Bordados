@@ -1,6 +1,7 @@
 // SIMULADO — calcula el estado de un trabajo a partir del tiempo transcurrido.
 // Las formas de respuesta salen de los fixtures copiados de packages/contracts/fixtures.
 import cancellationFixture from '../../mocks/cancellation.json';
+import completedFixture from '../../mocks/job-completed-real.json';
 import failureFixture from '../../mocks/failure.json';
 import needsReviewFixture from '../../mocks/needs-review.json';
 import validResultFixture from '../../mocks/valid-result.json';
@@ -88,11 +89,11 @@ function stitchedBounds(job: SimulatedJob) {
 }
 
 /** Instantánea del manifiesto: las URLs vienen null; getArtifacts las emite frescas. */
-function readyManifest(job: SimulatedJob, template: ArtifactManifest): ArtifactManifest {
+function readyManifest(job: SimulatedJob, template: ArtifactManifest, keepBounds = false): ArtifactManifest {
   const manifest = clone(template);
   manifest.job_id = job.id;
   manifest.revision_id = job.revisionId;
-  manifest.reread_metrics.stitch_bounds_mm = stitchedBounds(job);
+  if (!keepBounds) manifest.reread_metrics.stitch_bounds_mm = stitchedBounds(job);
   manifest.artifacts = manifest.artifacts.map((a): Artifact => ({
     ...a,
     job_id: job.id,
@@ -118,6 +119,16 @@ function terminalResponse(job: SimulatedJob, stageMs: number, cancelledAtIndex: 
   }
   if (outcome === ScenarioOutcome.Failed) {
     return withIdentity(failureFixture.payload as JobResponse, job, buildStages(job, 0, 'failed', stageMs));
+  }
+  if (outcome === ScenarioOutcome.NeedsReviewWithFiles) {
+    const response = withIdentity(completedFixture.payload as unknown as JobResponse, job, buildStages(job, 0, 'done', stageMs));
+    // Medidas y conteos del fixture tal cual; solo cambian los ids para pertenecer a este job.
+    response.artifact_manifest = readyManifest(job, response.artifact_manifest as ArtifactManifest, true);
+    if (response.validation_report) {
+      response.validation_report.job_id = job.id;
+      response.validation_report.revision_id = job.revisionId;
+    }
+    return response;
   }
   if (outcome === ScenarioOutcome.NeedsReview) {
     return withIdentity(needsReviewFixture.payload as JobResponse, job, buildStages(job, 0, 'done', stageMs));

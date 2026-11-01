@@ -1,0 +1,1153 @@
+{
+  "schema_version": "0.1",
+  "simulated": true,
+  "case": "job-completed-real",
+  "model": "JobResponse",
+  "direction": "response",
+  "endpoint": "GET /api/v1/jobs/{id}",
+  "note": "SIMULADO. Forma de un job que ya produjo archivos pero cuyos controles digitales no pasaron (needs_review, digital_checks_passed=false). Conteos y medidas son los del inventario historico citado en packages/contracts/fixtures/README.md; ningun worker ni JEF releido los produjo. Hashes ficticios.",
+  "contract_revision": "B2",
+  "payload": {
+    "schema_version": "0.1",
+    "job_id": "job_mock_1",
+    "project_id": "project_mock_1",
+    "revision_id": "rev_mock_1",
+    "asset_id": "asset_mock_svg",
+    "input_kind": "prepared_svg",
+    "settings_snapshot": {
+      "schema_version": "0.1",
+      "target": {
+        "width_mm": 150.0,
+        "height_mm": 150.0,
+        "fit": "contain"
+      },
+      "machine_profile": "janome_mc550e",
+      "machine_profile_version": "0.1",
+      "hoop_profile": "sq20b",
+      "hoop": {
+        "profile_id": "sq20b",
+        "profile_version": "0.1",
+        "width_mm": 200.0,
+        "height_mm": 200.0,
+        "jef_hoop_code": 4
+      },
+      "fabric_profile": "gabardina_inicial",
+      "fabric_profile_version": "0.1",
+      "thread_profile": "embroidery_thread_initial",
+      "color_limit": 3,
+      "ai_provider": "none",
+      "ai_model": null
+    },
+    "status": "needs_review",
+    "stages": [
+      {
+        "stage": "analyzing",
+        "outcome": "skipped",
+        "reason": "Prepared SVG: analysis omitted",
+        "measured_duration_ms": null
+      },
+      {
+        "stage": "vectorizing",
+        "outcome": "skipped",
+        "reason": "Prepared SVG: vectorization omitted",
+        "measured_duration_ms": null
+      },
+      {
+        "stage": "digitizing",
+        "outcome": "completed",
+        "reason": null,
+        "measured_duration_ms": 1000
+      },
+      {
+        "stage": "validating",
+        "outcome": "completed",
+        "reason": null,
+        "measured_duration_ms": 300
+      }
+    ],
+    "parent_job_id": null,
+    "estimated_remaining_s": null,
+    "sewout_status": "untested",
+    "sewout_record": null,
+    "failure": null,
+    "review": {
+      "cause": "Missing guides require object-level review.",
+      "issues": [
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_01"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_02"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_03"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_04"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_05"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_06"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_07"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_08"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_09"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_10"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_11"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_12"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_13"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_14"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        }
+      ],
+      "object_ids": [
+        "object_mock_satin_01",
+        "object_mock_satin_02",
+        "object_mock_satin_03",
+        "object_mock_satin_04",
+        "object_mock_satin_05",
+        "object_mock_satin_06",
+        "object_mock_satin_07",
+        "object_mock_satin_08",
+        "object_mock_satin_09",
+        "object_mock_satin_10",
+        "object_mock_satin_11",
+        "object_mock_satin_12",
+        "object_mock_satin_13",
+        "object_mock_satin_14"
+      ],
+      "region_ids": []
+    },
+    "diagnostics": [
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_01"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_02"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_03"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_04"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_05"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_06"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_07"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_08"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_09"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_10"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_11"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_12"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_13"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_14"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      }
+    ],
+    "cancellation_requested": false,
+    "issues": [
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_01"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_02"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_03"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_04"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_05"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_06"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_07"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_08"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_09"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_10"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_11"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_12"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_13"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "object_mock_satin_14"
+        ],
+        "region_ids": [],
+        "description": "Missing guides require object-level review.",
+        "evidence": {
+          "simulated": true,
+          "guides_present": false,
+          "note": "SIMULATED: check the column construction before accepting this object."
+        },
+        "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+      }
+    ],
+    "validation_report": {
+      "schema_version": "0.1",
+      "report_id": "report_mock_completed_1",
+      "job_id": "job_mock_1",
+      "revision_id": "rev_mock_1",
+      "provenance": {
+        "simulated": true,
+        "method": "SIMULATED contract fixture; no worker run or JEF reread",
+        "engine_version": "mock",
+        "parser_version": "mock"
+      },
+      "checks": [
+        {
+          "kind": "file",
+          "outcome": "passed",
+          "method": "SIMULATED fixture check"
+        },
+        {
+          "kind": "dimensions",
+          "outcome": "passed",
+          "method": "SIMULATED fixture check"
+        },
+        {
+          "kind": "hoop",
+          "outcome": "passed",
+          "method": "SIMULATED fixture check"
+        },
+        {
+          "kind": "geometry",
+          "outcome": "passed",
+          "method": "SIMULATED fixture check"
+        },
+        {
+          "kind": "routing",
+          "outcome": "passed",
+          "method": "SIMULATED fixture check"
+        },
+        {
+          "kind": "satin",
+          "outcome": "needs_review",
+          "method": "SIMULATED fixture check"
+        }
+      ],
+      "issues": [
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_01"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_02"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_03"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_04"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_05"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_06"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_07"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_08"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_09"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_10"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_11"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_12"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_13"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "object_mock_satin_14"
+          ],
+          "region_ids": [],
+          "description": "Missing guides require object-level review.",
+          "evidence": {
+            "simulated": true,
+            "guides_present": false,
+            "note": "SIMULATED: check the column construction before accepting this object."
+          },
+          "suggested_correction": "Check whether this satin column uses corresponding paired nodes; do not dismiss the warning by text."
+        }
+      ],
+      "digital_checks_passed": false,
+      "metrics": {
+        "stitch_bounds_mm": {
+          "min_x_mm": 0.0,
+          "min_y_mm": 0.0,
+          "max_x_mm": 150.0,
+          "max_y_mm": 142.8
+        },
+        "needle_stitches": 6789,
+        "thread_blocks": 3,
+        "color_changes": 2,
+        "raw_jump_commands": 272,
+        "displacement_jump_commands": 112,
+        "interpreted_trims": 53,
+        "max_stitch_length_mm": 4.87,
+        "jump_travel_mm": 1107.71,
+        "processing_duration_ms": 1300,
+        "count_method": "MOCK values based on historical inventory; not reread by a worker",
+        "raw_commands_artifact_id": "artifact_mock_commands",
+        "physical_trim_execution_verified": false
+      }
+    },
+    "artifact_manifest": {
+      "schema_version": "0.1",
+      "manifest_id": "manifest_mock_completed_1",
+      "job_id": "job_mock_1",
+      "revision_id": "rev_mock_1",
+      "provenance": {
+        "simulated": true,
+        "method": "SIMULATED contract fixture; no worker run or JEF reread",
+        "engine_version": "mock",
+        "parser_version": "mock"
+      },
+      "input_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "settings_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "geometry_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "artifacts": [
+        {
+          "artifact_id": "artifact_mock_jef",
+          "job_id": "job_mock_1",
+          "kind": "jef",
+          "filename": "output.jef",
+          "media_type": "application/octet-stream",
+          "sha256": "e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1",
+          "byte_size": 14816,
+          "derived_from": "export",
+          "download": null,
+          "download_url": null,
+          "expires_at": null
+        },
+        {
+          "artifact_id": "artifact_mock_editable_svg",
+          "job_id": "job_mock_1",
+          "kind": "editable_svg",
+          "filename": "editable.svg",
+          "media_type": "image/svg+xml",
+          "sha256": "e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3",
+          "byte_size": 8192,
+          "derived_from": "document",
+          "download": null,
+          "download_url": null,
+          "expires_at": null
+        },
+        {
+          "artifact_id": "artifact_mock_preview_png",
+          "job_id": "job_mock_1",
+          "kind": "preview_png",
+          "filename": "preview.png",
+          "media_type": "image/png",
+          "sha256": "e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2",
+          "byte_size": 4096,
+          "derived_from": "jef_reread",
+          "download": null,
+          "download_url": null,
+          "expires_at": null
+        },
+        {
+          "artifact_id": "artifact_mock_commands",
+          "job_id": "job_mock_1",
+          "kind": "raw_commands_json",
+          "filename": "raw-commands.json",
+          "media_type": "application/json",
+          "sha256": "e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4",
+          "byte_size": 2048,
+          "derived_from": "jef_reread",
+          "download": null,
+          "download_url": null,
+          "expires_at": null
+        }
+      ],
+      "reread_metrics": {
+        "stitch_bounds_mm": {
+          "min_x_mm": 0.0,
+          "min_y_mm": 0.0,
+          "max_x_mm": 150.0,
+          "max_y_mm": 142.8
+        },
+        "needle_stitches": 6789,
+        "thread_blocks": 3,
+        "color_changes": 2,
+        "raw_jump_commands": 272,
+        "displacement_jump_commands": 112,
+        "interpreted_trims": 53,
+        "max_stitch_length_mm": 4.87,
+        "jump_travel_mm": 1107.71,
+        "processing_duration_ms": 1300,
+        "count_method": "MOCK values based on historical inventory; not reread by a worker",
+        "raw_commands_artifact_id": "artifact_mock_commands",
+        "physical_trim_execution_verified": false
+      }
+    }
+  }
+}

@@ -4,6 +4,8 @@ import { JobStatus, PIPELINE_STAGES, type PipelineStage } from '../../contracts/
 export const ScenarioOutcome = {
   Ready: 'ready',
   NeedsReview: 'needs_review',
+  /** Controles digitales sin aprobar, pero con archivos ya generados (fixture job-completed-real). */
+  NeedsReviewWithFiles: 'needs_review_with_files',
   Failed: 'failed',
 } as const;
 export type ScenarioOutcome = (typeof ScenarioOutcome)[keyof typeof ScenarioOutcome];
@@ -20,6 +22,7 @@ export interface Scenario {
 export const SCENARIO_KEYWORD = {
   Failure: 'fallo',
   Review: 'revision',
+  Completed: 'completo',
 } as const;
 
 const PREPARED_SKIPS: PipelineStage[] = [JobStatus.Analyzing, JobStatus.Vectorizing];
@@ -33,6 +36,9 @@ export function pickScenario(filename: string, isSvg: boolean): Scenario {
   }
   if (name.includes(SCENARIO_KEYWORD.Review)) {
     return { name: 'revision', outcome: ScenarioOutcome.NeedsReview, skipped };
+  }
+  if (isSvg && name.includes(SCENARIO_KEYWORD.Completed)) {
+    return { name: 'completo', outcome: ScenarioOutcome.NeedsReviewWithFiles, skipped };
   }
   return { name: 'exito', outcome: ScenarioOutcome.Ready, skipped };
 }

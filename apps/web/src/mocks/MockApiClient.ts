@@ -22,13 +22,18 @@ import { pickScenario, ScenarioOutcome, type Scenario } from './scenarios/scenar
 
 const DEFAULT_STAGE_MS = 1500;
 const FALLBACK_RASTER_PX = { width: 800, height: 600 };
-const DOWNLOAD_TTL_MS = 300_000;
+/** El contrato fija 300 s; solo las pruebas lo acortan (downloadTtlMs). */
+const DEFAULT_DOWNLOAD_TTL_MS = 300_000;
 const MOCK_SHA = 'a'.repeat(64);
 
 export interface MockOptions {
   now?: () => number;
   stageMs?: number;
   ollamaAvailable?: boolean;
+  /** Solo para probar vencimientos; el contrato real es siempre 300 s. */
+  downloadTtlMs?: number;
+  /** Recibe el nombre de cada operación llamada (para pruebas e2e). */
+  onCall?: (method: string) => void;
 }
 
 interface StoredAsset {
@@ -60,6 +65,7 @@ function liveUrl(kind: string): string {
 export function createMockApiClient(options: MockOptions = {}): ApiClient {
   const now = options.now ?? Date.now;
   const stageMs = options.stageMs ?? DEFAULT_STAGE_MS;
+  const downloadTtlMs = options.downloadTtlMs ?? DEFAULT_DOWNLOAD_TTL_MS;
   const catalog = structuredClone(profilesFixture.payload) as ProfileCatalog;
   if (options.ollamaAvailable === false) {
     const ollama = catalog.providers.find((p) => p.provider_id === AiProvider.Ollama);
@@ -111,10 +117,11 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
   };
   const view = (job: SimulatedJob): JobResponse => simulateJob(job, now(), stageMs, latestSewout(job.revisionId));
 
+  // Cada emisión lleva su marca (#issued) para poder distinguir un enlace nuevo de uno anterior.
   const freshDownload = (url: string): ArtifactDownload => ({
-    url,
+    url: `${url}#issued=${now()}`,
     issued_at: iso(now()),
-    expires_at: iso(now() + DOWNLOAD_TTL_MS),
+    expires_at: iso(now() + downloadTtlMs),
   });
   const assetView = (stored: StoredAsset): SourceAsset => ({
     ...stored.asset,
@@ -147,7 +154,7 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
     return view(job);
   }
 
-  return {
+  const client: ApiClient = {
     isSimulated: true,
     async getProfiles() {
       return structuredClone(catalog);
@@ -307,6 +314,20 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
       });
     },
   };
+  return options.onCall ? traced(client, options.onCall) : client;
+}
+
+/** Avisa de cada operación llamada, sin alterar su resultado. */
+function traced(client: ApiClient, onCall: (method: string) => void): ApiClient {
+  const wrapped: Record<string, unknown> = { ...client };
+  for (const [name, value] of Object.entries(client)) {
+    if (typeof value !== 'function') continue;
+    wrapped[name] = (...args: unknown[]) => {
+      onCall(name);
+      return (value as (...a: unknown[]) => unknown)(...args);
+    };
+  }
+  return wrapped as unknown as ApiClient;
 }
 
 export { CANCEL_STOP_MS };
