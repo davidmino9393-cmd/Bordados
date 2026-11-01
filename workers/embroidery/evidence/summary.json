@@ -1,7 +1,11 @@
 {
   "platform": "Windows-11-10.0.26300-SP0",
   "original_references_unchanged": 71,
-  "frozen_contract_files_unchanged": 29,
+  "frozen_contract_files_unchanged": 27,
+  "approved_documentation_only_updates": [
+    "packages/contracts/openapi.json",
+    "packages/contracts/states.md"
+  ],
   "exports": [
     {
       "job": "cli-main-final",

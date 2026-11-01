@@ -31,7 +31,7 @@ Docker Linux: pipe dockerDesktopLinuxEngine no disponible. WSL: solo docker-desk
 
 ## Verificacion
 
-Con las dependencias del worker: `python workers/embroidery/verify_evidence.py`. Relee artefactos, compara secuencias/paleta y comprueba los 71 originales y 29 archivos de contratos congelados. Resultado: summary.json.
+`python workers/embroidery/verify_evidence.py` con deps del worker: relee artefactos y comprueba 71 originales y 29 archivos congelados. Solo admite las 2 notas documentales 1:N aprobadas, con hashes y schemas intactos (documentation-clarification.json). Resultado: summary.json.
 
 Pruebas: `python -m unittest discover -s tests/engine -p "test_*.py"`: 16 aprobadas. Las fallas inyectadas son deliberadas; los dos JEF y previews son reales.
 
