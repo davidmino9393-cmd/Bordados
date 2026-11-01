@@ -23,7 +23,7 @@ def stop_tree(process, job=None):
     return result
 
 
-def run_logged(command, directory, name, timeout):
+def run_logged(command, directory, name, timeout, cancel_event=None, env_overrides=None):
     directory = Path(directory)
     record = {"command": list(map(str, command)), "timeout_s": timeout,
               "stdin": "DEVNULL", "shell": False, "hidden_window": os.name == "nt"}
@@ -33,6 +33,8 @@ def run_logged(command, directory, name, timeout):
         options["creationflags"] |= CREATE_SUSPENDED
         record["started_suspended"] = True
     env = dict(os.environ, INKSTITCH_OFFLINE_SCRIPT="true", PYTHONUTF8="1", LANGUAGE="en_US")
+    if env_overrides:
+        env.update(env_overrides)
     for key in ("DISPLAY", "WAYLAND_DISPLAY", "PYTHONIOENCODING"):
         env.pop(key, None)
     started, job = time.monotonic(), None
@@ -46,7 +48,21 @@ def run_logged(command, directory, name, timeout):
                 job = WindowsJob(process)
                 record["process_tree_control"] = "Windows Job Object, KILL_ON_JOB_CLOSE"
                 job.resume(process.pid)
-            process.wait(timeout=timeout)
+            if cancel_event is None:
+                process.wait(timeout=timeout)
+            else:
+                while process.poll() is None:
+                    if cancel_event.is_set():
+                        record["cancelled"] = True
+                        record["cleanup"] = stop_tree(process, job)
+                        break
+                    remaining = timeout - (time.monotonic() - started)
+                    if remaining <= 0:
+                        raise subprocess.TimeoutExpired(command, timeout)
+                    try:
+                        process.wait(timeout=min(0.1, remaining))
+                    except subprocess.TimeoutExpired:
+                        pass
             record["returncode"] = process.returncode
         except subprocess.TimeoutExpired:
             record["timed_out"] = True
@@ -67,6 +83,8 @@ def run_logged(command, directory, name, timeout):
         raise WorkerFailure("WORKER_EXPORT_FAILED", reason, record)
     if record.get("timed_out"):
         raise WorkerFailure("WORKER_TIMEOUT", "process_deadline_exceeded", record)
+    if record.get("cancelled"):
+        raise WorkerFailure("JOB_CANCELLED", "process_tree_stopped", record)
     payload = (directory / f"{name}.stdout.bin").read_bytes()
     if record["returncode"] != 0 or not payload:
         raise WorkerFailure("WORKER_EXPORT_FAILED", "nonzero_exit_or_empty_payload", record)
