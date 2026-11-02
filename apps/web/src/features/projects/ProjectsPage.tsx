@@ -1,18 +1,36 @@
-import { useState, type FormEvent } from 'react';
+import { useCallback, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApi } from '../../api/ApiProvider';
+import type { ProjectResponse } from '../../contracts/project';
 import { es } from '../../copy/es';
 import { Card } from '../../shared/components/Card';
 import { Field } from '../../shared/components/Field';
+import { LoadMore } from '../../shared/components/LoadMore';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { errorMessage, useAsync } from '../../shared/hooks/useAsync';
 import { useDocumentTitle } from '../../shared/hooks/useDocumentTitle';
+import { useLoadMore } from '../../shared/hooks/useLoadMore';
 import { newIdempotencyKey } from '../../shared/utils/idempotency';
+
+const NO_PROJECTS: ProjectResponse[] = [];
 
 export function ProjectsPage() {
   const api = useApi();
   const navigate = useNavigate();
   const projects = useAsync(() => api.listProjects(), [api]);
+  const fetchPage = useCallback(
+    async (cursor: string) => {
+      const page = await api.listProjects(cursor);
+      return { items: page.items, next: page.next_cursor };
+    },
+    [api],
+  );
+  const list = useLoadMore(
+    { items: projects.data?.items ?? NO_PROJECTS, next: projects.data?.next_cursor ?? null },
+    (project) => project.project_id,
+    fetchPage,
+    'projects',
+  );
   const [name, setName] = useState('');
   const [nameError, setNameError] = useState<string>();
   const [submitError, setSubmitError] = useState<string>();
@@ -36,7 +54,7 @@ export function ProjectsPage() {
   };
 
   useDocumentTitle(es.projects.title);
-  const items = projects.data?.items ?? [];
+  const items = list.items;
   return (
     <>
       <h1>{es.projects.title}</h1>
@@ -65,7 +83,7 @@ export function ProjectsPage() {
           </li>
         ))}
       </ul>
-      {projects.data?.next_cursor && <p className="field__hint">{es.projects.more}</p>}
+      <LoadMore hasMore={list.hasMore} loading={list.loading} error={list.error} onLoadMore={list.loadMore} label={es.projects.more} />
     </>
   );
 }

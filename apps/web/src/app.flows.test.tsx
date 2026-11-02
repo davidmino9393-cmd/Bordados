@@ -878,3 +878,24 @@ describe('cliente real (HttpApiClient)', () => {
     expect(screen.queryByRole('note')).not.toBeInTheDocument();
   });
 });
+
+describe('Ver más en la lista de proyectos', () => {
+  it('muestra el botón mientras haya otra página, la pide con su cursor y lo oculta al terminar', async () => {
+    const project = (n: number) => ({ schema_version: '0.1', project_id: `project_${n}`, name: `Proyecto ${n}`, created_at: '2026-11-02T00:00:00Z' });
+    const base = createMockApiClient();
+    const listProjects = vi.fn(async (cursor?: string) =>
+      cursor === 'c1'
+        ? { schema_version: '0.1', items: [project(3)], next_cursor: null }
+        : { schema_version: '0.1', items: [project(1), project(2)], next_cursor: 'c1' },
+    );
+    const user = setupUser();
+    renderApp({ ...base, listProjects } as ApiClient);
+
+    expect(await screen.findByText('Proyecto 2')).toBeInTheDocument();
+    expect(screen.queryByText('Proyecto 3')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Ver más proyectos' }));
+    expect(await screen.findByText('Proyecto 3')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Ver más proyectos' })).not.toBeInTheDocument();
+    expect(listProjects).toHaveBeenLastCalledWith('c1');
+  });
+});

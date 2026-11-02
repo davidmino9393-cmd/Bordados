@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { JobResponse } from '../../contracts/job';
 import { es } from '../../copy/es';
@@ -5,7 +6,8 @@ import { Card } from '../../shared/components/Card';
 import { JobStatusBadge, SewoutBadge } from '../../shared/components/Badges';
 import { formatMm } from '../../shared/utils/format';
 
-export function JobHistory({ jobs, hasMore }: { jobs: JobResponse[]; hasMore: boolean }) {
+/** `children` va al pie de la lista (p. ej. el «Ver más»). */
+export function JobHistory({ jobs, children }: { jobs: JobResponse[]; children?: ReactNode }) {
   return (
     <Card>
       <Card.Header>{es.jobs.history}</Card.Header>
@@ -29,7 +31,7 @@ export function JobHistory({ jobs, hasMore }: { jobs: JobResponse[]; hasMore: bo
             ))}
           </ul>
         )}
-        {hasMore && <p className="field__hint">{es.jobs.historyMore}</p>}
+        {children}
       </Card.Body>
     </Card>
   );

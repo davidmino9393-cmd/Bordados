@@ -76,7 +76,7 @@ La franja «Datos simulados» aparece siempre que el cliente sea simulado. Sin `
 3. **Autenticación:** el navegador gestiona HTTP Basic en mismo origen; `ServiceBearer` no es utilizable desde el navegador.
 4. **Revisión sin cajas:** `review` trae `object_ids`/`region_ids`, no píxeles; no se dibuja overlay sobre el original.
 5. **Textos del servidor:** `description`/`message` llegan en inglés; la web traduce por `code` (catálogo) y usa el texto del servidor solo como respaldo.
-6. **Paginación:** se muestra la primera página con un aviso si hay `next_cursor`; falta «ver más».
+6. **Paginación:** páginas de 100 con «Ver más» (hook `useLoadMore`); lo cargado de más sobrevive a la renovación de la primera página. El backend ordena de la más antigua a la más reciente: con más de 100 elementos los más nuevos están en las páginas siguientes.
 7. **Muestra física, varias por revisión:** el contrato no dice si una revisión admite más de un registro ni cuál manda; la web permite registrar otro y muestra la proyección que devuelve el servidor.
 8. **Fecha con hora:** `tested_at` es `AwareDatetime`; el selector es `datetime-local` (hora local) y se envía en UTC.
 9. **Fotos de la muestra:** `photo_asset_ids` existe en el contrato, pero no define cómo subir una foto como asset. Queda pendiente (cambio propuesto: indicar el flujo de subida).
@@ -158,7 +158,7 @@ Mejoras que axe no detecta y se hicieron igual:
 
 ## Deuda menor (H1 completo)
 
-- **Paginación:** primera página de proyectos, assets y trabajos; falta «ver más».
+- **Paginación:** «Ver más» en proyectos, imágenes y trabajos. **Foco:** al cambiar de pantalla pasa al título (`useFocusOnNavigation`), sin robarlo en la carga inicial ni si la persona ya lo movió.
 - **Fotos de la muestra:** `photo_asset_ids` queda vacío hasta H2/H3.
 - **Test cruzado con el backend:** que el backend valide con Pydantic los fixtures que consume la web, cuando exista el servicio real.
 

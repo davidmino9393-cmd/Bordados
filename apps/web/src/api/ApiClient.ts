@@ -13,6 +13,11 @@ import type {
 import type { SewoutRecordRequest, SewoutResponse } from '../contracts/sewout';
 import type { ProfileCatalog } from '../contracts/settings';
 
+export interface ProjectCursors {
+  assetsCursor?: string;
+  jobsCursor?: string;
+}
+
 /** Códigos propios del cliente, además de los ErrorCode del contrato. */
 export const ClientErrorCode = {
   Network: 'NETWORK',
@@ -56,9 +61,11 @@ export interface ApiClient {
   /** true cuando las respuestas son simuladas. La UI lo muestra siempre. */
   readonly isSimulated: boolean;
   getProfiles(): Promise<ProfileCatalog>;
-  listProjects(): Promise<ProjectList>;
+  /** Primera página, o la siguiente si se pasa el `next_cursor` de la anterior. */
+  listProjects(cursor?: string): Promise<ProjectList>;
   createProject(name: string, idempotencyKey?: string): Promise<ProjectResponse>;
-  getProject(projectId: string): Promise<ProjectDetail>;
+  /** Un cursor pagina los archivos y otro los trabajos; sin cursores, la primera página de ambos. */
+  getProject(projectId: string, cursors?: ProjectCursors): Promise<ProjectDetail>;
   uploadAsset(projectId: string, file: File, idempotencyKey?: string): Promise<SourceAsset>;
   /** Paso 3 del flujo inicial: `base_revision_id: null`. */
   createInitialRevision(

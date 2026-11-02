@@ -1,11 +1,15 @@
+import { useRef } from 'react';
 import { Link, Route, Routes } from 'react-router-dom';
 import { es } from './copy/es';
 import { JobPage } from './features/job-progress/JobPage';
 import { ProjectPage } from './features/projects/ProjectPage';
 import { ProjectsPage } from './features/projects/ProjectsPage';
 import { SimulationBanner } from './shared/components/SimulationBanner';
+import { useFocusOnNavigation } from './shared/hooks/useFocusOnNavigation';
 
 export function App() {
+  const main = useRef<HTMLElement>(null);
+  useFocusOnNavigation(main);
   return (
     <>
       <header>
@@ -17,7 +21,7 @@ export function App() {
           </nav>
         </div>
       </header>
-      <main className="page">
+      <main className="page" ref={main}>
         <Routes>
           <Route path="/" element={<ProjectsPage />} />
           <Route path="/proyectos/:projectId" element={<ProjectPage />} />

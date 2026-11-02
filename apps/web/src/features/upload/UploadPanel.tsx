@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent } from 'react';
+import { useState, type ChangeEvent, type ReactNode } from 'react';
 import { useApi } from '../../api/ApiProvider';
 import type { SourceAsset } from '../../contracts/project';
 import type { UploadLimits } from '../../contracts/settings';
@@ -18,12 +18,14 @@ interface UploadPanelProps {
   selected: SourceAsset | undefined;
   onSelect: (assetId: string) => void;
   onUploaded: (asset: SourceAsset) => void;
+  /** Pie de la lista de imágenes (p. ej. «Ver más»). */
+  assetsFooter?: ReactNode;
 }
 
 const typeNames = (mimeTypes: string[]) =>
   mimeTypes.map((m) => m.replace('image/', '').replace('svg+xml', 'svg').toUpperCase()).join(', ');
 
-export function UploadPanel({ projectId, limits, assets, selected, onSelect, onUploaded }: UploadPanelProps) {
+export function UploadPanel({ projectId, limits, assets, selected, onSelect, onUploaded, assetsFooter }: UploadPanelProps) {
   const api = useApi();
   const [error, setError] = useState<string>();
   const [uploading, setUploading] = useState(false);
@@ -65,6 +67,7 @@ export function UploadPanel({ projectId, limits, assets, selected, onSelect, onU
             </select>
           </Field>
         )}
+        {assetsFooter}
         {selected && <AssetKindNotice asset={selected} />}
         {selected ? (
           <figure className="region-view">

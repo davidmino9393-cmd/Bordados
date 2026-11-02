@@ -102,6 +102,7 @@ export function issueTitle(code: string, fallback: string): string {
 }
 
 export const es = {
+  loadingMore: 'Cargando…',
   appName: 'Bordados con IA',
   simulationBanner:
     'Datos simulados: lo que ves no proviene del servidor real ni es un bordado generado.',
@@ -115,7 +116,7 @@ export const es = {
     create: 'Crear proyecto',
     nameRequired: 'Escribí un nombre para el proyecto.',
     createdOn: (date: string) => `Creado el ${date}`,
-    more: 'Hay más proyectos que no se muestran todavía.',
+    more: 'Ver más proyectos',
   },
   upload: {
     title: '1. Imagen o SVG',
@@ -131,6 +132,7 @@ export const es = {
     imageBadge: 'Imagen para analizar',
     imageText: 'Primero la analiza una IA; vas a poder revisar ese análisis antes de generar el bordado.',
     pickAsset: 'Imagen del proyecto',
+    moreAssets: 'Ver más imágenes',
     none: 'Subí una imagen para continuar.',
     unavailable: 'La vista previa del original no está disponible.',
   },
@@ -165,7 +167,7 @@ export const es = {
     title: 'Generación del bordado',
     history: 'Trabajos anteriores',
     historyEmpty: 'Todavía no se generó ningún trabajo.',
-    historyMore: 'Hay trabajos anteriores que no se muestran todavía.',
+    historyMore: 'Ver más trabajos',
     variantOf: 'Derivado de otro trabajo',
     open: 'Abrir',
   },

@@ -9,6 +9,15 @@ const HTTP_NOT_IMPLEMENTED = 501;
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 const DEFAULT_UPLOAD_TIMEOUT_MS = 120_000;
+/** Máximo que admite el backend por página; menos viajes y la lista más completa de entrada. */
+const PAGE_LIMIT = 100;
+
+/** `?limit=…&cursor=…` con solo los parámetros presentes. */
+function pageQuery(cursors: Record<string, string | undefined>): string {
+  const query = new URLSearchParams({ limit: String(PAGE_LIMIT) });
+  for (const [name, value] of Object.entries(cursors)) if (value) query.set(name, value);
+  return `?${query}`;
+}
 
 interface RequestOptions {
   body?: unknown;
@@ -85,10 +94,11 @@ export function createHttpApiClient(config: HttpClientConfig = {}): ApiClient {
   return {
     isSimulated: false,
     getProfiles: () => request('GET', '/profiles'),
-    listProjects: () => request('GET', '/projects'),
+    listProjects: (cursor) => request('GET', `/projects${pageQuery({ cursor })}`),
     createProject: (name, key) =>
       request('POST', '/projects', { key, body: { schema_version: '0.1', name } }),
-    getProject: (projectId) => request('GET', `/projects/${id(projectId)}`),
+    getProject: (projectId, cursors) =>
+      request('GET', `/projects/${id(projectId)}${pageQuery({ assets_cursor: cursors?.assetsCursor, jobs_cursor: cursors?.jobsCursor })}`),
     uploadAsset: (projectId, file, key) => {
       const form = new FormData();
       form.append('file', file);

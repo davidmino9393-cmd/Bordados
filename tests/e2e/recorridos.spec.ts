@@ -197,3 +197,14 @@ test('H2: regenerar con otro proveedor vuelve a analizar con ese proveedor', asy
   await page.getByRole('button', { name: 'Regenerar con otro proveedor' }).click();
   await expect(page.getByText(/Analizado con Modelo local \(Ollama\)/)).toBeVisible({ timeout: RUN_TIMEOUT_MS });
 });
+
+test('el foco pasa al título de cada pantalla al navegar', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  expect(await page.evaluate(() => document.activeElement?.tagName)).toBe('BODY'); // la carga inicial no roba el foco
+  await page.getByLabel('Nombre del proyecto').fill('Foco');
+  await page.getByRole('button', { name: 'Crear proyecto' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Foco' })).toBeFocused();
+  await page.getByRole('link', { name: 'Proyectos', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Proyectos' })).toBeFocused();
+});
