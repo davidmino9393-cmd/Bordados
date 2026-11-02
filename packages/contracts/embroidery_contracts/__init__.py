@@ -13,6 +13,7 @@ from .states import ALLOWED_TRANSITIONS, validate_transition
 from .profiles import ProfileCatalog
 from .queries import ProjectDetail, ProjectList, RevisionList
 from .revisions import CorrectionRevision, RevisionRequest, SizeVariantRevision
+from .analysis_decision import AnalysisApprove, AnalysisChangeProvider, AnalysisDecision
 
 __all__ = [
     "SCHEMA_VERSION", "AnalysisSpec", "EmbroideryDocument", "JobCreate", "JobResponse",
@@ -24,4 +25,5 @@ __all__ = [
     "ProfileCatalog", "ProjectDetail", "ProjectList", "RevisionList", "RevisionRequest",
     "SizeVariantRevision", "CorrectionRevision",
     "AuthorizedArtifactManifest",
+    "AnalysisApprove", "AnalysisChangeProvider", "AnalysisDecision",
 ]

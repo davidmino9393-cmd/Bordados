@@ -15,6 +15,7 @@ from embroidery_contracts import (
     RevisionCreate, RevisionResponse, SewoutRecord, SewoutResponse, SourceAsset,
     StitchPlan, ValidationReport, ProfileCatalog, ProjectDetail, ProjectList,
     RevisionList, RevisionRequest, SizeVariantRevision, CorrectionRevision, AuthorizedArtifactManifest,
+    AnalysisDecision, AnalysisApprove, AnalysisChangeProvider,
 )
 from embroidery_contracts.http import ERROR_STATUS, ErrorCode
 from embroidery_contracts.issues import ISSUE_RULES
@@ -26,7 +27,7 @@ MODELS = (
     AssetUpload, CancelRequest, ProblemResponse,
     ProfileCatalog, ProjectDetail, ProjectList, RevisionList, RevisionRequest,
     SizeVariantRevision, CorrectionRevision,
-    AuthorizedArtifactManifest,
+    AuthorizedArtifactManifest, AnalysisDecision, AnalysisApprove, AnalysisChangeProvider,
 )
 COMMON_ERRORS = (
     ErrorCode.MALFORMED_REQUEST, ErrorCode.UNAUTHENTICATED, ErrorCode.FORBIDDEN,
@@ -68,6 +69,31 @@ def job_example(status, cancellation_requested=False):
         if record["stage"] in {"digitizing", "validating"}:
             record["outcome"] = "running" if record["stage"] == status else "pending"
             record.pop("measured_duration_ms", None)
+    return payload
+
+
+def analysis_example():
+    def region(number, role, text, colors, uncertainties):
+        return {"region_id": f"region_mock_{number}", "bounds_px": {"x_px": 10 * number, "y_px": 10, "width_px": 100, "height_px": 50},
+                "representation": "estimated_bbox", "visual_role": role, "observed_text": text,
+                "suggested_colors": colors, "uncertainties": uncertainties}
+    return {"schema_version": "0.1", "analysis_id": "analysis_mock_1", "asset_id": "asset_mock_image", "provider": "openai",
+            "model": "SIMULATED model", "prompt_version": "prompt-mock-0", "original_response_artifact_id": "artifact_mock_provider_raw",
+            "regions": [region(1, "SIMULATED main text", "LOGO", ["#1F3A93"], []),
+                        region(3, "SIMULATED thin text", "Est. 2019", ["#555555"], ["SIMULATED: text may be lost at this size"])],
+            "duration_ms": 4200}
+
+
+def continuation_example():
+    """Job nuevo tras aprobar un análisis: misma revisión, `analyzing` omitido con motivo."""
+    payload = job_example("queued")
+    payload.update(job_id="job_mock_2", parent_job_id="job_mock_1", input_kind="raster_image")
+    payload["settings_snapshot"]["ai_provider"] = "openai"
+    for record in payload["stages"]:
+        if record["stage"] == "analyzing":
+            record.update(outcome="skipped", reason="análisis aprobado en job_mock_1")
+        elif record["stage"] == "vectorizing":
+            record.update(outcome="pending", reason=None)
     return payload
 
 
@@ -172,6 +198,14 @@ def job_operations():
         cancel_path: {"post": operation(cancel_path, "post", "cancelJob", "Always 202 for accepted requests, including terminal jobs. Preserve observed status; cancelled only after processes stop. Never restart a terminal job", JobResponse, 202,
                          {"requested": example(JobResponse, job_example("digitizing", True)), "terminal": example(JobResponse, fixture("cancellation"))}, CancelRequest, {"schema_version": "0.1"}, POST_ERRORS + (ErrorCode.NOT_FOUND,))},
     }
+    analysis_path, decision_path = get_path + "/analysis", get_path + "/analysis-decision"
+    jobs[analysis_path] = {"get": operation(analysis_path, "get", "getJobAnalysis", "H2: visual analysis associated with the job (its own, or the approved one of its parent in a continuation job). 404 when the job has none: prepared SVG, still analyzing, or failed before producing it. bounds_px are always in the original image frame (top-left origin, x right, y down)", AnalysisSpec, 200,
+                                {"simulated": example(AnalysisSpec, analysis_example())}, errors=existing)}
+    jobs[decision_path] = {"post": operation(decision_path, "post", "decideJobAnalysis", "H2: decide an analysis in needs_review with a review_required analysis issue. approve keeps the revision and asset and skips analysis; change_provider creates an analysis_retry revision. Both return a NEW queued job whose parent_job_id is the original, which is unchanged. 409 REVISION_CONFLICT if the original is not in that state; 422 for an unavailable or identical provider or flagged_region_ids outside the analysis", JobResponse, 202,
+                               {"approve": example(JobResponse, continuation_example())}, AnalysisDecision,
+                               {"action": "approve", "flagged_region_ids": ["region_mock_3"]}, POST_ERRORS + (ErrorCode.NOT_FOUND, ErrorCode.REVISION_CONFLICT))}
+    jobs[decision_path]["post"]["requestBody"]["content"]["application/json"]["examples"]["change_provider"] = example(
+        AnalysisDecision, {"action": "change_provider", "ai_provider": "ollama"})
     jobs[create_path]["post"]["description"] += (
         ". One revision admits N distinct jobs: failure, retry or regeneration may create a new job on the same revision. "
         "Each job preserves its identity, input/settings snapshot and completed artifacts; previous artifacts are never overwritten. "
@@ -343,7 +377,7 @@ def write_outputs():
     outputs = {"openapi.json": build_openapi(), "issue-catalog.json": build_issue_catalog()}
     for filename, document in outputs.items():
         (CONTRACTS / filename).write_text(render_json(document), encoding="utf-8")
-    print("Generated OpenAPI for 12 operations and the v0.1 B2 incidence catalogue")
+    print("Generated OpenAPI for 14 operations and the v0.1 B2 incidence catalogue")
 
 
 if __name__ == "__main__":

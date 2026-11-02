@@ -157,7 +157,7 @@ class RevisionResponse(Versioned):
     base_revision_id: Identifier | None
     reason: NonEmpty
     created_at: AwareDatetime
-    kind: Literal["initial", "size_variant", "correction"] = "initial"
+    kind: Literal["initial", "size_variant", "correction", "analysis_retry"] = "initial"
     parent_job_id: Identifier | None = None
     job_id: Identifier | None = None
 

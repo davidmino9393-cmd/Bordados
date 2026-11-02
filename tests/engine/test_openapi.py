@@ -37,7 +37,7 @@ class OpenAPIContractTests(unittest.TestCase):
             with self.subTest(filename=filename):
                 self.assertEqual((builder.CONTRACTS / filename).read_text(encoding="utf-8"), builder.render_json(generated))
 
-    def test_twelve_operations_refs_and_examples_are_coherent(self):
+    def test_fourteen_operations_refs_and_examples_are_coherent(self):
         document = builder.build_openapi()
         expected = {
             ("/api/v1/projects", "post"), ("/api/v1/projects/{id}/assets", "post"),
@@ -46,6 +46,7 @@ class OpenAPIContractTests(unittest.TestCase):
             ("/api/v1/projects/{id}/revisions", "post"), ("/api/v1/projects/{id}/sewouts", "post"),
             ("/api/v1/projects", "get"), ("/api/v1/projects/{id}", "get"),
             ("/api/v1/profiles", "get"), ("/api/v1/projects/{id}/revisions", "get"),
+            ("/api/v1/jobs/{id}/analysis", "get"), ("/api/v1/jobs/{id}/analysis-decision", "post"),
         }
         self.assertEqual({(path, method) for path, entry in document["paths"].items() for method in entry}, expected)
         self._check_references(document)
