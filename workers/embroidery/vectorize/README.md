@@ -39,6 +39,8 @@ Claude conserva `services/api`, web y evaluación F. Este módulo no cambia esta
 
 ## Referencias
 
+- [Continuar en otro chat](CONTINUAR.md)
+- [Próxima tarea de paleta](PROXIMA_TAREA.md)
 - [Modelos congelados](../../../packages/contracts/embroidery_contracts/design.py)
 - [Fixtures de entrada](../../../tests/fixtures/h2/LEEME.txt)
 - [Evidencia reproducible](../../../tests/engine/evidence/h2-e1/README.md)

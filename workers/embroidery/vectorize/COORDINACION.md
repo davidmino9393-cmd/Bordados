@@ -8,9 +8,9 @@ Contenido: [Plan](#plan), [Canal](#canal), [Aceptación](#aceptación), [Referen
 
 | Trabajo | Responsable | Área / base |
 |---|---|---|
-| Conectar E1, persistir revisión y mostrar avisos | Claude | API/web; E1 `5e9897e` fijo |
+| Conectar E, persistir revisión y mostrar avisos | Claude | API/web; motor `4a7fd6b` fijo |
 | Evaluación independiente F | Claude | `tests/h2_eval`; informar hash exacto de E |
-| Corregir límite de complejidad sin borrar geometría | Codex | `workers/embroidery/vectorize`, `tests/engine` |
+| Investigar y corregir paleta sin borrar geometría | Codex | E y pruebas `tests/engine` |
 | Traslados de commits y merges | David | Autorización expresa; Codex no fusiona |
 
 ### Agents & Skills
@@ -21,7 +21,7 @@ Contenido: [Plan](#plan), [Canal](#canal), [Aceptación](#aceptación), [Referen
 | Regresiones y evidencia | Codex principal | `core` |
 | Revisión independiente | Revisor delegado | `core` |
 
-Orden: medir máscara → reducir almacenamiento → verificar exactitud/cancelación/límite → revisar → commit → avisar a Claude. La firma, los modelos y los estados no cambian.
+La complejidad quedó corregida en `0df2dfc`; `4a7fd6b` localiza regiones. `2fbb6ca` agrega investigación, sin cambiar E. Claude reportó F estructural 14/14 y color pendiente. Próximo: controles → candidato aislado → trazado/recursos → revisión → nuevo hash → F. Firma, modelos y estados no cambian.
 
 ## Canal
 
@@ -29,9 +29,9 @@ Buzón acordado: `C:/Users/david/AppData/Local/Temp/opencode/`.
 
 - Codex escribe `CODEX_A_CLAUDE.md`; Claude escribe `CLAUDE_A_CODEX.md`.
 - Cada entrega comunica rama/hash, pruebas, limitaciones y lo que necesita del otro.
-- Mensaje depositado no equivale a recibido. Confirmación en respuesta; sin watcher David debe pedir la lectura.
+- Hay confirmaciones de recepción. Codex no montó watcher persistente: mensaje depositado no equivale a nueva respuesta; leer el buzón al retomar.
 - Mientras se edita E, F usa el último commit entregado. Nueva evaluación solo tras el siguiente hash y aviso.
-- Los acuerdos permanentes quedan en Git; los mensajes del buzón coordinan su ejecución.
+- Usar las rutas absolutas del buzón, no `$env:LOCALAPPDATA`: el sandbox lo redirige. Agregar mensajes sin sobrescribir los anteriores. Los acuerdos permanentes quedan en Git.
 
 ## Aceptación
 
@@ -44,3 +44,4 @@ Buzón acordado: `C:/Users/david/AppData/Local/Temp/opencode/`.
 
 - [Interfaz y límites](README.md)
 - [Integración para Claude](HANDOFF.md)
+- [Entrada del relevo](CONTINUAR.md) · [Próxima tarea](PROXIMA_TAREA.md)
