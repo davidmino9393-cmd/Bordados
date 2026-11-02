@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, screen } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { ApiError, ClientErrorCode } from './api/ApiClient';
 import { createHttpApiClient } from './api/HttpApiClient';
 import { ErrorCode } from './contracts/http';
@@ -670,6 +670,155 @@ describe('409 al pedir los archivos aunque el job traiga manifiesto', () => {
     await advance(100);
     expect(screen.queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: /Descargar/ }).length).toBeGreaterThan(0);
+  });
+});
+
+describe('H2: imágenes y análisis visual (SIMULADO, operaciones propuestas)', () => {
+  const ANALYSIS_TITLE = 'Revisá el análisis de la imagen';
+  const ANALYSIS_MS = 2600; // 0,5 s en cola + 1,5 s de análisis
+
+  /** Espera a que la pantalla de análisis desaparezca: ya se navegó al job nuevo. */
+  const leaveAnalysis = () => waitFor(() => expect(screen.queryByText(ANALYSIS_TITLE)).not.toBeInTheDocument());
+  async function openProject(user: ReturnType<typeof setupUser>) {
+    await user.type(screen.getByLabelText('Nombre del proyecto'), 'Imágenes');
+    await user.click(screen.getByRole('button', { name: 'Crear proyecto' }));
+    return screen.findByLabelText('Elegir archivo');
+  }
+  async function analysisPage(name: string, client: ApiClient = createMockApiClient()) {
+    const user = setupUser();
+    renderApp(client);
+    await generateFrom(user, pngFile(name));
+    await advance(ANALYSIS_MS);
+    await screen.findByText(ANALYSIS_TITLE);
+    return user;
+  }
+
+  it('distingue "SVG preparado" de "imagen para analizar" y avisa que el análisis con IA es experimental', async () => {
+    const user = setupUser();
+    renderApp();
+    const input = await openProject(user);
+
+    await user.upload(input, pngFile('logo.png'));
+    await screen.findByText(/logo\.png · /);
+    expect(screen.getByText('Imagen para analizar')).toBeInTheDocument();
+    expect(screen.getByText('Función experimental')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /OpenAI/ })).toBeEnabled();
+    expect(screen.getByRole('radio', { name: /Ollama/ })).toBeEnabled();
+    expect(screen.getByAltText('Imagen original: logo.png')).toBeInTheDocument(); // vista previa de la imagen subida
+
+    await user.upload(input, svgFile('preparado.svg'));
+    await screen.findByText(/preparado\.svg · /);
+    expect(screen.getByText('SVG preparado')).toBeInTheDocument();
+    expect(screen.getByText('Va directo a la generación del bordado.')).toBeInTheDocument();
+    expect(screen.queryByText('Función experimental')).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /OpenAI/ })).not.toBeInTheDocument();
+  });
+
+  it('sin proveedores de IA disponibles no deja generar una imagen, pero sí un SVG preparado', async () => {
+    const user = setupUser();
+    const base = createMockApiClient();
+    renderApp({ ...base, async getProfiles() { return { ...(await base.getProfiles()), providers: [] }; } });
+    const input = await openProject(user);
+
+    await user.upload(input, pngFile('logo.png'));
+    await screen.findByText(/logo\.png · /);
+    expect(screen.getByText(/no tiene proveedores de IA disponibles/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Generar bordado' })).toBeDisabled();
+
+    await user.upload(input, svgFile('preparado.svg'));
+    await screen.findByText(/preparado\.svg · /);
+    expect(screen.getByRole('button', { name: 'Generar bordado' })).toBeEnabled();
+  });
+
+  it('muestra regiones, texto, colores y dudas del análisis, con la zona incierta señalada', async () => {
+    await analysisPage('logo-analisis.png');
+    expect(screen.getByText('La IA no está segura de 1 zona')).toBeInTheDocument();
+    expect(screen.getByText(/Las cajas y los textos los estimó la IA y no están verificados/)).toBeInTheDocument();
+    expect(screen.getByText(/Analizado con OpenAI \(nube\) \(modelo-nube-simulado\)/)).toBeInTheDocument();
+    expect(document.querySelectorAll('li[data-region-id]')).toHaveLength(6);
+    expect(screen.getByText(/ESTRELLA/)).toBeInTheDocument();
+    expect(screen.getAllByText('#F2B705').length).toBeGreaterThan(0);
+    expect(screen.getByText('Texto muy fino: puede perderse al bordar a este tamaño')).toBeInTheDocument();
+    expect(screen.getAllByText('Incierta')).toHaveLength(1);
+    // Solo el análisis: todavía no hay vector, ni archivos, ni formulario de muestra.
+    expect(screen.queryByRole('heading', { name: 'Registrar muestra física' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Descargar/ })).not.toBeInTheDocument();
+  });
+
+  it('aprobar el análisis continúa con un job nuevo que omite el análisis y llega a "listo para prueba"', async () => {
+    const { client, calls } = instrument();
+    const user = await analysisPage('logo-analisis.png', client);
+    await user.click(screen.getByRole('button', { name: 'Aprobar el análisis y continuar' }));
+    await leaveAnalysis();
+    const decision = calls.find((c) => c.method === 'decideAnalysis')!.args[1];
+    expect(decision).toEqual({ action: 'approve', flagged_region_ids: [] });
+    expect(screen.queryByText(ANALYSIS_TITLE)).not.toBeInTheDocument();
+    expect(screen.getByText('Omitida')).toBeInTheDocument();
+    await advance(FULL_RUN_MS);
+    expect((await screen.findAllByText(READY)).length).toBeGreaterThan(0);
+  });
+
+  it('con varias dudas: marca regiones para revisión manual y las envía al aprobar', async () => {
+    const { client, calls } = instrument();
+    const user = await analysisPage('logo-ambiguo.png', client);
+    expect(screen.getByText('La IA no está segura de 3 zonas')).toBeInTheDocument();
+    expect(screen.getAllByText('Incierta')).toHaveLength(3);
+    expect(screen.getByText('0 zonas marcadas para revisión manual.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('checkbox', { name: /Zona difusa/ }));
+    await user.click(screen.getByRole('checkbox', { name: /Texto secundario/ }));
+    expect(screen.getByText('2 zonas marcadas para revisión manual.')).toBeInTheDocument();
+    expect(document.querySelector('rect[data-region-id="region_6"]')?.getAttribute('stroke')).toBe('#a02828');
+    expect(document.querySelector('rect[data-region-id="region_1"]')?.getAttribute('stroke')).toBe('#2f5d8a');
+
+    await user.click(screen.getByRole('button', { name: 'Aprobar el análisis y continuar' }));
+    await leaveAnalysis();
+    expect(calls.find((c) => c.method === 'decideAnalysis')!.args[1]).toEqual({
+      action: 'approve',
+      flagged_region_ids: ['region_3', 'region_6'],
+    });
+  });
+
+  it('regenerar con otro proveedor crea un job nuevo analizado por ese proveedor', async () => {
+    const { client, calls } = instrument();
+    const user = await analysisPage('logo-ambiguo.png', client);
+    expect(screen.getByRole('combobox', { name: 'Probar con otro proveedor' })).toHaveValue('ollama');
+    await user.click(screen.getByRole('button', { name: 'Regenerar con otro proveedor' }));
+    await leaveAnalysis();
+    expect(calls.find((c) => c.method === 'decideAnalysis')!.args[1]).toEqual({ action: 'change_provider', ai_provider: 'ollama' });
+
+    await advance(ANALYSIS_MS);
+    await screen.findByText(ANALYSIS_TITLE);
+    expect(screen.getByText(/Analizado con Modelo local \(Ollama\) \(modelo-local-simulado\)/)).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Probar con otro proveedor' })).toHaveValue('openai');
+  });
+
+  it('si la decisión falla lo informa con su código y se puede reintentar', async () => {
+    const base = createMockApiClient();
+    let fail = true;
+    const client: ApiClient = {
+      ...base,
+      async decideAnalysis(jobId, decision, key) {
+        if (fail) throw new ApiError(ClientErrorCode.NotImplemented, 'El servidor todavía no ofrece esta operación.', 501);
+        return base.decideAnalysis(jobId, decision, key);
+      },
+    };
+    const user = await analysisPage('logo-analisis.png', client);
+    await user.click(screen.getByRole('button', { name: 'Aprobar el análisis y continuar' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Código de incidencia: NOT_IMPLEMENTED');
+    expect(screen.getByText(ANALYSIS_TITLE)).toBeInTheDocument();
+    fail = false;
+    await user.click(screen.getByRole('button', { name: 'Aprobar el análisis y continuar' }));
+    await leaveAnalysis();
+  });
+
+  it('una revisión de geometría de una imagen y la de un SVG no usan la pantalla de análisis', async () => {
+    const user = setupUser();
+    renderApp();
+    await generateFrom(user, pngFile('logo-revision.png'));
+    await advance(FULL_RUN_MS);
+    await screen.findByText('Hay un elemento que necesita revisión');
+    expect(screen.queryByText(ANALYSIS_TITLE)).not.toBeInTheDocument();
   });
 });
 

@@ -118,3 +118,23 @@ test('teclado: se crea un proyecto sin mouse y todo lo enfocable muestra el foco
   }
   expect(seen.size).toBeGreaterThan(5);
 });
+
+test('imagen para analizar: carga con aviso experimental y pantalla de análisis (H2)', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Nombre del proyecto').fill('Prueba a11y');
+  await page.getByRole('button', { name: 'Crear proyecto' }).click();
+  const base64 = await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 800;
+    canvas.height = 600;
+    canvas.getContext('2d')!.fillRect(0, 0, 800, 600);
+    return canvas.toDataURL('image/png').split(',')[1];
+  });
+  await page.getByLabel('Elegir archivo').setInputFiles({ name: 'logo-ambiguo.png', mimeType: 'image/png', buffer: Buffer.from(base64, 'base64') });
+  await expect(page.getByText('Función experimental')).toBeVisible();
+  await expectAccessible(page, 'carga de imagen con proveedor experimental');
+  await generate(page);
+  await expect(page.getByText('Revisá el análisis de la imagen')).toBeVisible({ timeout: RUN_TIMEOUT_MS });
+  await page.getByRole('checkbox', { name: /Zona difusa/ }).check();
+  await expectAccessible(page, 'análisis visual con una región marcada');
+});

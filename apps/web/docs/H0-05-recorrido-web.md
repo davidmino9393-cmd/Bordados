@@ -108,6 +108,30 @@ Se corrió la UI completa contra `uvicorn` (commit `c6b4db6`) con el SVG `Anime_
 
 **Mock alineado con el backend real:** el fixture `job-completed-real.json` ahora tiene la forma exacta de la respuesta real (6 artefactos, 14 avisos idénticos con los 14 `object_ids` reales, controles `file`/`dimensions`/`hoop` en `passed` y `geometry`/`satin`/`routing`/`visual` en `not_run`, límites releídos de −75 a 75 y de −71,4 a 71,4). Los ids y hashes son ficticios evidentes (`000…001`, `000…002`), `provenance.simulated` es `true`, y el cliente simulado devuelve `original_download: null` para un SVG, como el backend. Los `object_ids` coinciden con `services/api/evidence/h0-04/job.json`.
 
+## H2 — preparación de la UI de análisis visual (solo mocks)
+
+Lo que existe hoy en la web, **sin backend** (el servidor de H0-04 solo ejecuta SVG preparado):
+- **Carga:** acepta PNG, JPG y SVG; muestra la vista previa de la imagen subida y una etiqueta que distingue «SVG preparado» (va directo a la generación) de «Imagen para analizar» (pasa antes por una IA). Para una imagen aparece el selector OpenAI / Ollama con el aviso «Función experimental». Si el catálogo no trae proveedores disponibles, no deja generar una imagen (sí un SVG).
+- **Pantalla `AnalysisReview`:** aparece con un job `needs_review`, `input_kind: raster_image` y avisos de etapa `analysis`. Muestra la imagen con las cajas estimadas, la lista de regiones (rol, texto detectado, colores sugeridos, dudas), permite marcar regiones para revisión manual, aprobar y continuar, o regenerar con otro proveedor. Las cajas son una guía no verificada (`estimated_bbox`).
+- **Mocks:** `apps/web/mocks/analysis-result.json` (`simulated: true`). Un PNG/JPG cuyo nombre contiene `analisis` (1 región incierta) o `ambiguo` (3 regiones inciertas) activa el flujo; cualquier otra imagen sigue yendo directo a la generación.
+
+### Cambios propuestos para el backend (H2) — esperan confirmación, no implementados
+
+Mensaje para quien implemente el backend (OpenCode), listo para copiar:
+
+> La web de H2 ya funciona con mocks y necesita estas operaciones. Ninguna existe en OpenAPI v0.1; propongo la forma y espero confirmación antes de que la implementes.
+>
+> 1. `GET /api/v1/jobs/{id}/analysis` → 200 `AnalysisSpec` (forma congelada en `design.py`). Solo para un job de imagen que ya terminó el análisis; 404/409 en otro caso. `region_id` debe coincidir con los `region_ids` de los avisos `ANALYSIS_REGION_INCOHERENT`.
+> 2. `POST /api/v1/jobs/{id}/analysis-decision` (con `Idempotency-Key`) con cuerpo `{"action":"approve","flagged_region_ids":[...]}` o `{"action":"change_provider","ai_provider":"openai|ollama"}` → 202 `JobResponse` **nuevo** con `parent_job_id` = `{id}`; el job original en `needs_review` no cambia. 409 `REVISION_CONFLICT` si ese job no está en `needs_review` por análisis; 422 si el proveedor no está disponible. Alternativa equivalente: nuevos `kind` en `POST /projects/{id}/revisions`.
+> 3. En el job que continúa tras aprobar, `analyzing` figura `skipped` con motivo («análisis aprobado en {id}»).
+> 4. Duda: `needs_review` exige un aviso `review_required` localizado, así que un análisis sin dudas no se detendría. ¿Hace falta una pausa opcional de aprobación?
+> 5. Duda: ¿en qué marco están `bounds_px` (original completo o recorte `crop_px`)?
+> 6. Duda: ¿qué hace el backend con `flagged_region_ids` (revisión manual en H3)?
+> 7. El catálogo de perfiles hoy devuelve `providers: []`; para imágenes debe listar `openai` y `ollama` con su disponibilidad.
+> 8. Para una imagen, `original_download` debería traer el enlace del original (la web lo usa para la vista previa).
+
+En el cliente real (`HttpApiClient`), `getAnalysis` y `decideAnalysis` **no llaman a la red**: devuelven un error controlado «no implementado» hasta que estas operaciones se aprueben.
+
 ## Accesibilidad
 
 Se corre **axe-core** (`@axe-core/playwright`, solo en `tests/e2e`) sobre la UI real en Chrome, en escritorio y en móvil (Pixel 7), con las etiquetas WCAG 2.0/2.1/2.2 A y AA más las buenas prácticas de axe, contraste incluido. Pantallas escaneadas: proyectos (vacío y con uno), proyecto sin imagen, con imagen y error de validación y con aviso de bastidor, trabajo en curso, fallido y cancelado, resultado listo (con y sin errores del formulario de muestra), revisión con archivos (14 incidencias) y la pantalla de error 501 con el cliente real.

@@ -121,3 +121,79 @@ test('job completo en needs_review: incidencias, muestra física, descarga del J
   expect(file.suggestedFilename()).toMatch(/-output\.jef$/);
   expect(stampOf(file.url())).toBeGreaterThanOrEqual(stampOf(freshHref));
 });
+
+// --- H2 (SIMULADO): imagen para analizar → análisis visual → aprobar → job ---
+const ANALYSIS_TITLE = 'Revisá el análisis de la imagen';
+
+/** PNG de 800 × 600 generado en el navegador: sirve de imagen real para ver la vista previa y las cajas. */
+async function makePng(page: Page, name: string) {
+  const base64 = await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 800;
+    canvas.height = 600;
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#f4f1ea';
+    ctx.fillRect(0, 0, 800, 600);
+    ctx.fillStyle = '#1f3a93';
+    ctx.fillRect(120, 80, 560, 140);
+    return canvas.toDataURL('image/png').split(',')[1];
+  });
+  return { name, mimeType: 'image/png', buffer: Buffer.from(base64, 'base64') };
+}
+
+async function uploadImage(page: Page, name: string) {
+  await page.goto('/');
+  await page.getByLabel('Nombre del proyecto').fill('Prueba H2');
+  await page.getByRole('button', { name: 'Crear proyecto' }).click();
+  await page.getByLabel('Elegir archivo').setInputFiles(await makePng(page, name));
+  await expect(page.getByAltText(`Imagen original: ${name}`)).toBeVisible();
+}
+
+test('H2: imagen → análisis simulado → aprobar → job', async ({ page }) => {
+  await uploadImage(page, 'logo-analisis.png');
+  // La carga distingue la imagen del SVG preparado y avisa que el análisis es experimental.
+  await expect(page.getByText('Imagen para analizar', { exact: true })).toBeVisible();
+  await expect(page.getByText('Función experimental')).toBeVisible();
+  await expect(page.getByRole('radio', { name: /OpenAI/ })).toBeChecked();
+  await expectNoHorizontalScroll(page);
+  await page.getByRole('button', { name: 'Generar bordado' }).click();
+
+  await expect(page.getByText(ANALYSIS_TITLE)).toBeVisible({ timeout: RUN_TIMEOUT_MS });
+  await expect(page.locator('li[data-region-id]')).toHaveCount(6);
+  await expect(page.locator('li[data-region-id="region_1"]')).toContainText('ESTRELLA');
+  await expect(page.getByText('Incierta', { exact: true })).toHaveCount(1);
+  await expect(page.getByRole('heading', { name: 'Registrar muestra física' })).toHaveCount(0);
+  await expectNoHorizontalScroll(page);
+
+  await page.getByRole('button', { name: 'Aprobar el análisis y continuar' }).click();
+  await expect(page.getByText('Listo para prueba (digital)').first()).toBeVisible({ timeout: RUN_TIMEOUT_MS });
+  await expect(page.getByText(ANALYSIS_TITLE)).toHaveCount(0);
+});
+
+test('H2: análisis con ambigüedad → needs_review con regiones marcadas', async ({ page }) => {
+  await uploadImage(page, 'logo-ambiguo.png');
+  await page.getByRole('button', { name: 'Generar bordado' }).click();
+
+  await expect(page.getByText(ANALYSIS_TITLE)).toBeVisible({ timeout: RUN_TIMEOUT_MS });
+  await expect(page.getByText('La IA no está segura de 3 zonas')).toBeVisible();
+  await expect(page.getByText('Hay un elemento que necesita revisión')).toHaveCount(0);
+  await expect(page.getByText('Incierta', { exact: true })).toHaveCount(3);
+  await expect(page.getByText('0 zonas marcadas para revisión manual.')).toBeVisible();
+
+  await page.getByRole('checkbox', { name: /Zona difusa/ }).check();
+  await page.getByRole('checkbox', { name: /Línea fina de adorno/ }).check();
+  await expect(page.getByText('2 zonas marcadas para revisión manual.')).toBeVisible();
+  await expect(page.locator('rect[stroke="#a02828"]')).toHaveCount(2);
+  await expectNoHorizontalScroll(page);
+
+  await page.getByRole('button', { name: 'Aprobar el análisis y continuar' }).click();
+  await expect(page.getByText('Listo para prueba (digital)').first()).toBeVisible({ timeout: RUN_TIMEOUT_MS });
+});
+
+test('H2: regenerar con otro proveedor vuelve a analizar con ese proveedor', async ({ page }) => {
+  await uploadImage(page, 'logo-ambiguo.png');
+  await page.getByRole('button', { name: 'Generar bordado' }).click();
+  await expect(page.getByText(/Analizado con OpenAI/)).toBeVisible({ timeout: RUN_TIMEOUT_MS });
+  await page.getByRole('button', { name: 'Regenerar con otro proveedor' }).click();
+  await expect(page.getByText(/Analizado con Modelo local \(Ollama\)/)).toBeVisible({ timeout: RUN_TIMEOUT_MS });
+});

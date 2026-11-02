@@ -13,12 +13,14 @@ const ambiguousIds = (name: AmbiguityName | undefined): string[] =>
 
 /** Regiones del fixture escaladas del tamaño de referencia (800 × 600) al del original subido. */
 function scaledRegions(job: SimulatedJob): AnalysisRegion[] {
+  // El análisis solo lleva dudas en las regiones que el guion marca como inciertas (coherente con los avisos).
+  const uncertain = new Set(ambiguousIds(job.scenario.ambiguity));
   const sx = job.assetPx ? job.assetPx.width / REFERENCE.width : 1;
   const sy = job.assetPx ? job.assetPx.height / REFERENCE.height : 1;
   return (analysisFixture.payload.regions as AnalysisRegion[]).map((region) => ({
     ...region,
     suggested_colors: [...region.suggested_colors],
-    uncertainties: [...region.uncertainties],
+    uncertainties: uncertain.has(region.region_id) ? [...region.uncertainties] : [],
     bounds_px: {
       x_px: region.bounds_px.x_px * sx,
       y_px: region.bounds_px.y_px * sy,
