@@ -6,6 +6,8 @@ import { expect, test, type Page } from '@playwright/test';
 const SVG_PATH = new URL('../../Anime_Socks_Bordado/Anime_Socks_InkStitch.svg', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
 const OUT_DIR = 'test-results/real-backend';
 const REVIEW_TIMEOUT_MS = 120_000;
+const PHOTO_PNG_BASE64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 
 interface ApiCall {
   method: string;
@@ -99,9 +101,15 @@ test('recorrido completo: flujo inicial, estados, archivos, JEF, muestra física
   await page.getByLabel('Estabilizador').fill('Cut-away');
   await page.getByLabel('Hilo').fill('Poliéster 40');
   await page.getByLabel('Observaciones').fill('Prueba de verificación contra el backend real.');
+  // Foto de la muestra: se sube como `sewout_photo` y después se ve en el registro.
+  await page.getByLabel(/Fotos de la muestra/).setInputFiles({ name: 'muestra-cosida.png', mimeType: 'image/png', buffer: Buffer.from(PHOTO_PNG_BASE64, 'base64') });
+  await expect(page.getByRole('button', { name: /Quitar muestra-cosida\.png/ })).toBeVisible();
   await page.getByRole('button', { name: 'Registrar muestra' }).click();
   await expect(page.getByText(/Muestra registrada/)).toBeVisible();
   await expect(page.getByText('Muestra física aprobada')).toBeVisible();
+  const photo = page.getByRole('img', { name: /Foto de la muestra: muestra-cosida\.png/ });
+  await expect(photo).toBeVisible();
+  await expect.poll(() => photo.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
   observations.estadoDigitalTrasMuestra = (await page.locator('.badge').first().innerText());
   await expect.soft(page.getByText('Listo para prueba (digital)')).toHaveCount(0);
   const sewoutCall = calls.find((c) => c.method === 'POST' && c.path.endsWith('/sewouts'));

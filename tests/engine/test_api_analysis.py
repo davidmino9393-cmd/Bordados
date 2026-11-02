@@ -107,9 +107,10 @@ class AnalysisApiTests(unittest.TestCase):
             finally:
                 exc.close()
 
-    def upload(self, project_id, content, filename="logo.png", mime="image/png"):
+    def upload(self, project_id, content, filename="logo.png", mime="image/png", purpose=None):
         boundary = "----h2" + uuid.uuid4().hex
-        body = (f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="{filename}"\r\nContent-Type: {mime}\r\n\r\n').encode() + content + f"\r\n--{boundary}--\r\n".encode()
+        field = f'--{boundary}\r\nContent-Disposition: form-data; name="purpose"\r\n\r\n{purpose}\r\n'.encode() if purpose else b""
+        body = field + (f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="{filename}"\r\nContent-Type: {mime}\r\n\r\n').encode() + content + f"\r\n--{boundary}--\r\n".encode()
         return self.call("POST", f"/api/v1/projects/{project_id}/assets", raw=body, content_type=f"multipart/form-data; boundary={boundary}")
 
     def settings(self, provider="openai"):
@@ -247,6 +248,26 @@ class AnalysisFlowTests(AnalysisApiTests):
             urllib.request.urlopen(urllib.request.Request(tampered), timeout=15)
         self.assertEqual(caught.exception.code, 403)
         caught.exception.close()
+
+    def test_sewout_photos_are_assets_with_their_own_purpose_that_never_become_designs(self):
+        self.start({"openai": FakeProvider("openai")})
+        _, project = self.call("POST", "/api/v1/projects", {"name": "Fotos"})
+        pid = project["project_id"]
+        _, design = self.upload(pid, png(shape=True), "logo.png")
+        status, photo = self.upload(pid, png(), "muestra.png", purpose="sewout_photo")
+        self.assertEqual((status, design["purpose"], photo["purpose"]), (201, "design", "sewout_photo"))
+        self.assertEqual({a["purpose"] for a in self.call("GET", f"/api/v1/projects/{pid}")[1]["assets"]}, {"design", "sewout_photo"})
+        self.assertEqual(self.upload(pid, png(), "x.png", purpose="otra")[0], 422)
+        svg = b'<svg xmlns="http://www.w3.org/2000/svg" width="10mm" height="10mm"><path id="a" d="M0 0L1 1"/></svg>'
+        self.assertEqual(self.upload(pid, svg, "a.svg", "image/svg+xml", purpose="sewout_photo")[0], 422)
+        _, revision = self.call("POST", f"/api/v1/projects/{pid}/revisions", {"schema_version": "0.1", "base_revision_id": None, "reason": "r", "settings": self.settings(), "document": None})
+        job_body = {"schema_version": "0.1", "asset_id": photo["asset_id"], "revision_id": revision["revision_id"], "input_kind": "raster_image", "settings": self.settings()}
+        self.assertEqual(self.call("POST", f"/api/v1/projects/{pid}/jobs", job_body)[0], 422)
+        sewout = {"schema_version": "0.1", "revision_id": revision["revision_id"], "status": "untested", "tested_at": None, "fabric_profile": "gabardina_inicial",
+                  "stabilizer": "entretela", "thread": "poliester", "observations": "sin probar"}
+        self.assertEqual(self.call("POST", f"/api/v1/projects/{pid}/sewouts", dict(sewout, photo_asset_ids=[design["asset_id"]]))[0], 422)
+        status, recorded = self.call("POST", f"/api/v1/projects/{pid}/sewouts", dict(sewout, photo_asset_ids=[photo["asset_id"]]))
+        self.assertEqual((status, recorded["photo_asset_ids"]), (201, [photo["asset_id"]]))
 
     def test_provider_failures_end_the_job_with_the_catalogue_code(self):
         for code in (IssueCode.ANALYSIS_REFUSED, IssueCode.PROVIDER_RATE_LIMITED, IssueCode.ANALYSIS_SCHEMA_INVALID):

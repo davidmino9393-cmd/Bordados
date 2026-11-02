@@ -2,6 +2,7 @@ import type { AnalysisDecision, AnalysisSpec } from '../contracts/analysis';
 import type { AuthorizedArtifactManifest } from '../contracts/artifacts';
 import type { JobCreate, JobResponse } from '../contracts/job';
 import type {
+  AssetPurpose,
   DerivedRevisionRequest,
   InitialRevisionRequest,
   ProjectDetail,
@@ -66,7 +67,8 @@ export interface ApiClient {
   createProject(name: string, idempotencyKey?: string): Promise<ProjectResponse>;
   /** Un cursor pagina los archivos y otro los trabajos; sin cursores, la primera página de ambos. */
   getProject(projectId: string, cursors?: ProjectCursors): Promise<ProjectDetail>;
-  uploadAsset(projectId: string, file: File, idempotencyKey?: string): Promise<SourceAsset>;
+  /** `purpose` por defecto `design`; las fotos de una muestra física se suben como `sewout_photo`. */
+  uploadAsset(projectId: string, file: File, idempotencyKey?: string, purpose?: AssetPurpose): Promise<SourceAsset>;
   /** Paso 3 del flujo inicial: `base_revision_id: null`. */
   createInitialRevision(
     projectId: string,

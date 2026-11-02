@@ -99,8 +99,9 @@ export function createHttpApiClient(config: HttpClientConfig = {}): ApiClient {
       request('POST', '/projects', { key, body: { schema_version: '0.1', name } }),
     getProject: (projectId, cursors) =>
       request('GET', `/projects/${id(projectId)}${pageQuery({ assets_cursor: cursors?.assetsCursor, jobs_cursor: cursors?.jobsCursor })}`),
-    uploadAsset: (projectId, file, key) => {
+    uploadAsset: (projectId, file, key, purpose) => {
       const form = new FormData();
+      if (purpose) form.append('purpose', purpose);
       form.append('file', file);
       return request('POST', `/projects/${id(projectId)}/assets`, { key, form, timeoutMs: uploadTimeoutMs });
     },

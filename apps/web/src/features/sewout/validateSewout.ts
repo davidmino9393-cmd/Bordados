@@ -39,7 +39,7 @@ export function validateSewout(values: SewoutFormValues, now: number): SewoutErr
 }
 
 /** Arma el SewoutRecord del contrato; `tested_at` sale en UTC con zona explícita (AwareDatetime). */
-export function toSewoutRequest(values: SewoutFormValues, revisionId: string): SewoutRecordRequest {
+export function toSewoutRequest(values: SewoutFormValues, revisionId: string, photoAssetIds: string[] = []): SewoutRecordRequest {
   const status = values.status as SewoutStatus;
   return {
     schema_version: CONTRACT_SCHEMA_VERSION,
@@ -50,6 +50,6 @@ export function toSewoutRequest(values: SewoutFormValues, revisionId: string): S
     stabilizer: values.stabilizer.trim(),
     thread: values.thread.trim(),
     observations: values.observations.trim(),
-    photo_asset_ids: [],
+    photo_asset_ids: photoAssetIds,
   };
 }

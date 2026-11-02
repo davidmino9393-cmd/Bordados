@@ -1,6 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { useApi } from '../../api/ApiProvider';
 import type { JobResponse } from '../../contracts/job';
+import { AssetPurpose, type SourceAsset } from '../../contracts/project';
 import { SewoutStatus } from '../../contracts/sewout';
 import { es } from '../../copy/es';
 import { Card } from '../../shared/components/Card';
@@ -8,6 +9,7 @@ import { Field } from '../../shared/components/Field';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { errorMessage, useAsync } from '../../shared/hooks/useAsync';
 import { useIdempotencyKey } from '../../shared/hooks/useIdempotencyKey';
+import { newIdempotencyKey } from '../../shared/utils/idempotency';
 import {
   validateSewout,
   toSewoutRequest,
@@ -21,6 +23,10 @@ interface SewoutFormProps {
   job: JobResponse;
   onJobChanged: (job: JobResponse) => void;
 }
+
+/** Fotos por muestra: alcanzan para ver el resultado sin llenar el proyecto. */
+const MAX_PHOTOS = 4;
+const PHOTO_TYPES = ['image/png', 'image/jpeg'];
 
 const RESULT_OPTIONS = [SewoutStatus.Approved, SewoutStatus.NeedsAdjustment, SewoutStatus.Untested] as const;
 
@@ -47,9 +53,34 @@ export function SewoutForm({ job, onJobChanged }: SewoutFormProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const [saved, setSaved] = useState(false);
+  const [photos, setPhotos] = useState<SourceAsset[]>([]);
+  const [photoError, setPhotoError] = useState<string>();
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const set = <K extends keyof SewoutFormValues>(key: K, value: SewoutFormValues[K]) => {
     setSaved(false);
     setValues((v) => ({ ...v, [key]: value }));
+  };
+
+  // Cada foto se sube al elegirla (como imagen de propósito `sewout_photo`) y solo se envía su identificador.
+  const addPhotos = async (event: ChangeEvent<HTMLInputElement>) => {
+    const input = event.target;
+    const files = Array.from(input.files ?? []);
+    input.value = '';
+    setPhotoError(undefined);
+    setSaved(false);
+    if (files.length + photos.length > MAX_PHOTOS) return setPhotoError(es.sewout.tooManyPhotos(MAX_PHOTOS));
+    if (files.some((file) => !PHOTO_TYPES.includes(file.type))) return setPhotoError(es.sewout.photoType);
+    setUploadingPhotos(true);
+    try {
+      for (const file of files) {
+        const asset = await api.uploadAsset(job.project_id, file, newIdempotencyKey(), AssetPurpose.SewoutPhoto);
+        setPhotos((current) => [...current, asset]);
+      }
+    } catch (e) {
+      setPhotoError(errorMessage(e));
+    } finally {
+      setUploadingPhotos(false);
+    }
   };
 
   const submit = async (event: FormEvent) => {
@@ -60,9 +91,10 @@ export function SewoutForm({ job, onJobChanged }: SewoutFormProps) {
     setBusy(true);
     setError(undefined);
     try {
-      const request = toSewoutRequest(values, job.revision_id);
+      const request = toSewoutRequest(values, job.revision_id, photos.map((p) => p.asset_id));
       await api.recordSewout(job.project_id, request, keyFor(request));
       setSaved(true);
+      setPhotos([]);
       setValues((v) => ({ ...v, status: '', tested_at: '', stabilizer: '', thread: '', observations: '' }));
       onJobChanged(await api.getJob(job.job_id));
     } catch (e) {
@@ -122,10 +154,36 @@ export function SewoutForm({ job, onJobChanged }: SewoutFormProps) {
           <Field label={text.observations} error={errorText(errors.observations)}>
             <textarea rows={4} value={values.observations} onChange={(e) => set('observations', e.target.value)} />
           </Field>
+          <Field label={text.photos} hint={text.photosHint(MAX_PHOTOS)} error={photoError}>
+            <input
+              type="file"
+              multiple
+              accept={PHOTO_TYPES.join(',')}
+              onChange={addPhotos}
+              disabled={uploadingPhotos || photos.length >= MAX_PHOTOS}
+            />
+          </Field>
+          {uploadingPhotos && <p role="status">{text.uploadingPhotos}</p>}
+          {photos.length > 0 && (
+            <ul className="list" aria-label={text.photosTitle}>
+              {photos.map((photo) => (
+                <li key={photo.asset_id} className="list__item">
+                  <span>{photo.original_filename}</span>
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => setPhotos((current) => current.filter((p) => p.asset_id !== photo.asset_id))}
+                  >
+                    {text.removePhoto} <span className="visually-hidden">{photo.original_filename}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
           {error && <Notice tone={NoticeTone.Error}>{error}</Notice>}
           {saved && <Notice tone={NoticeTone.Success}>{text.saved}</Notice>}
           <div className="row">
-            <button type="submit" disabled={busy || catalog.loading}>{busy ? text.submitting : text.submit}</button>
+            <button type="submit" disabled={busy || catalog.loading || uploadingPhotos}>{busy ? text.submitting : text.submit}</button>
           </div>
         </form>
       </Card.Body>

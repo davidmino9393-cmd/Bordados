@@ -396,6 +396,47 @@ describe('muestra física (POST /sewouts)', () => {
     expect(sent.revision_id).toBe(job.revision_id);
   });
 
+  it('sube fotos de la muestra como fotos (no como diseños), envía sus ids y no las ofrece para bordar', async () => {
+    const { client, calls } = instrument();
+    const user = await readyPage(client);
+    await user.upload(screen.getByLabelText(/Fotos de la muestra/), [pngFile('muestra-1.png'), pngFile('muestra-2.png')]);
+    expect(await screen.findByRole('button', { name: /Quitar muestra-1\.png/ })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Quitar muestra-2\.png/ }));
+    expect(screen.queryByRole('button', { name: /Quitar muestra-2\.png/ })).not.toBeInTheDocument();
+
+    await fill(user, 'Aprobada');
+    await user.click(screen.getByRole('button', { name: 'Registrar muestra' }));
+    await screen.findByText(/Muestra registrada/);
+
+    const uploads = calls.filter((c) => c.method === 'uploadAsset').filter((c) => c.args[3] === 'sewout_photo');
+    expect(uploads).toHaveLength(2);
+    const sent = calls.find((c) => c.method === 'recordSewout')!.args[1] as { photo_asset_ids: string[] };
+    expect(sent.photo_asset_ids).toHaveLength(1);
+    // El formulario queda limpio para la próxima muestra.
+    expect(screen.queryByRole('button', { name: /Quitar/ })).not.toBeInTheDocument();
+
+    // En el proyecto, las fotos no aparecen entre las imágenes para bordar.
+    await user.click(screen.getByRole('link', { name: /^←/ }));
+    await screen.findByRole('heading', { name: 'Prueba' });
+    expect(screen.queryByLabelText('Imagen del proyecto')).not.toBeInTheDocument();
+    expect(screen.queryByText(/muestra-1\.png/)).not.toBeInTheDocument();
+  });
+
+  it('rechaza fotos que no son PNG ni JPG y más de cuatro por muestra, sin subir nada', async () => {
+    const { client, count } = instrument();
+    const user = await readyPage(client);
+    const uploadsBefore = count('uploadAsset');
+    // El navegador filtra por `accept` al elegir; acá se fuerza el evento para comprobar la validación propia.
+    fireEvent.change(screen.getByLabelText(/Fotos de la muestra/), { target: { files: [new File(['x'], 'muestra.gif', { type: 'image/gif' })] } });
+    expect(await screen.findByText('Las fotos deben ser PNG o JPG.')).toBeInTheDocument();
+    await user.upload(
+      screen.getByLabelText(/Fotos de la muestra/),
+      ['a', 'b', 'c', 'd', 'e'].map((n) => pngFile(`${n}.png`)),
+    );
+    expect(await screen.findByText('Podés agregar hasta 4 fotos por muestra.')).toBeInTheDocument();
+    expect(count('uploadAsset')).toBe(uploadsBefore);
+  });
+
   it('una muestra que requiere ajustes se refleja sin tocar el estado digital', async () => {
     const user = await readyPage(instrument().client);
     await fill(user, 'Requiere ajustes');

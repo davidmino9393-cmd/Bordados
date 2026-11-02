@@ -11,7 +11,7 @@ from pathlib import Path
 import uuid
 import xml.etree.ElementTree as ET
 
-from fastapi import APIRouter, Depends, FastAPI, File, Header, Query, Request, UploadFile
+from fastapi import APIRouter, Depends, FastAPI, File, Form, Header, Query, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from PIL import Image, UnidentifiedImageError
@@ -36,6 +36,7 @@ from .store import Store
 
 
 LOGGER = logging.getLogger(__name__)
+ASSET_PURPOSES = frozenset({"design", "sewout_photo"})
 SVG = "{http://www.w3.org/2000/svg}svg"
 ACTIVE_SVG = {
     "{http://www.w3.org/2000/svg}script",
@@ -295,14 +296,19 @@ def create_app(config: ApiConfig, analysis_providers=None):
     async def upload_asset(
         id: str,
         file: UploadFile = File(...),
+        purpose: str = Form("design"),
         idempotency_key: str = Header(alias="Idempotency-Key"),
     ):
         owned("project", id)
+        if purpose not in ASSET_PURPOSES:
+            raise ApiProblem("INVALID_REQUEST", "purpose debe ser design o sewout_photo.")
         data = await file.read()
         content_type = (file.content_type or "").split(";", 1)[0].strip().lower()
         digest, width, height, suffix = _validate_upload(data, content_type, catalog.upload_limits)
         filename = _safe_filename(file.filename)
-        logical = {"project_id": id, "sha256": digest, "filename": filename, "content_type": content_type}
+        if purpose == "sewout_photo" and content_type == "image/svg+xml":
+            raise ApiProblem("INVALID_REQUEST", "Una foto de la muestra debe ser PNG o JPEG.")
+        logical = {"project_id": id, "sha256": digest, "filename": filename, "content_type": content_type, "purpose": purpose}
 
         def action():
             asset_id = _new_id("asset")
@@ -310,7 +316,7 @@ def create_app(config: ApiConfig, analysis_providers=None):
             path.write_bytes(data)
             body = SourceAsset(
                 asset_id=asset_id, project_id=id, sha256=digest, media_type=content_type,
-                original_filename=filename, original_width_px=width, original_height_px=height,
+                original_filename=filename, original_width_px=width, original_height_px=height, purpose=purpose,
             )
             store.create(
                 "asset", asset_id, owner, id, body.model_dump(mode="json"),
@@ -415,6 +421,8 @@ def create_app(config: ApiConfig, analysis_providers=None):
         owned("project", id)
         validate_settings(payload.settings, catalog)
         asset = owned("asset", payload.asset_id, id)
+        if asset["body"].get("purpose", "design") != "design":
+            raise ApiProblem("INVALID_REQUEST", "Una foto de muestra no puede usarse como diseño a bordar.")
         revision = owned("revision", payload.revision_id, id)
         if revision["body"].get("kind") != "initial":
             raise ApiProblem("INVALID_REQUEST", "Un trabajo nuevo parte de una revisión inicial.")
@@ -558,7 +566,8 @@ def create_app(config: ApiConfig, analysis_providers=None):
         if payload.fabric_profile not in {fabric.profile_id for fabric in catalog.fabrics}:
             raise ApiProblem("INVALID_REQUEST", "fabric_profile desconocido.")
         for asset_id in payload.photo_asset_ids:
-            owned("asset", asset_id, id)
+            if owned("asset", asset_id, id)["body"].get("purpose", "design") != "sewout_photo":
+                raise ApiProblem("INVALID_REQUEST", "photo_asset_ids solo admite fotos de muestra (purpose sewout_photo).")
         created = {}
 
         def action():

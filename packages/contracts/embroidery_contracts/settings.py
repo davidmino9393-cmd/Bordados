@@ -52,6 +52,8 @@ class SourceAsset(Versioned):
     original_height_px: Annotated[int, Field(gt=0)] | None = None
     crop_px: BoundsPX | None = None
     original_preserved: Literal[True] = True
+    # H2: `sewout_photo` es una foto de una muestra cosida (solo PNG/JPEG); nunca entra a un job ni a la lista de diseños.
+    purpose: Literal["design", "sewout_photo"] = "design"
     # Private storage keys belong to persistence, never to a web response.
 
     @model_validator(mode="after")
@@ -61,6 +63,8 @@ class SourceAsset(Versioned):
             raise ValueError("Pixel width and height must be provided together")
         if self.media_type != "image/svg+xml" and width is None:
             raise ValueError("Raster uploads require original pixel dimensions")
+        if self.purpose == "sewout_photo" and self.media_type == "image/svg+xml":
+            raise ValueError("A sewout photo must be a PNG or JPEG image")
         crop = self.crop_px
         if crop and (width is None or crop.x_px + crop.width_px > width or crop.y_px + crop.height_px > height):
             raise ValueError("A crop must lie within known original pixel dimensions")

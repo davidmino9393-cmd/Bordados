@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useApi } from '../../api/ApiProvider';
 import { startGeneration } from '../../api/startGeneration';
 import type { JobResponse } from '../../contracts/job';
-import type { SourceAsset } from '../../contracts/project';
+import { AssetPurpose, type SourceAsset } from '../../contracts/project';
 import type { JobSettings } from '../../contracts/settings';
 import { es } from '../../copy/es';
 import { LoadMore } from '../../shared/components/LoadMore';
@@ -60,7 +60,8 @@ export function ProjectPage() {
   );
 
   useDocumentTitle(project.data?.project.name);
-  const assets = assetList.items;
+  // Las fotos de una muestra física viven en el proyecto pero no son imágenes para bordar.
+  const assets = assetList.items.filter((asset) => asset.purpose === AssetPurpose.Design);
   const selected = assets.find((a) => a.asset_id === pickedId) ?? assets.at(-1);
 
   // Los originales se sirven con enlaces temporales: se renuevan antes de vencer.

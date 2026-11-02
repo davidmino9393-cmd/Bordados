@@ -17,6 +17,13 @@ export interface BoundsPX {
   height_px: number;
 }
 
+/** `sewout_photo`: foto de una muestra cosida; nunca se elige para bordar. */
+export const AssetPurpose = {
+  Design: 'design',
+  SewoutPhoto: 'sewout_photo',
+} as const;
+export type AssetPurpose = (typeof AssetPurpose)[keyof typeof AssetPurpose];
+
 export interface SourceAsset {
   schema_version: string;
   asset_id: string;
@@ -32,6 +39,7 @@ export interface SourceAsset {
   original_height_px: number | null;
   crop_px: BoundsPX | null;
   original_preserved: true;
+  purpose: AssetPurpose;
 }
 
 export interface ProjectList {

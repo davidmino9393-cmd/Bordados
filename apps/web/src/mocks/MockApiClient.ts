@@ -6,11 +6,12 @@ import { ApiError, type ApiClient } from '../api/ApiClient';
 import { ErrorCode } from '../contracts/http';
 import { ACTIVE_STATUSES, JobStatus, type JobCreate, type JobResponse } from '../contracts/job';
 import type { ArtifactDownload, AuthorizedArtifactManifest } from '../contracts/artifacts';
-import type {
-  DerivedRevisionRequest,
-  ProjectResponse,
-  RevisionResponse,
-  SourceAsset,
+import {
+  AssetPurpose,
+  type DerivedRevisionRequest,
+  type ProjectResponse,
+  type RevisionResponse,
+  type SourceAsset,
 } from '../contracts/project';
 import type { SewoutProjection, SewoutResponse } from '../contracts/sewout';
 import { AiProvider, MediaType, type JobSettings, type ProfileCatalog } from '../contracts/settings';
@@ -191,13 +192,14 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
         jobs_next_cursor: null,
       };
     },
-    uploadAsset(projectId, file, key) {
-      return idempotent('asset', key, { projectId, name: file.name, size: file.size }, async () => {
+    uploadAsset(projectId, file, key, purpose = AssetPurpose.Design) {
+      return idempotent('asset', key, { projectId, name: file.name, size: file.size, purpose }, async () => {
         if (!projects.has(projectId)) throw problem(ErrorCode.NotFound);
         const limits = catalog.upload_limits;
         if (file.size > limits.max_bytes) throw problem(ErrorCode.PayloadTooLarge);
         if (!(limits.accepted_mime_types as string[]).includes(file.type)) throw problem(ErrorCode.UnsupportedMediaType);
         const isSvg = file.type === MediaType.Svg;
+        if (purpose === AssetPurpose.SewoutPhoto && isSvg) throw problem(ErrorCode.InvalidRequest);
         const size = isSvg ? null : await readImageSize(file);
         const objectUrl = typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : mockVectorImage();
         const asset: SourceAsset = {
@@ -212,6 +214,7 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
           original_height_px: size?.height ?? null,
           crop_px: null,
           original_preserved: true,
+          purpose,
         };
         const stored = { asset, scenario: pickScenario(file.name, isSvg), objectUrl };
         assets.set(asset.asset_id, stored);

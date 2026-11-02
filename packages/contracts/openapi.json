@@ -3077,6 +3077,15 @@
             "title": "Project Id",
             "type": "string"
           },
+          "purpose": {
+            "default": "design",
+            "enum": [
+              "design",
+              "sewout_photo"
+            ],
+            "title": "Purpose",
+            "type": "string"
+          },
           "schema_version": {
             "const": "0.1",
             "default": "0.1",
@@ -8192,6 +8201,7 @@
                           "original_preserved": true,
                           "original_width_px": null,
                           "project_id": "project_mock_1",
+                          "purpose": "design",
                           "schema_version": "0.1",
                           "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
                         }
@@ -8993,6 +9003,7 @@
                       "original_preserved": true,
                       "original_width_px": null,
                       "project_id": "project_mock_1",
+                      "purpose": "design",
                       "schema_version": "0.1",
                       "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
                     }
@@ -11860,6 +11871,7 @@
           "original_preserved": true,
           "original_width_px": null,
           "project_id": "project_mock_1",
+          "purpose": "design",
           "schema_version": "0.1",
           "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         },
