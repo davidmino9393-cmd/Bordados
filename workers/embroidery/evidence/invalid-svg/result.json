@@ -1,0 +1,11 @@
+{
+  "ok": false,
+  "issue": {
+    "code": "INPUT_UNREADABLE",
+    "reason": "invalid_or_unprepared_svg",
+    "evidence": {
+      "message": "not well-formed (invalid token): line 1, column 6"
+    }
+  },
+  "digital_readiness_evaluated": false
+}

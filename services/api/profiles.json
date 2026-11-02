@@ -1,0 +1,46 @@
+{
+  "schema_version": "0.1",
+  "catalog_version": "0.1",
+  "machines": [
+    {
+      "profile_id": "janome_mc550e",
+      "profile_version": "0.1",
+      "label": "Janome MC 550E",
+      "hoop_profile_ids": ["sq20b"],
+      "max_colors": 3,
+      "calibration_status": "proposed"
+    }
+  ],
+  "hoops": [
+    {
+      "profile_id": "sq20b",
+      "profile_version": "0.1",
+      "label": "SQ20b 200 x 200 mm",
+      "width_mm": 200.0,
+      "height_mm": 200.0,
+      "jef_hoop_code": 4
+    }
+  ],
+  "fabrics": [
+    {
+      "profile_id": "gabardina_inicial",
+      "profile_version": "0.1",
+      "label": "Gabardina inicial",
+      "calibration_status": "proposed"
+    }
+  ],
+  "thread_profiles": [
+    {
+      "profile_id": "embroidery_thread_initial",
+      "profile_version": "0.1",
+      "label": "Hilo de bordado inicial"
+    }
+  ],
+  "max_colors": 3,
+  "providers": [],
+  "upload_limits": {
+    "max_bytes": 10485760,
+    "max_decoded_pixels": 20000000,
+    "accepted_mime_types": ["image/png", "image/jpeg", "image/svg+xml"]
+  }
+}

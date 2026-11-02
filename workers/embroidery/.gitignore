@@ -1,0 +1,9 @@
+.tools/
+.deps/
+__pycache__/
+evidence/**/input.svg
+evidence/**/*.stdout.bin
+evidence/cli-main/
+evidence/cli-verified/
+evidence/cli-small/
+evidence/timeout-job-object/

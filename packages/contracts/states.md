@@ -1,6 +1,6 @@
 # Estados digitales v0.1
 
-Propósito: tabla de transiciones implementada en `embroidery_contracts/states.py`, pendiente de revisión humana.
+Propósito: tabla de transiciones de contratos v0.1 congelados, implementada en `embroidery_contracts/states.py`.
 
 Contenido: [Tabla](#tabla), [guardas](#guardas), [relacionados](#relacionados).
 
@@ -20,6 +20,7 @@ Contenido: [Tabla](#tabla), [guardas](#guardas), [relacionados](#relacionados).
 
 ## Guardas
 
+- Revisión → jobs es 1:N. Fallo, reintento o regeneración pueden crear otro job sobre la misma revisión, sin modificarla. Identidad, entrada, ajustes y artefactos terminados de cada job son inmutables; sus estados sí avanzan por esta tabla. Nunca sobrescribir resultados anteriores. Correcciones de geometría/ajustes requieren otra revisión.
 - `validate_transition(previous, following)` valida la arista y conserva job/proyecto/revisión/asset/tipo de entrada/ajustes. No es un endpoint para asignar estado desde el cliente.
 - Salto queued→digitizing: solo prepared_svg, con analyzing y vectorizing registrados como skipped y motivo explícito.
 - `needs_review`: al menos una incidencia review_required vinculada a objetos o regiones.
