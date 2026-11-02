@@ -115,22 +115,24 @@ Lo que existe hoy en la web, **sin backend** (el servidor de H0-04 solo ejecuta 
 - **Pantalla `AnalysisReview`:** aparece con un job `needs_review`, `input_kind: raster_image` y avisos de etapa `analysis`. Muestra la imagen con las cajas estimadas, la lista de regiones (rol, texto detectado, colores sugeridos, dudas), permite marcar regiones para revisión manual, aprobar y continuar, o regenerar con otro proveedor. Las cajas son una guía no verificada (`estimated_bbox`).
 - **Mocks:** `apps/web/mocks/analysis-result.json` (`simulated: true`). Un PNG/JPG cuyo nombre contiene `analisis` (1 región incierta) o `ambiguo` (3 regiones inciertas) activa el flujo; cualquier otra imagen sigue yendo directo a la generación.
 
-### Cambios propuestos para el backend (H2) — esperan confirmación, no implementados
+### Contrato H2 confirmado por OpenCode (pendiente de incorporarse a OpenAPI/contracts)
 
-Mensaje para quien implemente el backend (OpenCode), listo para copiar:
+OpenCode confirmó la forma propuesta con ajustes. Es un cambio **aditivo**: dos rutas nuevas y `analysis_retry` en `RevisionResponse.kind`; `AnalysisSpec` no cambia. El backend no se implementa hasta actualizar el contrato.
 
-> La web de H2 ya funciona con mocks y necesita estas operaciones. Ninguna existe en OpenAPI v0.1; propongo la forma y espero confirmación antes de que la implementes.
->
-> 1. `GET /api/v1/jobs/{id}/analysis` → 200 `AnalysisSpec` (forma congelada en `design.py`). Solo para un job de imagen que ya terminó el análisis; 404/409 en otro caso. `region_id` debe coincidir con los `region_ids` de los avisos `ANALYSIS_REGION_INCOHERENT`.
-> 2. `POST /api/v1/jobs/{id}/analysis-decision` (con `Idempotency-Key`) con cuerpo `{"action":"approve","flagged_region_ids":[...]}` o `{"action":"change_provider","ai_provider":"openai|ollama"}` → 202 `JobResponse` **nuevo** con `parent_job_id` = `{id}`; el job original en `needs_review` no cambia. 409 `REVISION_CONFLICT` si ese job no está en `needs_review` por análisis; 422 si el proveedor no está disponible. Alternativa equivalente: nuevos `kind` en `POST /projects/{id}/revisions`.
-> 3. En el job que continúa tras aprobar, `analyzing` figura `skipped` con motivo («análisis aprobado en {id}»).
-> 4. Duda: `needs_review` exige un aviso `review_required` localizado, así que un análisis sin dudas no se detendría. ¿Hace falta una pausa opcional de aprobación?
-> 5. Duda: ¿en qué marco están `bounds_px` (original completo o recorte `crop_px`)?
-> 6. Duda: ¿qué hace el backend con `flagged_region_ids` (revisión manual en H3)?
-> 7. El catálogo de perfiles hoy devuelve `providers: []`; para imágenes debe listar `openai` y `ollama` con su disponibilidad.
-> 8. Para una imagen, `original_download` debería traer el enlace del original (la web lo usa para la vista previa).
+| Operación | Comportamiento confirmado |
+|---|---|
+| `GET /api/v1/jobs/{id}/analysis` | 200 `AnalysisSpec` si el job tiene análisis asociado: propio, o el aprobado del padre en un job de continuación. 404 `NOT_FOUND` si el job no existe, es `prepared_svg`, sigue analizando o falló antes de producirlo. Los `region_id` son estables y únicos; los de `ANALYSIS_REGION_INCOHERENT` son un subconjunto exacto |
+| `POST /api/v1/jobs/{id}/analysis-decision` (con `Idempotency-Key`) | 202 `JobResponse` **nuevo** con `parent_job_id = {id}`; el original no cambia. 404 si no existe; 409 `REVISION_CONFLICT` si el original no está en `needs_review` con un aviso `review_required` de etapa `analysis`; 422 `INVALID_REQUEST` si el proveedor no está disponible, es el mismo o `flagged_region_ids` no pertenece al análisis; 409 `IDEMPOTENCY_CONFLICT` con otra carga |
+| `{"action":"approve","flagged_region_ids":[…]}` | Misma `revision_id` y mismo asset; el job nace `queued`, `analyzing` queda `skipped` con el motivo «análisis aprobado en {id}» y reutiliza el análisis aprobado. Las regiones marcadas solo se guardan como metadato (H3 las usará para revisión manual) |
+| `{"action":"change_provider","ai_provider":"openai\|ollama"}` | `ai_provider` forma parte de `JobSettings` y la revisión es inmutable: el servidor crea una revisión nueva `kind: "analysis_retry"` (con `base_revision_id` = la original) y un job que vuelve a analizar. **El `revision_id` cambia**: la web lo lee de la respuesta |
 
-En el cliente real (`HttpApiClient`), `getAnalysis` y `decideAnalysis` **no llaman a la red**: devuelven un error controlado «no implementado» hasta que estas operaciones se aprueben.
+Respuestas a las dudas:
+- **Análisis sin dudas:** no pausa. Sin un aviso `review_required` localizado el job sigue su curso y la web no muestra `AnalysisReview`. No se simula `needs_review` con un aviso artificial. Si el producto quiere aprobación siempre, sería un cambio aparte (H2.1): ajuste `require_analysis_approval` y aviso `ANALYSIS_APPROVAL_REQUIRED`.
+- **`bounds_px`:** siempre en el marco de la imagen original (origen arriba a la izquierda, x a la derecha, y hacia abajo), con las dimensiones de `original_width_px`/`original_height_px`. Si el proveedor analiza un recorte, el backend suma `crop_px` antes de guardar.
+- **Regiones marcadas:** ver arriba; no alteran geometría ni bloquean.
+- **Catálogo y original:** `GET /profiles` debe listar `openai` y `ollama` con su disponibilidad real, y para una imagen `original_download` debe ser una URL firmada no nula (la web la usa para la vista previa y las cajas).
+
+**Estado de la web:** el mock ya sigue este comportamiento y `HttpApiClient` llama a las dos rutas nuevas. La UI solo llega a `AnalysisReview` con un job de imagen en `needs_review` por análisis, algo que el backend de H0-04 todavía no produce (rechaza imágenes con `INVALID_REQUEST`). Sin probar contra backend real.
 
 ## Accesibilidad
 

@@ -61,6 +61,21 @@ describe('createHttpApiClient (contratos-v0.1)', () => {
     expect(JSON.parse(init.body as string)).toEqual({ revision_id: 'r1' });
   });
 
+  it('H2: pide el análisis con GET y decide con POST /jobs/{id}/analysis-decision y su Idempotency-Key', async () => {
+    const fetchImpl = vi.fn(async () => json({}, 202));
+    const api = clientWith(fetchImpl as unknown as typeof fetch);
+    await api.getAnalysis('job_1');
+    await api.decideAnalysis('job_1', { action: 'approve', flagged_region_ids: ['region_3'] }, 'k-dec');
+    await api.decideAnalysis('job_1', { action: 'change_provider', ai_provider: 'ollama' }, 'k-prov');
+    const [get, approve, change] = fetchImpl.mock.calls as unknown as Array<[string, RequestInit]>;
+    expect(get[0]).toBe('/api/v1/jobs/job_1/analysis');
+    expect(get[1].method).toBe('GET');
+    expect(approve[0]).toBe('/api/v1/jobs/job_1/analysis-decision');
+    expect((approve[1].headers as Record<string, string>)['Idempotency-Key']).toBe('k-dec');
+    expect(JSON.parse(approve[1].body as string)).toEqual({ action: 'approve', flagged_region_ids: ['region_3'] });
+    expect(JSON.parse(change[1].body as string)).toEqual({ action: 'change_provider', ai_provider: 'ollama' });
+  });
+
   it('traduce application/problem+json al código del contrato y a un mensaje en español', async () => {
     const problem = {
       schema_version: '0.1', type: 'urn:embroidery:problem:forbidden', title: 'Forbidden', status: 403,

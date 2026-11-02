@@ -22,6 +22,8 @@ import { buildAnalysisSpec } from './analysis';
 import { pickScenario, ScenarioOutcome, type Scenario } from './scenarios/scenarios';
 
 const DEFAULT_STAGE_MS = 1500;
+/** Nombre del guion de un job que continúa tras aprobar un análisis. */
+const APPROVED_SCENARIO = 'analisis-aprobado';
 const FALLBACK_RASTER_PX = { width: 800, height: 600 };
 /** El contrato fija 300 s; solo las pruebas lo acortan (downloadTtlMs). */
 const DEFAULT_DOWNLOAD_TTL_MS = 300_000;
@@ -273,13 +275,16 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
         return view(job);
       });
     },
-    // CAMBIO PROPUESTO (H2): no existe en OpenAPI v0.1.
+    // H2 (confirmado por OpenCode, aún fuera de OpenAPI v0.1): 200 si el job tiene un análisis asociado,
+    // propio o el aprobado de su padre en un job de continuación; 404 en cualquier otro caso.
     async getAnalysis(jobId) {
       const job = requireJob(jobId);
-      if (job.scenario.outcome !== ScenarioOutcome.AnalysisReview) throw problem(ErrorCode.NotFound);
-      return buildAnalysisSpec(job);
+      if (job.scenario.outcome === ScenarioOutcome.AnalysisReview) return buildAnalysisSpec(job);
+      const parent = job.parentJobId ? jobs.get(job.parentJobId) : undefined;
+      if (job.scenario.name === APPROVED_SCENARIO && parent) return buildAnalysisSpec(parent);
+      throw problem(ErrorCode.NotFound);
     },
-    // CAMBIO PROPUESTO (H2): aprobar el análisis o cambiar de proveedor crea un job nuevo.
+    // H2 (confirmado): aprobar o cambiar de proveedor crea un job nuevo; el original no cambia.
     decideAnalysis(jobId, decision, key) {
       return idempotent('analysis-decision', key, { jobId, decision }, async () => {
         const parent = requireJob(jobId);
@@ -287,20 +292,24 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
         if (!stored || parent.scenario.outcome !== ScenarioOutcome.AnalysisReview || view(parent).status !== JobStatus.NeedsReview) {
           throw problem(ErrorCode.RevisionConflict);
         }
-        const revisionId = nextId('rev');
-        let settings = parent.settings;
-        let scenario: Scenario = {
-          name: 'analisis-aprobado',
-          outcome: ScenarioOutcome.Ready,
-          skipped: ['analyzing'],
-          skipReason: `Analysis approved by the user in ${parent.id}`,
-        };
-        if (decision.action === 'change_provider') {
-          const available = catalog.providers.find((p) => p.provider_id === decision.ai_provider)?.available;
-          if (!available || decision.ai_provider === parent.settings.ai_provider) throw problem(ErrorCode.InvalidRequest);
-          settings = { ...parent.settings, ai_provider: decision.ai_provider };
-          scenario = { ...parent.scenario, skipped: [] };
+        if (decision.action === 'approve') {
+          // Las regiones marcadas deben ser del análisis; solo se guardan como metadato de la decisión.
+          const known = new Set(buildAnalysisSpec(parent).regions.map((r) => r.region_id));
+          if (decision.flagged_region_ids.some((id) => !known.has(id))) throw problem(ErrorCode.InvalidRequest);
+          const scenario: Scenario = {
+            name: APPROVED_SCENARIO,
+            outcome: ScenarioOutcome.Ready,
+            skipped: ['analyzing'],
+            skipReason: `análisis aprobado en ${parent.id}`,
+          };
+          // Misma revisión (los ajustes no cambian) y mismo asset.
+          return startJob(parent.projectId, parent.revisionId, stored, parent.settings, scenario, parent.id);
         }
+        const available = catalog.providers.find((p) => p.provider_id === decision.ai_provider)?.available;
+        if (!available || decision.ai_provider === parent.settings.ai_provider) throw problem(ErrorCode.InvalidRequest);
+        // ai_provider es parte de JobSettings y la revisión es inmutable: el servidor crea una revisión nueva.
+        const settings = { ...parent.settings, ai_provider: decision.ai_provider };
+        const revisionId = nextId('rev');
         revisions.set(revisionId, {
           schema_version: '0.1',
           revision_id: revisionId,
@@ -308,12 +317,12 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
           base_revision_id: parent.revisionId,
           reason: decision.action,
           created_at: iso(now()),
-          kind: 'correction',
+          kind: 'analysis_retry',
           parent_job_id: parent.id,
           job_id: null,
           settings,
         });
-        return startJob(parent.projectId, revisionId, stored, settings, scenario, parent.id);
+        return startJob(parent.projectId, revisionId, stored, settings, { ...parent.scenario, skipped: [] }, parent.id);
       });
     },
     recordSewout(projectId, request, key) {

@@ -64,7 +64,8 @@ export interface RevisionResponse {
   base_revision_id: string | null;
   reason: string;
   created_at: string;
-  kind: 'initial' | 'size_variant' | 'correction';
+  /** `analysis_retry` (H2) solo aparece en respuestas: la crea el servidor al cambiar de proveedor. */
+  kind: 'initial' | 'size_variant' | 'correction' | 'analysis_retry';
   parent_job_id: string | null;
   job_id: string | null;
 }

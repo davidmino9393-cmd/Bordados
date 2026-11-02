@@ -364,6 +364,51 @@ describe('MockApiClient (SIMULADO, forma de contratos-v0.1)', () => {
       await expect(api.decideAnalysis(job.job_id, { action: 'approve', flagged_region_ids: [] })).rejects.toMatchObject({ code: ErrorCode.RevisionConflict });
     });
 
+    it('aprobar reutiliza la misma revisión y el mismo asset; cambiar de proveedor crea una revisión nueva', async () => {
+      const { job } = await reachReview('logo-analisis.png');
+      const approved = await api.decideAnalysis(job.job_id, { action: 'approve', flagged_region_ids: [] });
+      expect(approved.revision_id).toBe(job.revision_id);
+      expect(approved.asset_id).toBe(job.asset_id);
+      expect(approved.status).toBe(JobStatus.Queued);
+      expect(approved.stages.find((s) => s.stage === 'analyzing')?.reason).toBe(`análisis aprobado en ${job.job_id}`);
+
+      const retried = await api.decideAnalysis(job.job_id, { action: 'change_provider', ai_provider: 'ollama' });
+      expect(retried.revision_id).not.toBe(job.revision_id);
+      expect(retried.settings_snapshot.ai_provider).toBe('ollama');
+      expect(retried.asset_id).toBe(job.asset_id);
+      expect(retried.parent_job_id).toBe(job.job_id);
+    });
+
+    it('aprobar con regiones que no son del análisis se rechaza (422); las del análisis, no', async () => {
+      const { job } = await reachReview('logo-ambiguo.png');
+      await expect(api.decideAnalysis(job.job_id, { action: 'approve', flagged_region_ids: ['region_999'] })).rejects.toMatchObject({
+        code: ErrorCode.InvalidRequest,
+      });
+      const ok = await api.decideAnalysis(job.job_id, { action: 'approve', flagged_region_ids: ['region_3', 'region_6'] });
+      expect(ok.parent_job_id).toBe(job.job_id);
+    });
+
+    it('un job de continuación devuelve el análisis aprobado de su padre; un SVG o un job común, 404', async () => {
+      const { job } = await reachReview('logo-analisis.png');
+      const parentAnalysis = await api.getAnalysis(job.job_id);
+      const next = await api.decideAnalysis(job.job_id, { action: 'approve', flagged_region_ids: [] });
+      expect((await api.getAnalysis(next.job_id)).analysis_id).toBe(parentAnalysis.analysis_id);
+
+      const svg = await start('preparado.svg', 'image/svg+xml');
+      await expect(api.getAnalysis(svg.job.job_id)).rejects.toMatchObject({ code: ErrorCode.NotFound });
+      await expect(api.getAnalysis('job_que_no_existe')).rejects.toMatchObject({ code: ErrorCode.NotFound });
+    });
+
+    it('repetir la misma clave con otro cuerpo es IDEMPOTENCY_CONFLICT; con el mismo cuerpo repite la respuesta', async () => {
+      const { job } = await reachReview('logo-analisis.png');
+      const first = await api.decideAnalysis(job.job_id, { action: 'approve', flagged_region_ids: [] }, 'clave-1');
+      const again = await api.decideAnalysis(job.job_id, { action: 'approve', flagged_region_ids: [] }, 'clave-1');
+      expect(again.job_id).toBe(first.job_id);
+      await expect(
+        api.decideAnalysis(job.job_id, { action: 'change_provider', ai_provider: 'ollama' }, 'clave-1'),
+      ).rejects.toMatchObject({ code: ErrorCode.IdempotencyConflict });
+    });
+
     it('escala las regiones al tamaño real del original', async () => {
       const { job, asset } = await reachReview('logo-analisis.png');
       const analysis = await api.getAnalysis(job.job_id);
