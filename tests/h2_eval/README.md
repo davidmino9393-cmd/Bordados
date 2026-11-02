@@ -16,6 +16,8 @@ Mide el módulo E (`workers/embroidery/vectorize`) sobre `tests/fixtures/h2/mani
 
 **Aún no se mide:** conteo de huecos, texto como anotación y la suposición de fondo. El arnés pasa `AnalysisSpec` sin regiones a propósito: E debe sacar la geometría de los píxeles.
 
+Topología (componentes y huecos por capa y frente al original): `topology_report.py --base RUTA --candidate RUTA --markdown salida.md` (ejemplo medido en `informes/topologia-kmeans3-vs-4a7fd6b.md`).
+
 Para comparar dos variantes de E sobre el mismo conjunto: `compare_reports.py base.json candidato.json` (ejemplo medido en `informes/kmeans3-vs-4a7fd6b.md`).
 
 ```bash
