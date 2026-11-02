@@ -19,7 +19,7 @@ Aplicación web privada que convierte una imagen o un SVG de un logo en un borda
 
 ## 3. Estado del repositorio
 - `main`: `af21ed3`. Tags: `contratos-v0.1` (`ad958db`, contratos congelados) y `h0-04-completado` (según el coordinador, en `c6b4db6`).
-- `claude/web`: `da5e1a1` (último; incluye `tests/fixtures/h2` en un commit exclusivo para poder trasladarlo con cherry-pick). Contiene todo lo hecho por Claude, **sin mergear a `main`**.
+- `claude/web`: incluye `codex/motor` (E1, merge `76f20d9`) y el arnés F en `tests/h2_eval/`; `tests/fixtures/h2` está en commits exclusivos (`da5e1a1`, `4018d97`). Contiene todo lo hecho por Claude, **sin mergear a `main`**.
 - `opencode/h0-06`: `5857315`, revisada y **sin mergear** por orden del usuario.
 - Nada se subió con `push`.
 
@@ -36,7 +36,7 @@ Aplicación web privada que convierte una imagen o un SVG de un logo en un borda
    - Manifiesto de las imágenes de prueba (`apps/web/docs/h2/`: esquema, ejemplo y validador).
 
 ## 5. Estado actual y límites (importante)
-- **La vectorización de imágenes NO existe.** Un análisis sin dudas, o su continuación, termina en `failed` con `WORKER_EXPORT_FAILED` y motivo `vectorization_not_implemented`. Es deliberado: no se simula.
+- **Vectorización E1 (Codex, mergeada en `claude/web` y conectada en `runner.py`):** imágenes planas PNG/JPEG → geometría en mm con huecos. El job termina en `needs_review` con `DENSITY_REVIEW_REQUIRED`: técnica y parámetros son provisionales hasta H3; no hay JEF ni `ready_for_sewout`. Límites: Anime Socks (1122×1402) excede la complejidad de E1; sin ejes centrales, satén ni degradados; el SVG editable no se descarga porque el contrato v0.1 exige JEF en el manifiesto.
 - **El adaptador de OpenAI nunca se probó contra la red.** Faltan clave y modelo (van solo en la configuración privada del backend).
 - **El adaptador de Ollama no existe**; figura «no disponible» en el catálogo.
 - **Conjunto de imágenes de prueba:** hay 14 sintéticas en `tests/fixtures/h2/` (14 diseños distintos, hashes verificados, generadas por código). Faltan las dos escalas de Anime Socks para llegar a 15–20: la referencia es `Anime_Socks.png`, idéntica a `Anime_Socks_Bordado/trabajo/Referencia.png`; David debe confirmarla. Más adelante conviene sumar logos reales con permiso.

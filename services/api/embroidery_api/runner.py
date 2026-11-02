@@ -6,11 +6,12 @@ import os
 from pathlib import Path
 import threading
 
-from embroidery_contracts import IssueCode, JobResponse, JobStatus, validate_transition
+from embroidery_contracts import AnalysisSpec, IssueCode, JobResponse, JobStatus, SourceAsset, validate_transition
 from embroidery_contracts.issues import Severity
 from embroidery_contracts.jobs import StageRecord
 from api_adapter import make_issue, result_documents
 from process_runner import WorkerFailure, run_logged
+from vectorize import VectorizeFailure, vectorize
 
 from .analysis import ProviderError, normalize, region_incoherent_issue
 from .errors import ApiProblem
@@ -32,8 +33,9 @@ FAILURE_DESCRIPTIONS = {
     IssueCode.PROVIDER_UNAVAILABLE: "El proveedor de IA no está disponible.",
     IssueCode.LOCAL_MODEL_UNAVAILABLE: "El modelo local no está disponible.",
 }
-VECTORIZATION_PENDING = "vectorization_not_implemented"
-VECTORIZATION_PENDING_TEXT = "La vectorización de imágenes todavía no está disponible en este servidor."
+VECTORIZATION_REVIEW_UNLOCALIZED = "vectorization_review_unlocalized"
+DIGITIZING_BLOCKED = "Bloqueado hasta que H3 valide técnica y parámetros físicos"
+VECTORIZATION_FILES = {"document": "vectorized-document.json", "svg": "vectorized-editable.svg", "evidence": "vectorized-evidence.json"}
 STAGE_ORDER = ("analyzing", "vectorizing", "digitizing", "validating")
 
 
@@ -235,7 +237,7 @@ class JobRunner:
         status = JobStatus.VECTORIZING if continuation else JobStatus.ANALYZING
         previous = self._save_transition(previous, status, private, {first: ("running", None, None)})
         if continuation:
-            self._save_failed(previous, private, IssueCode.WORKER_EXPORT_FAILED, VECTORIZATION_PENDING, stage="vectorizing")
+            self._vectorize(previous, private, event)
             return
         self._analyze(previous, private, event)
 
@@ -272,11 +274,90 @@ class JobRunner:
                 {"issues": [issue.model_dump(mode="json") for issue in issues]},
             )
             return
-        # Sin dudas el análisis no pausa: sigue a la vectorización, que aún no está implementada.
+        # Sin dudas el análisis no pausa: sigue a la vectorización.
         previous = self._save_transition(
             previous, JobStatus.VECTORIZING, private, {**done, "vectorizing": ("running", None, None)},
         )
-        self._save_failed(previous, private, IssueCode.WORKER_EXPORT_FAILED, VECTORIZATION_PENDING, stage="vectorizing")
+        self._vectorize(previous, private, event)
+
+    def _analysis_for(self, private, asset):
+        """Análisis de este job o, en una continuación, el del job que lo aprobó. Solo anota; no sustituye geometría.
+
+        Las regiones cuya caja sale del original ya se avisaron como ANALYSIS_REGION_INCOHERENT y la persona las aprobó o
+        marcó; E1 las rechaza otra vez, así que no se le pasan (siguen en el análisis guardado y en `GET /analysis`).
+        """
+        spec = private.get("analysis")
+        if spec is None and private.get("analysis_from"):
+            spec = self.store.get("job", private["analysis_from"])["private"].get("analysis")
+        if spec is None:
+            return None
+        analysis = AnalysisSpec.model_validate(spec)
+        inside = tuple(
+            region for region in analysis.regions
+            if region.bounds_px.x_px + region.bounds_px.width_px <= asset.original_width_px
+            and region.bounds_px.y_px + region.bounds_px.height_px <= asset.original_height_px
+        )
+        return analysis.model_copy(update={"regions": inside})
+
+    def _vectorize(self, previous, private, event):
+        """H2-E1: geometría desde los píxeles. Sin H3 no hay puntadas validadas: el job termina en needs_review."""
+        try:
+            asset = SourceAsset.model_validate(self.store.get("asset", previous.asset_id)["body"])
+            result = vectorize(
+                Path(private["asset_path"]).read_bytes(), asset.media_type, asset, self._analysis_for(private, asset),
+                previous.settings_snapshot, job_id=previous.job_id, revision_id=previous.revision_id, cancel=event,
+            )
+        except VectorizeFailure as failure:
+            self._vectorize_failure(previous, private, failure.issue)
+            return
+        job_dir = Path(private["job_dir"])
+        job_dir.mkdir(parents=True, exist_ok=True)
+        files = {name: job_dir / filename for name, filename in VECTORIZATION_FILES.items()}
+        files["document"].write_text(result.document.model_dump_json(indent=2), encoding="utf-8")
+        files["svg"].write_bytes(result.editable_svg)
+        files["evidence"].write_text(json.dumps(result.evidence, ensure_ascii=False, sort_keys=True, indent=2), encoding="utf-8")
+        private["vectorization"] = {name: str(path) for name, path in files.items()}
+        issues = tuple(result.issues)
+        done = {"vectorizing": ("completed", result.duration_ms, None)}
+        if any(issue.severity == Severity.BLOCKING_ERROR for issue in issues):
+            self._save_transition(previous, JobStatus.FAILED, private, {"vectorizing": ("failed", result.duration_ms, None)},
+                                  {"issues": [issue.model_dump(mode="json") for issue in issues]})
+            return
+        if not any(issue.severity == Severity.REVIEW_REQUIRED and (issue.object_ids or issue.region_ids) for issue in issues):
+            self._save_failed(previous, private, IssueCode.WORKER_EXPORT_FAILED, VECTORIZATION_REVIEW_UNLOCALIZED, stage="vectorizing")
+            return
+        self._save_transition(
+            previous, JobStatus.NEEDS_REVIEW, private,
+            {**done, "digitizing": ("skipped", None, DIGITIZING_BLOCKED), "validating": ("skipped", None, DIGITIZING_BLOCKED)},
+            {"issues": [issue.model_dump(mode="json") for issue in issues]},
+        )
+
+    def _vectorize_failure(self, previous, private, issue):
+        if issue.code == IssueCode.JOB_CANCELLED:
+            self._save_transition(previous, JobStatus.CANCELLED, private, {"vectorizing": ("cancelled", None, None)},
+                                  {"cancellation_requested": True})
+        elif issue.severity == Severity.BLOCKING_ERROR:
+            self._save_transition(
+                previous, JobStatus.FAILED, private,
+                {"vectorizing": ("failed", None, None), **{name: ("pending", None, None) for name in STAGE_ORDER[2:]}},
+                {"issues": [issue.model_dump(mode="json")]},
+            )
+        elif issue.severity == Severity.REVIEW_REQUIRED and (issue.object_ids or issue.region_ids):
+            self._save_transition(previous, JobStatus.NEEDS_REVIEW, private, {"vectorizing": ("completed", None, None)},
+                                  {"issues": [issue.model_dump(mode="json")]})
+        else:
+            # Una incidencia de revisión sin objeto ni región no puede pausar el job ni declararlo fallido por sí sola:
+            # falla con el código genérico y conserva el original.
+            unlocalized = make_issue(
+                IssueCode.WORKER_EXPORT_FAILED, FAILURE_DESCRIPTIONS[IssueCode.WORKER_EXPORT_FAILED],
+                {"reason": VECTORIZATION_REVIEW_UNLOCALIZED, "original_code": issue.code.value,
+                 "original_severity": issue.severity.value, "original_evidence": issue.evidence},
+            )
+            self._save_transition(
+                previous, JobStatus.FAILED, private,
+                {"vectorizing": ("failed", None, None), **{name: ("pending", None, None) for name in STAGE_ORDER[2:]}},
+                {"issues": [unlocalized.model_dump(mode="json")]},
+            )
 
     def _command(self, asset_path, job_dir):
         command = [
@@ -327,8 +408,6 @@ class JobRunner:
         except (TypeError, ValueError):
             issue_code = IssueCode.WORKER_EXPORT_FAILED
         description = FAILURE_DESCRIPTIONS.get(issue_code, "El worker no pudo completar el trabajo.")
-        if reason == VECTORIZATION_PENDING:
-            description = VECTORIZATION_PENDING_TEXT
         return make_issue(issue_code, description, {"reason": reason or "worker_failure"})
 
     def _save_transition(self, previous, status, private, updates, extra=None):

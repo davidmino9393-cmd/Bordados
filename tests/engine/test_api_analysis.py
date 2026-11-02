@@ -22,7 +22,7 @@ sys.path.insert(0, str(ROOT / "packages" / "contracts"))
 sys.path.insert(0, str(ROOT / "workers" / "embroidery"))
 
 import uvicorn
-from PIL import Image
+from PIL import Image, ImageDraw
 
 from embroidery_api.analysis import AnalysisProvider, ProviderError, ProviderResult
 from embroidery_api.app import create_app
@@ -36,9 +36,14 @@ INSIDE = {"x_px": 5, "y_px": 5, "width_px": 40, "height_px": 20, "visual_role": 
 OUTSIDE = dict(INSIDE, x_px=60, width_px=40, visual_role="Zona dudosa")
 
 
-def png(width=80, height=60):
+def png(width=80, height=60, shape=False):
     buffer = io.BytesIO()
-    Image.new("RGB", (width, height), "white").save(buffer, "PNG")
+    image = Image.new("RGB", (width, height), "white")
+    if shape:  # un anillo oscuro: una forma con un hueco, para que E1 tenga qué vectorizar
+        draw = ImageDraw.Draw(image)
+        draw.ellipse((10, 5, width - 10, height - 5), fill="#1F3A93")
+        draw.ellipse((25, 18, width - 25, height - 18), fill="white")
+    image.save(buffer, "PNG")
     return buffer.getvalue()
 
 
@@ -184,15 +189,31 @@ class AnalysisFlowTests(AnalysisApiTests):
         self.assertEqual([r["region_id"] for r in analysis["regions"]], ["region_1", "region_2"])
         self.assertEqual((analysis["provider"], analysis["asset_id"]), ("openai", done["asset_id"]))
 
-    def test_a_clean_analysis_does_not_pause_and_ends_honestly_at_the_missing_vectorization(self):
+    def test_a_clean_analysis_does_not_pause_and_vectorizes_into_needs_review_without_digitizing(self):
+        self.start({"openai": FakeProvider("openai", [INSIDE])})
+        _, job = self.raster_job(image=png(shape=True))
+        done = self.wait(job["job_id"])
+        self.assertEqual(done["status"], "needs_review")
+        stages = self.stages(done)
+        self.assertEqual((stages["analyzing"], stages["vectorizing"]), ("completed", "completed"))
+        self.assertEqual((stages["digitizing"], stages["validating"]), ("skipped", "skipped"))
+        issue = next(i for i in done["issues"] if i["code"] == "DENSITY_REVIEW_REQUIRED")
+        self.assertEqual((issue["severity"], issue["stage"]), ("review_required", "routing"))
+        self.assertTrue(issue["object_ids"])
+        self.assertIsNone(done.get("artifact_manifest"))
+        self.assertNotEqual(done["status"], "ready_for_sewout")
+        self.assertEqual(self.call("GET", f"/api/v1/jobs/{job['job_id']}/artifacts")[1]["code"], "ARTIFACTS_UNAVAILABLE")
+
+    def test_an_empty_image_fails_with_the_original_vectorization_diagnostic_kept(self):
         self.start({"openai": FakeProvider("openai", [INSIDE])})
         _, job = self.raster_job()
         done = self.wait(job["job_id"])
         self.assertEqual(done["status"], "failed")
         self.assertEqual(self.stages(done), {"analyzing": "completed", "vectorizing": "failed", "digitizing": "pending", "validating": "pending"})
         self.assertEqual(done["failure"]["stage"], "vectorizing")
-        self.assertIn("todavía no está disponible", done["failure"]["message"])
-        self.assertEqual(done["issues"][0]["evidence"]["reason"], "vectorization_not_implemented")
+        evidence = done["issues"][0]["evidence"]
+        self.assertEqual((evidence["reason"], evidence["original_code"]), ("vectorization_review_unlocalized", "GEOMETRY_INVALID"))
+        self.assertEqual(evidence["original_evidence"]["reason"], "empty_foreground")
 
     def test_provider_failures_end_the_job_with_the_catalogue_code(self):
         for code in (IssueCode.ANALYSIS_REFUSED, IssueCode.PROVIDER_RATE_LIMITED, IssueCode.ANALYSIS_SCHEMA_INVALID):
@@ -223,7 +244,7 @@ class AnalysisFlowTests(AnalysisApiTests):
 class DecisionTests(AnalysisApiTests):
     def review(self, providers=None, regions=(INSIDE, OUTSIDE), provider="openai"):
         self.start(providers or {"openai": FakeProvider("openai", regions), "ollama": FakeProvider("ollama", regions)})
-        pid, job = self.raster_job(provider)
+        pid, job = self.raster_job(provider, image=png(shape=True))
         return pid, self.wait(job["job_id"])
 
     def decide(self, job_id, body, key=None):
@@ -238,8 +259,9 @@ class DecisionTests(AnalysisApiTests):
         analyzing = next(r for r in child["stages"] if r["stage"] == "analyzing")
         self.assertEqual((analyzing["outcome"], analyzing["reason"]), ("skipped", f"análisis aprobado en {original['job_id']}"))
         done = self.wait(child["job_id"])
-        self.assertEqual(done["status"], "failed")  # la vectorización aún no existe
-        self.assertEqual(self.stages(done)["vectorizing"], "failed")
+        self.assertEqual(done["status"], "needs_review")  # E1 vectoriza; sin H3 no hay puntadas validadas
+        self.assertEqual((self.stages(done)["vectorizing"], self.stages(done)["digitizing"]), ("completed", "skipped"))
+        self.assertIn("DENSITY_REVIEW_REQUIRED", [i["code"] for i in done["issues"]])
         self.assertEqual(self.call("GET", f"/api/v1/jobs/{child['job_id']}/analysis")[1]["analysis_id"], f"analysis_{original['job_id']}")
         self.assertEqual(self.call("GET", f"/api/v1/jobs/{original['job_id']}")[1]["status"], "needs_review")
 

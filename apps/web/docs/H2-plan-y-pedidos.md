@@ -7,8 +7,8 @@ Estado: **autorizado (parche y backend en `claude/web`, sin merge a `main`)**. H
 | A. Contrato | **Hecho** (commit `00e6fd2`), 37 pruebas del motor |
 | B. Adaptador OpenAI | **Código y pruebas con transporte falso** (9). Sin clave ni modelo no se probó con OpenAI real |
 | C. Adaptador Ollama | Pendiente; figura «no disponible» en el catálogo |
-| D. Pipeline de imagen | **Hecho**: `analyzing`, `analysis`, `analysis-decision`, `analysis_retry`, continuación (14 pruebas HTTP). La vectorización no existe: el job termina en `failed` / `vectorization_not_implemented` |
-| E. Vector y geometría | Pendiente; necesita el conjunto de imágenes |
+| D. Pipeline de imagen | **Hecho**: `analyzing`, `analysis`, `analysis-decision`, `analysis_retry`, continuación (14 pruebas HTTP). La continuación ejecuta E1 y termina en `needs_review` (`DENSITY_REVIEW_REQUIRED`), sin JEF |
+| E. Vector y geometría | **E1 hecho por Codex** (planas, huecos; PNG/JPEG) y conectado en `runner.py`. Pendiente: Anime Socks excede el límite de complejidad, SVG, ejes centrales, satén |
 | F. Evaluación | **Arnés listo** (`tests/h2_eval/`, 6 pruebas); espera `vectorize()` de Codex. IoU, huecos y texto aún sin medir |
 | G. Web | Pendiente del backend real con una clave |
 
