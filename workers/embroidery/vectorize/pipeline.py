@@ -15,7 +15,7 @@ from .contours import contours
 from .segmentation import decode, segment
 from .types import VectorizeResult, check_cancel, fail, issue
 
-METHOD_VERSION = "e1-pixel-mask-v1"
+METHOD_VERSION = "e1-pixel-mask-v2"
 TRANSFORM_VERSION = "raster-contain-v1"
 PROVISIONAL_STITCH_LENGTH_MM = 2.5
 PROVISIONAL_FILL_SPACING_MM = 0.4

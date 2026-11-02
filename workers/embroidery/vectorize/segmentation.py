@@ -11,6 +11,10 @@ from PIL import Image, ImageChops, ImageStat, UnidentifiedImageError, __version_
 from embroidery_contracts import IssueCode
 from .types import check_cancel, fail
 
+# Refinamiento k-means del MEDIANCUT: sin él, un fondo tonal casi blanco se queda con casi toda la paleta y los trazos
+# oscuros desaparecen (Anime Socks: 6,35 % de los píxeles con error de color >= 64 contra 0,04 % con 3 pasadas; trazos
+# oscuros conservados 0 de 34 contra 29 de 34). Ver tests/h2_eval/informes/. Es una constante global, no un ajuste por logo.
+QUANTIZER_KMEANS_PASSES = 3
 MAX_INPUT_BYTES = 32 * 1024 * 1024
 MAX_INPUT_PIXELS = 4_000_000
 ALPHA_THRESHOLD = 128
@@ -140,7 +144,7 @@ def segment(rgba, asset, color_limit, cancel):
     check_cancel(cancel)
     foreground = Image.frombytes("RGB", (len(compact) // 3, 1), bytes(compact))
     quantized = foreground.quantize(
-        colors=color_limit, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE,
+        colors=color_limit, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE, kmeans=QUANTIZER_KMEANS_PASSES,
     )
     check_cancel(cancel)
     palette_bytes = quantized.getpalette()
@@ -161,7 +165,7 @@ def segment(rgba, asset, color_limit, cancel):
                 source_index += 1
     evidence.update({
         "pillow_version": PILLOW_VERSION,
-        "quantizer": "Pillow MEDIANCUT; no dithering; foreground pixels only",
+        "quantizer": f"Pillow MEDIANCUT kmeans={QUANTIZER_KMEANS_PASSES}; no dithering; foreground pixels only",
         "foreground_pixels": len(indices), "colour_limit": color_limit,
         "output_colours": sorted(palette.values()),
         "quantization_is_lossy": True,

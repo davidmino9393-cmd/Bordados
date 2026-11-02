@@ -25,6 +25,8 @@ Las skills son opcionales por decisión del usuario; catálogo disponible en `.a
 
 Contrato local: v0.1 congelado, tag `contratos-v0.1` en `ad958db`; los modelos concretos prevalecen sobre propuestas antiguas.
 
+**Actualización (claude/web):** David autorizó promover `kmeans=3` (constante `QUANTIZER_KMEANS_PASSES`, método `e1-pixel-mask-v2`; Anime Socks 425078 → 110028 aristas, SVG ~2 MB) porque Codex se quedó sin tokens; la evidencia de F está en `tests/h2_eval/informes/`. Quedan: identificar los 5 componentes y 6 huecos de trazos oscuros que se pierden, y el error de color de líneas finas / texto chico. Lo que sigue describe el estado previo.
+
 El motor sigue idéntico a `4a7fd6b`. La referencia se traza a ambas escalas: 425078 aristas, 23655 subpaths, 5839 huecos; SVG alrededor de 7 MB. Esto no demuestra fidelidad visual.
 
 Claude reportó F estructural sobre `4a7fd6b`: 14/14 PNG/JPEG, 2 SVG omitidos, 0 errores. El color sigue fallando: la paleta pierde letras y flores. No confundir IoU contra la misma regla de fondo con calidad semántica.
