@@ -16,6 +16,8 @@ Mide el módulo E (`workers/embroidery/vectorize`) sobre `tests/fixtures/h2/mani
 
 **Aún no se mide:** conteo de huecos, texto como anotación y la suposición de fondo. El arnés pasa `AnalysisSpec` sin regiones a propósito: E debe sacar la geometría de los píxeles.
 
+Para comparar dos variantes de E sobre el mismo conjunto: `compare_reports.py base.json candidato.json` (ejemplo medido en `informes/kmeans3-vs-4a7fd6b.md`).
+
 ```bash
 python tests/h2_eval/run_eval.py --out informe.json      # contra E
 python tests/h2_eval/run_eval.py --worker-path RUTA/workers/embroidery   # contra un hash de E extraído con git archive
