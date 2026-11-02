@@ -1,5 +1,6 @@
 """Deterministic colour masks from decoded pixels, without geometry inferred by AI."""
 from array import array
+from collections import Counter
 from dataclasses import dataclass
 from io import BytesIO
 import hashlib
@@ -15,6 +16,7 @@ from .types import check_cancel, fail
 # oscuros desaparecen (Anime Socks: 6,35 % de los píxeles con error de color >= 64 contra 0,04 % con 3 pasadas; trazos
 # oscuros conservados 0 de 34 contra 29 de 34). Ver tests/h2_eval/informes/. Es una constante global, no un ajuste por logo.
 QUANTIZER_KMEANS_PASSES = 3
+WHITE_DISTANCE_MAX = 3 * 255
 MAX_INPUT_BYTES = 32 * 1024 * 1024
 MAX_INPUT_PIXELS = 4_000_000
 ALPHA_THRESHOLD = 128
@@ -147,6 +149,8 @@ def segment(rgba, asset, color_limit, cancel):
         colors=color_limit, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE, kmeans=QUANTIZER_KMEANS_PASSES,
     )
     check_cancel(cancel)
+    quantized.putpalette(_median_member_palette(foreground, quantized))
+    check_cancel(cancel)
     palette_bytes = quantized.getpalette()
     indices = quantized.tobytes()
     palette = {index: "#" + bytes(palette_bytes[index * 3:index * 3 + 3]).hex() for index in sorted(set(indices))}
@@ -165,7 +169,7 @@ def segment(rgba, asset, color_limit, cancel):
                 source_index += 1
     evidence.update({
         "pillow_version": PILLOW_VERSION,
-        "quantizer": f"Pillow MEDIANCUT kmeans={QUANTIZER_KMEANS_PASSES}; no dithering; foreground pixels only",
+        "quantizer": f"Pillow MEDIANCUT kmeans={QUANTIZER_KMEANS_PASSES}; no dithering; foreground pixels only; cluster colour = median member by distance from white",
         "foreground_pixels": len(indices), "colour_limit": color_limit,
         "output_colours": sorted(palette.values()),
         "quantization_is_lossy": True,
@@ -175,6 +179,31 @@ def segment(rgba, asset, color_limit, cancel):
         "pixels_discarded_by_size_filter": 0,
     })
     return Segmentation(labels, width, height, x, y, palette, evidence)
+
+
+def _median_member_palette(foreground, quantized):
+    """Color de cada grupo = su miembro mediano por distancia al blanco, en lugar del promedio.
+
+    El promedio mezcla el color del diseño con los píxeles suavizados del borde (que son una mezcla con el fondo) y deja
+    todo más pálido: un azul 14285a salía 172a5c y una línea fina oscura, gris. La mediana toma el color que más se
+    repite en el cuerpo del grupo. Medido en las 14 imágenes: el error medio no empeora en ninguna y se reduce a la
+    mitad en los logos planos (tests/h2_eval/informes/). Es determinista: se ordena por (distancia, RGB).
+    """
+    pixels = foreground.tobytes()
+    counts = Counter(zip(quantized.tobytes(), zip(pixels[0::3], pixels[1::3], pixels[2::3])))
+    members = {}
+    for (index, color), count in counts.items():
+        members.setdefault(index, []).append((WHITE_DISTANCE_MAX - sum(color), color, count))
+    palette = list(quantized.getpalette())
+    for index, colours in members.items():
+        colours.sort()
+        half, seen = sum(count for _, _, count in colours) / 2, 0
+        for _, color, count in colours:
+            seen += count
+            if seen >= half:
+                palette[index * 3:index * 3 + 3] = color
+                break
+    return palette
 
 
 def _quantization_evidence(foreground, quantized):

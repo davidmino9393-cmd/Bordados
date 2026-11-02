@@ -141,5 +141,24 @@ class FidelityTests(unittest.TestCase):
         self.assertAlmostEqual(b * x_mm + d * y_mm + f, 40)
 
 
+class CompareReportsTests(unittest.TestCase):
+    @staticmethod
+    def report(large, mean):
+        image = {"id": "a", "status": "ok", "objects": 1, "fidelity": {"large_error_fraction": large, "p95_max_channel_error": 1, "mean_abs_rgb_error": mean}}
+        return {"images": [image], "summary": {"duration_ms": {"median": 1, "max": 1}}}
+
+    def verdict(self, base, candidate):
+        import compare_reports
+        return compare_reports.compare(base, candidate).splitlines()[-3].split("|")[-2].strip()
+
+    def test_immaterial_large_error_differences_are_decided_by_mean_error(self):
+        self.assertEqual(self.verdict(self.report(0.0100, 4.0), self.report(0.0105, 2.0)), "mejora")
+        self.assertEqual(self.verdict(self.report(0.0100, 4.0), self.report(0.0100, 4.05)), "empata")
+        self.assertEqual(self.verdict(self.report(0.0100, 2.0), self.report(0.0100, 4.0)), "empeora")
+
+    def test_material_large_error_differences_decide_first(self):
+        self.assertEqual(self.verdict(self.report(0.10, 2.0), self.report(0.01, 9.0)), "mejora")
+
+
 if __name__ == "__main__":
     unittest.main()

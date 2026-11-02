@@ -38,6 +38,17 @@ class ComplexityTests(unittest.TestCase):
         self.assertLess(min(luma), 160)
         self.assertIn("kmeans=3", segmentation["quantizer"])
 
+    def test_flat_colour_survives_anti_aliased_edges_exactly(self):
+        # El promedio del grupo mezcla el azul con los píxeles suavizados del borde y lo aclara; la mediana conserva el color real.
+        navy = (20, 40, 90)
+        big = Image.new("RGB", (400, 400), "white")
+        from PIL import ImageDraw
+        ImageDraw.Draw(big).ellipse((40, 40, 360, 360), fill=navy)
+        image = big.resize((100, 100), Image.Resampling.LANCZOS)  # bordes suavizados
+        result = result_for(png(image), configuration=settings(colors=1))
+        self.assertEqual([o.work_color for o in result.document.objects], ["#14285a"])
+        self.assertIn("median member", result.evidence["segmentation"]["quantizer"])
+
     def test_excessive_complexity_still_fails_without_simplifying_input(self):
         image = Image.new("RGBA", (512, 512))
         image.putdata([(0, 0, 255, 255) if (x + y) % 2 else (0, 0, 0, 0)

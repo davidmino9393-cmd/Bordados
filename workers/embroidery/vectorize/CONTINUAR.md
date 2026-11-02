@@ -25,7 +25,7 @@ Las skills son opcionales por decisión del usuario; catálogo disponible en `.a
 
 Contrato local: v0.1 congelado, tag `contratos-v0.1` en `ad958db`; los modelos concretos prevalecen sobre propuestas antiguas.
 
-**Actualización (claude/web):** David autorizó promover `kmeans=3` (constante `QUANTIZER_KMEANS_PASSES`, método `e1-pixel-mask-v2`; Anime Socks 425078 → 110028 aristas, SVG ~2 MB) porque Codex se quedó sin tokens; la evidencia de F está en `tests/h2_eval/informes/`. Quedan: identificar los 5 componentes y 6 huecos de trazos oscuros que se pierden, y el error de color de líneas finas / texto chico. Lo que sigue describe el estado previo.
+**Actualización (claude/web):** David autorizó promover `kmeans=3` (constante `QUANTIZER_KMEANS_PASSES`, método `e1-pixel-mask-v2`; Anime Socks 425078 → 110028 aristas, SVG ~2 MB) porque Codex se quedó sin tokens; la evidencia de F está en `tests/h2_eval/informes/`. Después: color representativo del grupo = miembro mediano (`e1-pixel-mask-v3`). Los «trazos oscuros perdidos» eran contornos de luminancia 171–191 (ver `tests/h2_eval/informes/trazos-oscuros-anime-socks.md`); quedan líneas finas (la máscara incluye los píxeles suavizados y las engrosa) y una política de tamaño mínimo bordable (H3). Lo que sigue describe el estado previo.
 
 El motor sigue idéntico a `4a7fd6b`. La referencia se traza a ambas escalas: 425078 aristas, 23655 subpaths, 5839 huecos; SVG alrededor de 7 MB. Esto no demuestra fidelidad visual.
 

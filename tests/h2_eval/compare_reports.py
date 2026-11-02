@@ -1,13 +1,15 @@
 """Compara dos informes de run_eval.py (p. ej. dos variantes de E sobre el mismo conjunto) y arma la tabla en Markdown.
 
 Uso:  python tests/h2_eval/compare_reports.py base.json candidato.json [--names base candidato]
-Solo muestra lo medido: mejora/empata/empeora se decide por la fracción de píxeles con error de canal grande.
+Solo muestra lo medido. Mejora/empata/empeora: primero por la fracción de píxeles con error de canal grande (diferencias menores a
+0,1 punto porcentual cuentan como empate) y, si empata, por el error medio (empate dentro de 0,1 niveles).
 """
 import argparse
 import json
 from pathlib import Path
 
-TIE_TOLERANCE = 1e-6
+LARGE_ERROR_TIE = 0.001   # fracción de píxeles: 0,1 punto porcentual
+MEAN_ERROR_TIE = 0.1      # niveles de canal
 
 
 def load(path):
@@ -23,7 +25,12 @@ def compare(base, candidate, names=("base", "candidato")):
             continue
         a, b = image["fidelity"], other["fidelity"]
         delta = b["large_error_fraction"] - a["large_error_fraction"]
-        verdict = "mejora" if delta < -TIE_TOLERANCE else "empeora" if delta > TIE_TOLERANCE else "empata"
+        if abs(delta) <= LARGE_ERROR_TIE:
+            delta = b["mean_abs_rgb_error"] - a["mean_abs_rgb_error"]
+            tie = MEAN_ERROR_TIE
+        else:
+            tie = 0
+        verdict = "mejora" if delta < -tie else "empeora" if delta > tie else "empata"
         verdicts[verdict] += 1
         rows.append(
             f"| {image['id']} | {a['large_error_fraction']:.4f} | {b['large_error_fraction']:.4f} | {a['p95_max_channel_error']} | "
