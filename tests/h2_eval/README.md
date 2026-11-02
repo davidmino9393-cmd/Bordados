@@ -8,7 +8,7 @@ Mide el módulo E (`workers/embroidery/vectorize`) sobre `tests/fixtures/h2/mani
 | `within_target_contain` | Límites de objetos dentro del tamaño objetivo (tolerancia 0,01 mm) |
 | `colors_within_limit` | Colores distintos ≤ `color_limit` (se usa `expected_colors` del manifiesto) |
 | `geometry_kinds_allowed` | Solo `verified_curve` / `verified_mask` |
-| `provisional_values_marked` | Cada objeto con su `DesignDecision` `provisional_until_h3` y `evidence.parameters_status` |
+| `provisional_values_marked` | Convención de E1: cada objeto con `DesignDecision` (`h3_validation_required`), cubierto por una incidencia `DENSITY_REVIEW_REQUIRED` y `evidence.h3_validation_required` |
 | `deterministic` | Dos corridas: mismo documento, SVG y evidencia (sin `timings`) |
 | Revisión estática | Nombres de archivo, ids y familias del conjunto dentro del código de E |
 

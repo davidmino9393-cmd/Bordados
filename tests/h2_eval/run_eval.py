@@ -22,8 +22,8 @@ DEFAULT_MANIFEST = ROOT / "tests" / "fixtures" / "h2" / "manifest.json"
 VECTORIZE_SOURCE = ROOT / "workers" / "embroidery" / "vectorize"
 BOUNDS_TOLERANCE_MM = 0.01
 ALLOWED_GEOMETRY_KINDS = {"verified_curve", "verified_mask"}
-PROVISIONAL_REASON_PREFIX = "provisional_until_h3"
-PROVISIONAL_STATUS = "provisional_uncalibrated"
+PROVISIONAL_FLAG = "h3_validation_required"
+PROVISIONAL_ISSUE_CODE = "DENSITY_REVIEW_REQUIRED"
 TIMINGS_KEY = "timings"
 NOT_MEASURED = ("iou_vs_mask", "holes_preserved", "text_as_annotation")
 MEDIA_TYPES = {"png": "image/png", "jpeg": "image/jpeg", "svg": "image/svg+xml"}
@@ -81,11 +81,13 @@ def check_result(result, asset, settings, entry):
     )
     checks["colors_within_limit"] = len({o.work_color.lower() for o in document.objects}) <= settings.color_limit
     checks["geometry_kinds_allowed"] = all(o.geometry_kind in ALLOWED_GEOMETRY_KINDS for o in document.objects)
-    provisional = {d.object_id for d in document.decisions if d.reason.startswith(PROVISIONAL_REASON_PREFIX) and d.origin == "rule"}
-    checks["provisional_values_marked"] = (
-        bool(document.objects) and all(o.object_id in provisional for o in document.objects)
-        and result.evidence.get("parameters_status") == PROVISIONAL_STATUS
-    )
+    # Convención real de E1: una decisión por objeto con h3_validation_required, una incidencia DENSITY_REVIEW_REQUIRED
+    # que cubre todos los objetos y la bandera en la evidencia. Nada de eso es calibración.
+    flagged = {d.object_id for d in document.decisions
+               if d.origin == "rule" and isinstance(d.new_value, dict) and d.new_value.get(PROVISIONAL_FLAG) is True}
+    covered = {oid for issue in result.issues if issue.code.value == PROVISIONAL_ISSUE_CODE for oid in issue.object_ids}
+    ids = {o.object_id for o in document.objects}
+    checks["provisional_values_marked"] = bool(ids) and ids <= flagged and ids <= covered and result.evidence.get(PROVISIONAL_FLAG) is True
     checks["has_objects"] = bool(document.objects)
     issues = [issue.severity.value for issue in result.issues]
     expected = entry["expected_outcome"]
@@ -94,6 +96,8 @@ def check_result(result, asset, settings, entry):
 
 
 def evaluate_image(vectorize_fn, entry, base_dir):
+    if entry["format"] == "svg":  # los SVG siguen el recorrido de SVG preparado, no el de E
+        return {"id": entry["id"], "category": entry["category"], "status": "skipped", "reason": "svg_uses_prepared_svg_path"}
     data, asset, settings, analysis = build_inputs(entry, base_dir)
     kwargs = {"job_id": "job_eval", "revision_id": "revision_eval"}
     record = {"id": entry["id"], "category": entry["category"]}
@@ -136,7 +140,7 @@ def static_review(manifest, source_dir=VECTORIZE_SOURCE):
 def summarize(records):
     ok = [r for r in records if r["status"] == "ok"]
     names = sorted({name for r in ok for name in r["checks"]})
-    summary = {"images": len(records), "errors": sum(1 for r in records if r["status"] == "error"),
+    summary = {"images": len(records), "skipped": sum(1 for r in records if r["status"] == "skipped"), "errors": sum(1 for r in records if r["status"] == "error"),
                "checks": {name: {"passed": sum(r["checks"][name] for r in ok), "of": len(ok)} for name in names}}
     durations = [d for r in ok for d in r["duration_ms"]]
     if durations:

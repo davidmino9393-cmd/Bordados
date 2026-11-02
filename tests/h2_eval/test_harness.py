@@ -7,7 +7,10 @@ import unittest
 
 import run_eval
 from embroidery_contracts import EmbroideryDocument
+from embroidery_contracts import IssueCode
 from embroidery_contracts.design import DesignDecision, EmbroideryObject
+from embroidery_contracts.issues import ISSUE_RULES
+from embroidery_contracts.results import Issue
 
 
 @dataclass(frozen=True)
@@ -30,15 +33,18 @@ def make_result(asset, settings, *, width=None, colors=("#112233",), kind="verif
             proposed_technique="fill", effective_technique="fill", parameters={"stitch_length_mm": 3.0},
         ))
         if mark:
-            decisions.append(DesignDecision(object_id=object_id, reason="provisional_until_h3: sin calibración física", field="parameters",
-                                            previous_value=None, new_value={"stitch_length_mm": 3.0}, origin="rule"))
+            decisions.append(DesignDecision(object_id=object_id, reason="provisional", field="parameters",
+                                            previous_value=None, new_value={run_eval.PROVISIONAL_FLAG: True}, origin="rule"))
     document = EmbroideryDocument(
         document_id="document_eval", revision_id="revision_eval", asset_id=asset.asset_id,
         coordinates={"transform_version": "t1"}, page_bounds_mm=bounds, object_bounds_mm=bounds, objects=tuple(objects), decisions=tuple(decisions),
     )
-    evidence = {"parameters_status": run_eval.PROVISIONAL_STATUS if mark else "calibrated", run_eval.TIMINGS_KEY: {"total_ms": 1}}
+    evidence = {run_eval.PROVISIONAL_FLAG: mark, run_eval.TIMINGS_KEY: {"total_ms": 1}}
     evidence.update(extra or {})
-    return FakeResult(document, (), svg, evidence, 5)
+    rule = ISSUE_RULES[IssueCode.DENSITY_REVIEW_REQUIRED]
+    issues = (Issue(code=IssueCode.DENSITY_REVIEW_REQUIRED, severity=rule.severity, stage=rule.stage, object_ids=tuple(o.object_id for o in objects),
+                    description="provisional", evidence={}, suggested_correction="validar en H3"),) if mark else ()
+    return FakeResult(document, issues, svg, evidence, 5)
 
 
 def manifest_dir(entries):
