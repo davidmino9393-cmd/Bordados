@@ -5,6 +5,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
+import fidelity
 import run_eval
 from embroidery_contracts import EmbroideryDocument
 from embroidery_contracts import IssueCode
@@ -76,7 +77,7 @@ class HarnessTests(unittest.TestCase):
         report = self.evaluate(lambda data, media, asset, analysis, settings, **kw: make_result(asset, settings))
         self.assertEqual(report["status"], "passed")
         self.assertEqual(self.failed_checks(report), set())
-        self.assertIn("iou_vs_mask", report["not_measured"])
+        self.assertIn("text_as_annotation", report["not_measured"])
 
     def test_detects_each_kind_of_violation(self):
         cases = {
@@ -120,6 +121,24 @@ class HarnessTests(unittest.TestCase):
         if run_eval.load_vectorize() is not None:
             self.skipTest("vectorize ya existe en este árbol")
         self.assertEqual(run_eval.main(["--only", "nada"]), 2)
+
+
+class FidelityTests(unittest.TestCase):
+    def test_even_odd_fill_leaves_holes_and_uses_pixel_centres(self):
+        outer = [(0, 0), (10, 0), (10, 10), (0, 10)]
+        hole = [(3, 3), (7, 3), (7, 7), (3, 7)]
+        self.assertEqual(fidelity.fill_even_odd([outer], 10, 10).histogram()[255], 100)
+        self.assertEqual(fidelity.fill_even_odd([outer, hole], 10, 10).histogram()[255], 100 - 16)
+
+    def test_subpaths_parse_move_line_close(self):
+        self.assertEqual(fidelity.subpaths("M0,0 L2,0 L2,2 Z M5,5 L6,5 L6,6 Z"), [[(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)], [(5.0, 5.0), (6.0, 5.0), (6.0, 6.0)]])
+
+    def test_inverse_affine_round_trips(self):
+        matrix = (0.09, 0.0, 0.0, 0.09, 1.5, -2.0)
+        a, b, c, d, e, f = fidelity.inverse_affine(matrix)
+        x_mm, y_mm = 0.09 * 100 + 1.5, 0.09 * 40 - 2.0
+        self.assertAlmostEqual(a * x_mm + c * y_mm + e, 100)
+        self.assertAlmostEqual(b * x_mm + d * y_mm + f, 40)
 
 
 if __name__ == "__main__":

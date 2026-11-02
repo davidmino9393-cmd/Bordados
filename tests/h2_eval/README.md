@@ -12,9 +12,12 @@ Mide el módulo E (`workers/embroidery/vectorize`) sobre `tests/fixtures/h2/mani
 | `deterministic` | Dos corridas: mismo documento, SVG y evidencia (sin `timings`) |
 | Revisión estática | Nombres de archivo, ids y familias del conjunto dentro del código de E |
 
-**Aún no se mide:** IoU contra la máscara, conservación de huecos y texto como anotación (necesitan rasterizar el documento; se agregan cuando exista E). El arnés pasa `AnalysisSpec` sin regiones a propósito: E debe sacar la geometría de los píxeles.
+**Fidelidad medida (`fidelity.py`, informativa, sin umbrales de aceptación):** se redibuja el documento en la resolución del original (relleno par-impar, huecos vacíos) y se mide `foreground_iou`, píxeles faltantes y sobrantes, error medio de color, p95 del error máximo por canal y la fracción de píxeles con error de canal ≥ 64. El fondo (alpha < 128 o RGB ≥ 250) se define aparte de E pero coincide con la regla de E1: **el IoU no valida la suposición de fondo blanco**, y por eso sale ≈ 1; lo que informa la calidad es el error de color.
+
+**Aún no se mide:** conteo de huecos, texto como anotación y la suposición de fondo. El arnés pasa `AnalysisSpec` sin regiones a propósito: E debe sacar la geometría de los píxeles.
 
 ```bash
 python tests/h2_eval/run_eval.py --out informe.json      # contra E
+python tests/h2_eval/run_eval.py --worker-path RUTA/workers/embroidery   # contra un hash de E extraído con git archive
 python -m unittest discover -s tests/h2_eval -p "test_*.py"   # pruebas del arnés (vectorize falso)
 ```

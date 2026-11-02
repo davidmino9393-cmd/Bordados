@@ -1,7 +1,8 @@
 """Paquete F de H2: mide el módulo E (vectorize) sobre el conjunto de tests/fixtures/h2.
 
 Solo informa lo medido. Si `vectorize` no existe, dice que no está disponible y no inventa resultados.
-Uso:  python tests/h2_eval/run_eval.py [--manifest RUTA] [--out informe.json] [--only ID ...]
+Uso:  python tests/h2_eval/run_eval.py [--manifest RUTA] [--out informe.json] [--only ID ...] [--worker-path RUTA]
+`--worker-path` antepone otra carpeta `workers/embroidery` (p. ej. un hash de E extraído con `git archive`) a la del árbol.
 Códigos de salida: 0 todas las comprobaciones pasan, 1 alguna falla, 2 vectorize no disponible.
 """
 import argparse
@@ -16,6 +17,8 @@ ROOT = Path(__file__).resolve().parents[2]
 for sub in ("packages/contracts", "workers/embroidery"):
     sys.path.insert(0, str(ROOT / sub))
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import fidelity  # noqa: E402
 from embroidery_contracts import AnalysisSpec, EmbroideryDocument, JobSettings, SourceAsset  # noqa: E402
 
 DEFAULT_MANIFEST = ROOT / "tests" / "fixtures" / "h2" / "manifest.json"
@@ -25,7 +28,7 @@ ALLOWED_GEOMETRY_KINDS = {"verified_curve", "verified_mask"}
 PROVISIONAL_FLAG = "h3_validation_required"
 PROVISIONAL_ISSUE_CODE = "DENSITY_REVIEW_REQUIRED"
 TIMINGS_KEY = "timings"
-NOT_MEASURED = ("iou_vs_mask", "holes_preserved", "text_as_annotation")
+NOT_MEASURED = ("holes_preserved_as_count", "text_as_annotation", "background_assumption")
 MEDIA_TYPES = {"png": "image/png", "jpeg": "image/jpeg", "svg": "image/svg+xml"}
 SETTINGS_BASE = {
     "machine_profile": "janome_mc550e", "machine_profile_version": "0.1",
@@ -116,6 +119,10 @@ def evaluate_image(vectorize_fn, entry, base_dir):
     )
     record.update(status="ok", checks=checks, outcome=outcome, objects=len(first.document.objects),
                   duration_ms=[first.duration_ms, second.duration_ms])
+    try:
+        record["fidelity"] = fidelity.measure(first.document, data)
+    except Exception as error:  # no se oculta: queda en el informe como no medido
+        record["fidelity"] = {"not_measured": f"{type(error).__name__}: {error}"}
     return record
 
 
@@ -142,6 +149,9 @@ def summarize(records):
     names = sorted({name for r in ok for name in r["checks"]})
     summary = {"images": len(records), "skipped": sum(1 for r in records if r["status"] == "skipped"), "errors": sum(1 for r in records if r["status"] == "error"),
                "checks": {name: {"passed": sum(r["checks"][name] for r in ok), "of": len(ok)} for name in names}}
+    ious = [r["fidelity"]["foreground_iou"] for r in ok if "foreground_iou" in r.get("fidelity", {})]
+    if ious:
+        summary["foreground_iou"] = {"min": min(ious), "median": statistics.median(ious), "measured": len(ious), "of": len(ok)}
     durations = [d for r in ok for d in r["duration_ms"]]
     if durations:
         summary["duration_ms"] = {"median": statistics.median(durations), "max": max(durations), "runs": len(durations)}
@@ -150,12 +160,14 @@ def summarize(records):
 
 def run(vectorize_fn, manifest_path=DEFAULT_MANIFEST, only=None):
     manifest = json.loads(Path(manifest_path).read_text(encoding="utf-8"))
+    module = sys.modules.get("vectorize")
+    evidence_source = str(Path(module.__file__).parent) if module and getattr(module, "__file__", None) else None
     entries = [e for e in manifest["images"] if not only or e["id"] in only]
     records = [evaluate_image(vectorize_fn, entry, Path(manifest_path).parent) for entry in entries]
     findings = static_review(manifest)
     summary = summarize(records)
     failed = summary["errors"] > 0 or bool(findings) or any(v["passed"] != v["of"] for v in summary["checks"].values())
-    return {"status": "failed" if failed else "passed", "manifest": str(Path(manifest_path).name), "not_measured": list(NOT_MEASURED),
+    return {"status": "failed" if failed else "passed", "manifest": str(Path(manifest_path).name), "vectorize_source": evidence_source, "not_measured": list(NOT_MEASURED),
             "static_review": {"per_logo_literals": findings}, "summary": summary, "images": records}
 
 
@@ -164,7 +176,10 @@ def main(argv=None):
     parser.add_argument("--manifest", default=str(DEFAULT_MANIFEST))
     parser.add_argument("--out")
     parser.add_argument("--only", nargs="*")
+    parser.add_argument("--worker-path", help="carpeta que contiene el paquete vectorize a evaluar")
     args = parser.parse_args(argv)
+    if args.worker_path:
+        sys.path.insert(0, str(Path(args.worker_path).resolve()))
     vectorize_fn = load_vectorize()
     if vectorize_fn is None:
         report = {"status": "vectorize_not_available", "detail": "No existe workers/embroidery/vectorize; no se midió nada."}
