@@ -8,7 +8,7 @@ import hashlib
 import math
 import warnings
 
-from PIL import Image, ImageChops, ImageStat, UnidentifiedImageError, __version__ as PILLOW_VERSION
+from PIL import Image, ImageChops, ImageFilter, ImageStat, UnidentifiedImageError, __version__ as PILLOW_VERSION
 
 from embroidery_contracts import IssueCode
 from .types import check_cancel, fail
@@ -19,10 +19,11 @@ from .types import check_cancel, fail
 QUANTIZER_KMEANS_PASSES = 3
 WHITE_DISTANCE_MAX = 3 * 255
 # Cobertura mínima de un píxel suavizado: un píxel del borde es una mezcla del color del grupo con el blanco del fondo; si
-# tiene menos de la mitad de ese color se lo deja en el fondo (como un trazador a 50 % de cobertura). Sin esto, cada línea
-# fina sale 1-2 px más ancha que en el original. Solo con fondo blanco quitado; con transparencia manda el alfa.
+# tiene menos de la mitad de ese color y toca el fondo, se lo deja en el fondo (como un trazador a 50 % de cobertura). Sin
+# esto, cada línea fina sale 1-2 px más ancha que en el original. Solo con fondo blanco quitado; con transparencia manda el alfa.
 COVERAGE_MIN = 0.5
 COVERAGE_LEVEL = math.ceil(COVERAGE_MIN * 255)
+FRINGE_PASSES = 2  # anillos de píxeles que se pueden descartar desde el fondo hacia adentro
 MAX_INPUT_BYTES = 32 * 1024 * 1024
 MAX_INPUT_PIXELS = 4_000_000
 ALPHA_THRESHOLD = 128
@@ -140,13 +141,14 @@ def segment(rgba, asset, color_limit, cancel):
     width, height = rgb.size
     mask_bytes = mask.tobytes()
     rgb_bytes = rgb.tobytes()
-    compact = bytearray()
+    compact, positions = bytearray(), []
     for row in range(height):
         if row % ROW_CANCEL_INTERVAL == 0:
             check_cancel(cancel)
         for index in range(row * width, (row + 1) * width):
             if mask_bytes[index]:
                 compact.extend(rgb_bytes[index * 3:index * 3 + 3])
+                positions.append(index)
     if not compact:
         fail(IssueCode.GEOMETRY_INVALID, "No se encontraron píxeles de diseño.", "empty_foreground")
     check_cancel(cancel)
@@ -158,10 +160,10 @@ def segment(rgba, asset, color_limit, cancel):
     quantized.putpalette(_median_member_palette(foreground, quantized))
     keep = None
     if evidence["white_removed_globally"]:
-        # Se descartan los bordes suavizados y los colores se recalculan con los píxeles que quedan (el núcleo del trazo).
-        keep = _coverage_mask(foreground, quantized)
+        # Se descarta el borde suavizado y los colores se recalculan con los píxeles que quedan (el núcleo del trazo).
+        keep = _fringe_keep(rgb, mask, positions, quantized)
         quantized.putpalette(_median_member_palette(foreground, quantized, keep))
-        keep = _coverage_mask(foreground, quantized)
+        keep = _fringe_keep(rgb, mask, positions, quantized)
     check_cancel(cancel)
     palette_bytes = quantized.getpalette()
     indices = quantized.tobytes()
@@ -189,6 +191,7 @@ def segment(rgba, asset, color_limit, cancel):
         "quantizer": f"Pillow MEDIANCUT kmeans={QUANTIZER_KMEANS_PASSES}; no dithering; foreground pixels only; cluster colour = median member by distance from white",
         "foreground_pixels": len(kept_indices), "colour_limit": color_limit,
         "coverage_threshold": COVERAGE_MIN if keep is not None else None,
+        "fringe_rule": f"coverage < {COVERAGE_MIN} and touching background, {FRINGE_PASSES} passes" if keep is not None else None,
         "fringe_pixels_removed": len(indices) - len(kept_indices),
         "output_colours": sorted(palette.values()),
         "quantization_is_lossy": True,
@@ -226,28 +229,51 @@ def _median_member_palette(foreground, quantized, keep=None):
     return palette
 
 
-def _coverage_mask(foreground, quantized):
-    """Máscara 'L' (255 = se queda) de los píxeles con cobertura >= COVERAGE_MIN del color de su propio grupo.
+def _low_coverage(rgb, index_image, palette):
+    """Máscara 'L' (255) de los píxeles con cobertura < COVERAGE_MIN del color de su propio grupo.
 
     Un píxel p mezclado con blanco es p = blanco - a * (blanco - color); la cobertura `a` se obtiene por mínimos cuadrados
     sobre los tres canales. Se calcula con operaciones de imagen (una conversión lineal por grupo), sin recorrer píxeles.
     """
-    palette = quantized.getpalette()
-    index_image = Image.frombytes("L", quantized.size, quantized.tobytes())
-    keep = Image.new("L", quantized.size, 0)
-    for index in sorted(set(quantized.tobytes())):
+    low = Image.new("L", rgb.size, 0)
+    for index in sorted(set(index_image.tobytes())):
         weights = [255 - channel for channel in palette[index * 3:index * 3 + 3]]
         denominator = sum(weight * weight for weight in weights)
-        in_group = index_image.point(lambda value, wanted=index: 255 if value == wanted else 0)
-        if denominator == 0:  # un grupo blanco puro no puede ser una mezcla: se queda entero
-            keep = ImageChops.lighter(keep, in_group)
+        if denominator == 0:  # un grupo blanco puro no puede ser una mezcla
             continue
         scale = 255 / denominator
         # 255 * a = (255 / D) * (255 * sum(w) - sum(w * p)): coeficientes -w * scale y término constante 255 * sum(w) * scale.
         matrix = (-weights[0] * scale, -weights[1] * scale, -weights[2] * scale, 255 * sum(weights) * scale)
-        coverage = foreground.convert("L", matrix).point(lambda value: 255 if value >= COVERAGE_LEVEL else 0)
-        keep = ImageChops.lighter(keep, ImageChops.darker(coverage, in_group))
-    return keep
+        weak = rgb.convert("L", matrix).point(lambda value: 255 if value < COVERAGE_LEVEL else 0)
+        in_group = index_image.point(lambda value, wanted=index: 255 if value == wanted else 0)
+        low = ImageChops.lighter(low, ImageChops.darker(weak, in_group))
+    return low
+
+
+def _fringe_keep(rgb, mask, positions, quantized):
+    """Máscara compacta 'L' (255 = se queda): se descarta solo el borde suavizado.
+
+    Un píxel sale si su cobertura es menor a COVERAGE_MIN **y toca el fondo** (vecindad de 8, FRINGE_PASSES anillos). Los
+    píxeles débiles que quedan dentro de una forma, por ruido de JPEG o por un diseño casi blanco, se conservan: borrarlos
+    abriría agujeros dentro del diseño.
+    """
+    palette = quantized.getpalette()
+    width, height = rgb.size
+    compact_indices = quantized.tobytes()
+    scattered = bytearray(width * height)
+    for offset, position in enumerate(positions):
+        scattered[position] = compact_indices[offset]
+    index_image = Image.frombytes("L", rgb.size, bytes(scattered))
+    low = _low_coverage(rgb, index_image, palette)
+    kept = mask
+    for _ in range(FRINGE_PASSES):
+        touches_background = ImageChops.darker(ImageChops.invert(kept).filter(ImageFilter.MaxFilter(3)), kept)
+        dropped = ImageChops.darker(low, touches_background)
+        if dropped.getbbox() is None:
+            break
+        kept = ImageChops.subtract(kept, dropped)
+    kept_bytes = kept.tobytes()
+    return Image.frombytes("L", (len(positions), 1), bytes(kept_bytes[position] for position in positions))
 
 
 def _quantization_evidence(foreground, quantized, keep=None):

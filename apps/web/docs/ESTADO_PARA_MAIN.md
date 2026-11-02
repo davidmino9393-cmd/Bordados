@@ -36,7 +36,7 @@ Corrida completa sobre el último commit:
 
 | Suite | Resultado |
 |---|---|
-| Motor (`unittest`) | 114 pruebas OK |
+| Motor (`unittest`) | 115 pruebas OK |
 | Evaluación F (`tests/h2_eval`) | 16 pruebas OK (1 omitida); `run_eval.py`: 14 PNG/JPEG, 0 errores, 8 comprobaciones 14/14 |
 | Web (Vitest, typecheck, build) | 156 pruebas OK |
 | e2e con mocks (Playwright) | 42 OK |
@@ -48,7 +48,7 @@ Corrida completa sobre el último commit:
 - **Sin JEF desde imágenes:** E1 genera geometría con parámetros provisionales sin calibrar; los trabajos de imagen terminan en `needs_review`. Nada afirma que algo esté listo para coser.
 - **Calidad de color:** Anime Socks conserva letras y contornos con 3 colores, pero el rosa de pétalos queda casi blanco. La medición de legibilidad real necesita muestras cosidas (H3).
 - **Ancho mínimo bordable:** 0,4 mm es un supuesto sin calibrar; se mide y avisa, no se aplica.
-- **Revisión pendiente de Codex** sobre mis cambios en `segmentation.py`, `pipeline.py` y `thin_features.py`, que él mantiene.
+- **Revisión de E:** la hizo Claude, sin esperar a Codex por indicación de David (`tests/h2_eval/informes/revision-e-v4.md`): un fallo real corregido (la regla de cobertura abría agujeros en diseños casi blancos con ruido; ahora solo descarta el borde que toca el fondo). Es una revisión del propio autor: una mirada ajena (Codex o la IA local de solo lectura) sigue siendo recomendable.
 - **Rendimiento:** E1 en Anime Socks ~3,5 s; mediana de F ~1 s por imagen.
 
 ## Decisiones para David

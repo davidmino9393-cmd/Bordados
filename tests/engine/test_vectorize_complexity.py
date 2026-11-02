@@ -64,6 +64,31 @@ class ComplexityTests(unittest.TestCase):
         self.assertAlmostEqual(width_px, 3.0, delta=0.1)  # con cobertura >= 0,5 queda el ancho real: 3 px
         self.assertEqual(segmentation["coverage_threshold"], 0.5)
 
+    def test_weak_pixels_inside_a_nearly_white_shape_are_kept_so_the_coverage_rule_opens_no_pinholes(self):
+        import random
+        from unittest import mock
+
+        import vectorize.segmentation as segmentation
+        random.seed(7)
+        base, amplitude = (249, 247, 246), 5  # a menos de 8 niveles del blanco, con ruido como el de un JPEG
+        image = Image.new("RGB", (160, 160), "white")
+        pixels = image.load()
+        for y in range(160):
+            for x in range(160):
+                if (x - 80) ** 2 + (y - 80) ** 2 < 60 ** 2:
+                    pixels[x, y] = tuple(max(0, min(255, c + random.randint(-amplitude, amplitude))) for c in base)
+        data = png(image)
+
+        def holes(result):
+            return sum(mask["holes"] for mask in result.evidence["masks"])
+
+        with_rule = result_for(data, source=asset(data), configuration=settings(80, 80, 1))
+        with mock.patch.object(segmentation, "_fringe_keep", lambda rgb, mask, positions, quantized: Image.new("L", (len(positions), 1), 255)):
+            without_rule = result_for(data, source=asset(data), configuration=settings(80, 80, 1))
+        # Los agujeros que ya traía la regla de fondo blanco (píxeles interiores >= 250) no son culpa de la cobertura.
+        self.assertLessEqual(holes(with_rule), holes(without_rule) + 5)
+        self.assertLess(with_rule.evidence["segmentation"]["fringe_pixels_removed"], 40)
+
     def test_transparent_images_are_decided_by_alpha_not_by_coverage_over_white(self):
         image = Image.new("RGBA", (40, 40), (0, 0, 0, 0))
         image.paste((250, 240, 235, 255), (10, 10, 30, 30))  # un color casi blanco, pero opaco: es diseño
