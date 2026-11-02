@@ -601,7 +601,9 @@ def create_app(config: ApiConfig, analysis_providers=None):
 
     @api.get("/profiles")
     def get_profiles():
-        return JSONResponse(catalog.model_dump(mode="json"))
+        # La lista de proveedores se sondea en vivo (el modelo local puede estar apagado); el resto del catálogo no cambia.
+        live = catalog.model_copy(update={"providers": provider_availability(providers, live=True)})
+        return JSONResponse(live.model_dump(mode="json"))
 
     @app.get("/downloads/{token}")
     def download(token: str, request: Request):

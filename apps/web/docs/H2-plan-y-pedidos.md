@@ -6,7 +6,7 @@ Estado: **autorizado (parche y backend en `claude/web`, sin merge a `main`)**. H
 |---|---|
 | A. Contrato | **Hecho** (commit `00e6fd2`), 37 pruebas del motor |
 | B. Adaptador OpenAI | **Código y pruebas con transporte falso** (9). Sin clave ni modelo no se probó con OpenAI real |
-| C. Adaptador Ollama | Pendiente; figura «no disponible» en el catálogo |
+| C. Adaptador Ollama | **Código y pruebas con transporte falso** (10 de unidad + 3 por la API): sondeo en vivo de servidor y modelo en `GET /profiles`, códigos `LOCAL_MODEL_UNAVAILABLE` / `ANALYSIS_INCOMPLETE` / `ANALYSIS_SCHEMA_INVALID`, sin cambio silencioso de proveedor. Falta un modelo de visión real (el `qwen3-coder` del servidor de David es de código) |
 | D. Pipeline de imagen | **Hecho**: `analyzing`, `analysis`, `analysis-decision`, `analysis_retry`, continuación (14 pruebas HTTP). La continuación ejecuta E1 y termina en `needs_review` (`DENSITY_REVIEW_REQUIRED`), sin JEF |
 | E. Vector y geometría | **E1 hecho por Codex** (planas, huecos; PNG/JPEG) y conectado en `runner.py`. Anime Socks ya procesa (`4a7fd6b`) y, con `kmeans=3` promovido (autorizado por David), conserva sus trazos oscuros (F: 0,04 % de píxeles con error de color ≥ 64). Pendiente: fidelidad de paleta, SVG de entrada, ejes centrales, satén |
 | F. Evaluación | **Arnés listo** (`tests/h2_eval/`, 6 pruebas); espera `vectorize()` de Codex. IoU, huecos y texto aún sin medir |

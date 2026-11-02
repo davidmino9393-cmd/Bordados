@@ -36,7 +36,7 @@ Corrida completa sobre el último commit:
 
 | Suite | Resultado |
 |---|---|
-| Motor (`unittest`) | 96 pruebas OK |
+| Motor (`unittest`) | 109 pruebas OK |
 | Evaluación F (`tests/h2_eval`) | 16 pruebas OK (1 omitida); `run_eval.py`: 14 PNG/JPEG, 0 errores, 8 comprobaciones 14/14 |
 | Web (Vitest, typecheck, build) | 156 pruebas OK |
 | e2e con mocks (Playwright) | 42 OK |
@@ -44,7 +44,7 @@ Corrida completa sobre el último commit:
 | Regresión que reexporta con Ink/Stitch | OK: JEF idéntico, comando por comando, al entregado |
 
 ## Riesgos
-- **Lo no probado:** OpenAI contra la red real (falta clave, modelo y tope de costo) y Ollama (no existe el adaptador). El análisis de IA de los recorridos reales está simulado y rotulado.
+- **Lo no probado:** OpenAI contra la red real (falta clave, modelo y tope de costo) y Ollama (el adaptador existe y está probado solo con transporte falso: falta un modelo de visión real). El análisis de IA de los recorridos reales está simulado y rotulado.
 - **Sin JEF desde imágenes:** E1 genera geometría con parámetros provisionales sin calibrar; los trabajos de imagen terminan en `needs_review`. Nada afirma que algo esté listo para coser.
 - **Calidad de color:** Anime Socks conserva letras y contornos con 3 colores, pero el rosa de pétalos queda casi blanco. La medición de legibilidad real necesita muestras cosidas (H3).
 - **Ancho mínimo bordable:** 0,4 mm es un supuesto sin calibrar; se mide y avisa, no se aplica.

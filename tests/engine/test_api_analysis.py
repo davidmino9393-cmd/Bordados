@@ -26,7 +26,7 @@ sys.path.insert(0, str(ROOT / "workers" / "embroidery"))
 import uvicorn
 from PIL import Image, ImageDraw
 
-from embroidery_api.analysis import AnalysisProvider, ProviderError, ProviderResult
+from embroidery_api.analysis import AnalysisProvider, OllamaProvider, ProviderError, ProviderResult
 from embroidery_api.app import create_app
 from embroidery_api.config import ApiConfig
 from embroidery_contracts import IssueCode
@@ -268,6 +268,49 @@ class AnalysisFlowTests(AnalysisApiTests):
         self.assertEqual(self.call("POST", f"/api/v1/projects/{pid}/sewouts", dict(sewout, photo_asset_ids=[design["asset_id"]]))[0], 422)
         status, recorded = self.call("POST", f"/api/v1/projects/{pid}/sewouts", dict(sewout, photo_asset_ids=[photo["asset_id"]]))
         self.assertEqual((status, recorded["photo_asset_ids"]), (201, [photo["asset_id"]]))
+
+    def test_the_local_model_is_probed_live_in_the_profile_catalogue(self):
+        def tags(url, timeout):
+            return 200, json.dumps({"models": [{"name": "qwen2.5vl:7b"}]}).encode()
+
+        def down(url, timeout):
+            raise urllib.error.URLError("rechazada")
+
+        for fetch, available in ((tags, True), (down, False)):
+            with self.subTest(available=available):
+                self.start({"ollama": OllamaProvider("qwen2.5vl:7b", fetch=fetch)})
+                _, catalogue = self.call("GET", "/api/v1/profiles")
+                by_id = {item["provider_id"]: item for item in catalogue["providers"]}
+                self.assertEqual(by_id["ollama"]["available"], available)
+                self.assertEqual(by_id["ollama"]["unavailable_reason"] is None, available)
+                self.assertFalse(by_id["openai"]["available"])
+
+    def test_a_job_runs_end_to_end_with_the_ollama_adapter_and_never_falls_back(self):
+        def chat(url, headers, body, timeout):
+            self.assertTrue(url.endswith("/api/chat"))
+            reply = {"model": "qwen2.5vl:7b", "done": True, "done_reason": "stop", "prompt_eval_count": 5, "eval_count": 3,
+                     "message": {"role": "assistant", "content": json.dumps({"regions": [dict(INSIDE)]})}}
+            return 200, json.dumps(reply).encode()
+
+        self.start({"ollama": OllamaProvider("qwen2.5vl:7b", transport=chat)})
+        _, job = self.raster_job("ollama", image=png(shape=True))
+        done = self.wait(job["job_id"])
+        self.assertEqual(done["status"], "needs_review")  # E1 vectorizó; sin H3 no hay puntadas
+        self.assertEqual(done["settings_snapshot"]["ai_provider"], "ollama")
+        _, analysis = self.call("GET", f"/api/v1/jobs/{job['job_id']}/analysis")
+        self.assertEqual((analysis["provider"], analysis["model"]), ("ollama", "qwen2.5vl:7b"))
+
+    def test_a_down_local_model_fails_the_job_with_its_own_code_and_does_not_use_openai(self):
+        def refuse(url, headers, body, timeout):
+            raise urllib.error.URLError("rechazada")
+
+        openai = FakeProvider("openai", [INSIDE])
+        self.start({"ollama": OllamaProvider("qwen2.5vl:7b", transport=refuse), "openai": openai})
+        _, job = self.raster_job("ollama", image=png(shape=True))
+        done = self.wait(job["job_id"])
+        self.assertEqual(done["status"], "failed")
+        self.assertEqual((done["failure"]["code"], done["failure"]["stage"]), ("LOCAL_MODEL_UNAVAILABLE", "analyzing"))
+        self.assertEqual(openai.calls, 0)
 
     def test_provider_failures_end_the_job_with_the_catalogue_code(self):
         for code in (IssueCode.ANALYSIS_REFUSED, IssueCode.PROVIDER_RATE_LIMITED, IssueCode.ANALYSIS_SCHEMA_INVALID):

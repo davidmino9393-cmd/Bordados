@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 import json
 import re
 import socket
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -163,6 +164,108 @@ class OpenAIProvider(AnalysisProvider):
         )
 
 
+def default_fetch(url, timeout):
+    request = urllib.request.Request(url, method="GET")
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return response.status, response.read()
+    except urllib.error.HTTPError as exc:
+        return exc.code, exc.read(MAX_ERROR_BODY * 10)
+
+
+class OllamaProvider(AnalysisProvider):
+    """Modelo de visión local (Ollama, `/api/chat`) con salida estructurada. La imagen nunca sale del servidor."""
+
+    provider_id = "ollama"
+    PROBE_TTL_S = 10.0  # la disponibilidad se consulta en vivo, pero no más de una vez cada tanto
+    PROBE_TIMEOUT_S = 2.0
+
+    def __init__(self, model, base_url="http://127.0.0.1:11434", timeout_s=120.0, transport=default_transport,
+                 fetch=default_fetch, clock=time.monotonic):
+        if not model:
+            raise ValueError("OllamaProvider requiere el modelo de la configuración privada")
+        self.model = model
+        self._base = base_url.rstrip("/")
+        self._timeout, self._transport, self._fetch, self._clock = timeout_s, transport, fetch, clock
+        self._probe_cache = None  # (momento, (disponible, motivo))
+        self._probe_lock = threading.Lock()
+
+    def analyze(self, image, media_type, width_px, height_px, cancel=None):
+        if cancel is not None and cancel.is_set():
+            raise ProviderError(IssueCode.LOCAL_MODEL_UNAVAILABLE, "cancelled")
+        payload = {
+            "model": self.model, "stream": False, "format": RESPONSE_SCHEMA,
+            "options": {"temperature": 0, "seed": 0},  # la misma imagen debería dar la misma respuesta
+            "messages": [{
+                "role": "user", "content": f"{PROMPT} Tamaño del original: {width_px} × {height_px} px.",
+                "images": [base64.b64encode(image).decode("ascii")],
+            }],
+        }
+        started = time.monotonic()
+        try:
+            status, body = self._transport(
+                self._base + "/api/chat", {"Content-Type": "application/json"}, json.dumps(payload).encode("utf-8"), self._timeout,
+            )
+        except (urllib.error.URLError, socket.timeout, TimeoutError, ConnectionError, OSError) as exc:
+            raise ProviderError(IssueCode.LOCAL_MODEL_UNAVAILABLE, f"connection:{type(exc).__name__}") from None
+        duration_ms = int((time.monotonic() - started) * 1000)
+        if status == 404:  # Ollama responde 404 cuando el modelo no está instalado
+            raise ProviderError(IssueCode.LOCAL_MODEL_UNAVAILABLE, "model_not_found")
+        if status >= 500:
+            raise ProviderError(IssueCode.LOCAL_MODEL_UNAVAILABLE, f"http_{status}")
+        if status != 200:
+            raise ProviderError(IssueCode.ANALYSIS_SCHEMA_INVALID, f"http_{status}")
+        return self._parse(body, duration_ms)
+
+    def _parse(self, body, duration_ms):
+        try:
+            document = json.loads(body)
+        except ValueError:
+            raise ProviderError(IssueCode.ANALYSIS_SCHEMA_INVALID, "response_not_json") from None
+        if not isinstance(document, dict):
+            raise ProviderError(IssueCode.ANALYSIS_SCHEMA_INVALID, "response_not_object")
+        if document.get("done_reason") == "length":
+            raise ProviderError(IssueCode.ANALYSIS_INCOMPLETE, "output_length_limit")
+        message = document.get("message")
+        text = message.get("content") if isinstance(message, dict) else None
+        if not isinstance(text, str) or not text.strip():
+            raise ProviderError(IssueCode.ANALYSIS_INCOMPLETE, "no_output_text")
+        try:
+            regions = json.loads(text)["regions"]
+        except (ValueError, KeyError, TypeError):
+            raise ProviderError(IssueCode.ANALYSIS_SCHEMA_INVALID, "output_not_matching_schema") from None
+        return ProviderResult(
+            regions=regions, model=str(document.get("model") or self.model), raw=document, duration_ms=duration_ms,
+            input_tokens=document.get("prompt_eval_count"), output_tokens=document.get("eval_count"),
+        )
+
+    def probe(self):
+        """(disponible, motivo): el servidor responde y el modelo está instalado. Se recuerda unos segundos."""
+        with self._probe_lock:
+            now = self._clock()
+            if self._probe_cache and now - self._probe_cache[0] < self.PROBE_TTL_S:
+                return self._probe_cache[1]
+            result = self._probe_now()
+            self._probe_cache = (now, result)
+            return result
+
+    def _probe_now(self):
+        try:
+            status, body = self._fetch(self._base + "/api/tags", self.PROBE_TIMEOUT_S)
+        except (urllib.error.URLError, socket.timeout, TimeoutError, ConnectionError, OSError):
+            return False, "El servidor del modelo local (Ollama) no responde."
+        if status != 200:
+            return False, f"El servidor del modelo local respondió con el estado {status}."
+        try:
+            names = {str(item.get("name")) for item in json.loads(body).get("models", []) if isinstance(item, dict)}
+        except (ValueError, AttributeError):
+            return False, "El servidor del modelo local devolvió una lista de modelos ilegible."
+        wanted = {self.model, self.model if ":" in self.model else f"{self.model}:latest"}
+        if not wanted & names:
+            return False, f"El modelo local «{self.model}» no está instalado en el servidor."
+        return True, None
+
+
 @dataclass
 class NormalizedAnalysis:
     spec: AnalysisSpec
@@ -224,7 +327,7 @@ def region_incoherent_issue(spec, region_id):
 
 UNAVAILABLE_REASONS = {
     "openai": "OpenAI no está configurado en el servidor (clave y modelo).",
-    "ollama": "El adaptador de modelo local todavía no está disponible.",
+    "ollama": "El modelo local (Ollama) no está configurado en el servidor.",
 }
 
 
@@ -235,12 +338,20 @@ def configured_providers(config):
         providers["openai"] = OpenAIProvider(
             config.openai_api_key, config.openai_model, config.openai_base_url, config.analysis_timeout_s,
         )
+    if config.ollama_model:
+        providers["ollama"] = OllamaProvider(config.ollama_model, config.ollama_base_url, config.ollama_timeout_s)
     return providers
 
 
-def provider_availability(providers):
-    return tuple(
-        ProviderAvailability(provider_id=pid, available=pid in providers,
-                             unavailable_reason=None if pid in providers else UNAVAILABLE_REASONS[pid])
-        for pid in ("openai", "ollama")
-    )
+def provider_availability(providers, live=False):
+    """Disponibilidad por proveedor. Con `live`, un proveedor que sabe sondearse (Ollama) informa si su servidor responde
+    y tiene el modelo; sin `live` (validación de pedidos) basta con que esté configurado."""
+    items = []
+    for pid in ("openai", "ollama"):
+        provider = providers.get(pid)
+        if provider is None:
+            items.append(ProviderAvailability(provider_id=pid, available=False, unavailable_reason=UNAVAILABLE_REASONS[pid]))
+            continue
+        available, reason = provider.probe() if live and hasattr(provider, "probe") else (True, None)
+        items.append(ProviderAvailability(provider_id=pid, available=available, unavailable_reason=None if available else reason))
+    return tuple(items)
