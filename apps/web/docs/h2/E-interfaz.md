@@ -34,6 +34,10 @@ Reglas de la salida:
 - **Avisos:** `GEOMETRY_INVALID`, `GEOMETRY_REPAIR_AMBIGUOUS`, `GEOMETRY_HOLES_CHANGED` u otro del catálogo. Si hace falta un código nuevo, se propone como cambio de contrato.
 - **Cancelación:** revisa `cancel` entre etapas y termina limpio.
 
+### Acuerdos de las dos precisiones de Codex
+- **Valores provisionales (`effective_technique` y `parameters` son obligatorios en `EmbroideryObject`).** Sin cambiar el contrato: (a) E toma `effective_technique = proposed_technique` y `parameters` de **una sola tabla con nombre** (`PROVISIONAL_PARAMETERS`, por técnica; no por logo), con un comentario que diga «sin calibrar, hasta H3»; (b) por cada objeto, E agrega al documento un `DesignDecision` con `origin: "rule"`, `field: "effective_technique"` / `"parameters"`, `previous_value: null`, `new_value` el valor asignado y `reason` que empiece con `provisional_until_h3: sin calibración física`; (c) `evidence["parameters_status"] = "provisional_uncalibrated"`. Así la web y la evaluación pueden mostrar «parámetros provisionales» sin presentarlos como calibrados. Si H3 prefiere un campo explícito, se propone como cambio de contrato aparte; no se hace en E.
+- **Determinismo.** Con las mismas entradas, `document` y `editable_svg` son idénticos byte a byte. `duration_ms` y los tiempos quedan fuera de la comparación: `evidence` separa `timings` (no determinista) del resto (determinista).
+
 Adaptador aparte (mismo dueño): `document_to_inkstitch_svg(document) -> str` en `workers/embroidery/`, para que el worker actual lo consuma como SVG preparado y produzca el JEF sin cambios.
 
 ## 2. Reparto de archivos
@@ -52,8 +56,8 @@ E usa solo modelos ya presentes en `af21ed3`. **No necesita** el contrato H2 (`0
 
 | Commit | Contenido | Para qué |
 |---|---|---|
-| `da5e1a1` | solo `tests/fixtures/h2/**` (14 imágenes, manifiesto, generador) | Imágenes de prueba con ruta estable |
-| el siguiente de fixtures | las dos escalas de Anime Socks, cuando David confirme la referencia | Completar el conjunto |
+| `da5e1a1` | solo `tests/fixtures/h2/**` (14 imágenes sintéticas, `Anime_Socks.png`, manifiesto, generador) | Imágenes de prueba con ruta estable |
+| `4018d97` | solo `tests/fixtures/h2/**`: dos entradas de Anime Socks (150×142,8 y 126,2×120 mm); 16 entradas | Completar el conjunto; el validador pasa con `--check-files` |
 
 Traslado: `git cherry-pick` de esos commits sobre `codex/motor`, con autorización de David y sin tocar `main`. La integración posterior va en sentido contrario: Claude mergea `codex/motor` en `claude/web` (no en `main`) para conectar E; David decide el paso final a `main`.
 
@@ -61,7 +65,7 @@ Traslado: `git cherry-pick` de esos commits sobre `codex/motor`, con autorizaci�
 Corre `vectorize()` sobre el manifiesto y mide: IoU entre el documento redibujado y la máscara de la imagen; huecos conservados; límites dentro del tamaño objetivo (`contain`); colores ≤ límite; texto presente como anotación; determinismo (dos corridas, mismo resultado); duración; y una revisión estática que impida nombres de archivo, tamaños o coordenadas de las imágenes en el código de E. Sin porcentajes inventados: se informa lo medido.
 
 ## 5. Para cerrar
-1. David confirma la referencia de Anime Socks (`Anime_Socks.png` = `trabajo/Referencia.png`, idénticas).
-2. David autoriza el cherry-pick de los commits de fixtures a `codex/motor` y que Codex trabaje solo en esa rama.
+1. ~~David confirma la referencia de Anime Socks~~ **Hecho**: `Anime_Socks.png` = `trabajo/Referencia.png`.
+2. ~~David autoriza el cherry-pick~~ **Hecho** (sin merges ni push); lo ejecuta Codex en su propio worktree.
 3. Codex confirma o corrige la firma de `vectorize()` y los campos de `VectorizeResult`.
 4. Primer entregable de Codex: `vectorize()` sobre las imágenes planas (logos y formas con huecos) con sus pruebas, antes de line art y casos difíciles.
