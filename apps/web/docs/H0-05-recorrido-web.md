@@ -82,6 +82,30 @@ La franja «Datos simulados» aparece siempre que el cliente sea simulado. Sin `
 9. **Fotos de la muestra:** `photo_asset_ids` existe en el contrato, pero no define cómo subir una foto como asset. Queda pendiente (cambio propuesto: indicar el flujo de subida).
 10. **Quién puede registrar:** el contrato habla de «usuario autorizado»; si no lo es, el 403 se muestra con su código.
 
+## Verificación contra el backend real (H0-04)
+
+Se corrió la UI completa contra `uvicorn` (commit `c6b4db6`) con el SVG `Anime_Socks_InkStitch.svg`, 150 × 150 mm, `sq20b` y `gabardina_inicial`. Para repetirla: levantar el backend, `cd tests/e2e && npx playwright test -c playwright.real.config.ts` (usa un Vite propio en el puerto 5176 con `API_PROXY_TARGET`).
+
+| Punto | Resultado real |
+|---|---|
+| Autenticación | HTTP Basic (`test`/`test`). El desafío es Basic solo si el config **no** define `service_token` |
+| Latencias (sonda directa) | `POST /projects` 17 ms · `/assets` 30 ms · `/revisions` 22 ms · `POST /jobs` **202 en 10 ms** · `GET artifacts` 17 ms |
+| Estados | `digitizing` (0 s) → `needs_review` (18,9 s). Con sondeo cada 0,5 s no se observaron `queued` ni `validating`; `analyzing` y `vectorizing` figuran `skipped` |
+| `GET artifacts` | **200 en `needs_review`**, TTL 300 s, `Cache-Control: no-store` |
+| Archivos | **6**: `jef`, `editable_svg`, `inkstitch_svg`, `preview_png` (`jef_reread`), `validation_json`, `raw_commands_json` (el mock tiene 4) |
+| JEF descargado desde la UI | 14.816 bytes; `pyembroidery`: **150,0 × 142,8 mm, 6.789 puntadas, 3 bloques** |
+| Límites releídos | `stitch_bounds_mm` de −75 a 75 y de −71,4 a 71,4 (origen centrado, no 0…150); la UI muestra el ancho y el alto calculados, sin depender del origen |
+| Incidencias | 14 `SATIN_RUNG_WARNING` (`review_required`), estado final siempre `needs_review` |
+| Muestra física | `POST /sewouts` 201; `sewout_status` pasa a `approved` y el estado digital sigue en `needs_review` |
+| Cancelación | `POST /cancel` 202; el siguiente `GET` ya devuelve `cancelled` con `cancellation_requested: true` (~1 s) y sin descargas |
+
+**Diferencias entre el mock y el backend real**
+- **Avisos sin asignar a un objeto:** los 14 avisos son idénticos («Satin has no rungs») y cada uno lista los **mismos 14** `object_ids` (`satin_A_descenso_0`, `satin_SOCKS_S_1_0`, …). Su evidencia declara `localization: "candidate columns, native warning unmapped"` y `source_object_mapping_verified: false`: son columnas candidatas, no una relación 1 a 1. Este caso rompió la web (claves repetidas en la lista); ya está corregido con una prueba de regresión. Falta decidir si la UI debe avisar que la asignación no está verificada.
+- **Original sin vista previa:** el backend no emite `original_download` (llega `null`). La comparación muestra «—» en «Original» y el formulario dice que la vista previa no está disponible.
+- **Catálogo:** `providers` llega vacío; no afecta a los SVG preparados, pero una imagen no mostraría proveedor para elegir.
+- **Solo SVG preparado:** PNG/JPG, variantes de tamaño y correcciones todavía no se ejecutan en H0-04; esas partes de la UI no se pudieron probar contra el backend real.
+- **Enlaces:** son absolutos (`public_base_url`) y firmados; se abren sin credenciales, con `Content-Disposition: attachment`.
+
 ## Accesibilidad
 
 Se corre **axe-core** (`@axe-core/playwright`, solo en `tests/e2e`) sobre la UI real en Chrome, en escritorio y en móvil (Pixel 7), con las etiquetas WCAG 2.0/2.1/2.2 A y AA más las buenas prácticas de axe, contraste incluido. Pantallas escaneadas: proyectos (vacío y con uno), proyecto sin imagen, con imagen y error de validación y con aviso de bastidor, trabajo en curso, fallido y cancelado, resultado listo (con y sin errores del formulario de muestra), revisión con archivos (14 incidencias) y la pantalla de error 501 con el cliente real.
