@@ -60,8 +60,8 @@ export function ProjectPage() {
   );
 
   useDocumentTitle(project.data?.project.name);
-  // Las fotos de una muestra física viven en el proyecto pero no son imágenes para bordar.
-  const assets = assetList.items.filter((asset) => asset.purpose === AssetPurpose.Design);
+  // Las fotos de una muestra física viven en el proyecto pero no son imágenes para bordar (sin `purpose` = diseño).
+  const assets = assetList.items.filter((asset) => asset.purpose !== AssetPurpose.SewoutPhoto);
   const selected = assets.find((a) => a.asset_id === pickedId) ?? assets.at(-1);
 
   // Los originales se sirven con enlaces temporales: se renuevan antes de vencer.
