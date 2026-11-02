@@ -237,6 +237,24 @@ class VectorizeTests(unittest.TestCase):
         bounds = value.document.object_bounds_mm
         self.assertEqual((bounds.min_x_mm, bounds.min_y_mm, bounds.max_x_mm, bounds.max_y_mm), (10, 14, 26, 30))
 
+    def test_out_of_bounds_analysis_issue_is_localized_to_actual_region(self):
+        data = png(Image.new("RGB", (20, 20), "blue"))
+        source = asset(data)
+        analysis = AnalysisSpec(
+            analysis_id="analysis_simulated_test", asset_id=source.asset_id,
+            provider="openai", model="simulated-test-model", prompt_version="test-v1",
+            original_response_artifact_id="provider_simulated_test", duration_ms=0,
+            regions=({"region_id": "outside_region", "bounds_px": {
+                "x_px": 19, "y_px": 0, "width_px": 2, "height_px": 10,
+            }, "visual_role": "shape"},),
+        )
+        with self.assertRaises(VectorizeFailure) as caught:
+            result_for(data, source=source, analysis=analysis)
+        incidence = caught.exception.issue
+        self.assertEqual(incidence.code, IssueCode.ANALYSIS_REGION_INCOHERENT)
+        self.assertEqual(incidence.region_ids, ("outside_region",))
+        self.assertEqual(incidence.severity.value, "review_required")
+
     def test_invalid_input_and_metadata_are_catalogued(self):
         data = png(Image.new("RGB", (8, 8), "blue"))
         source = asset(data)

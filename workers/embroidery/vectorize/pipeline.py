@@ -56,7 +56,7 @@ def _validate_analysis(analysis, asset):
     for region in analysis.regions:
         bounds = region.bounds_px
         if bounds.x_px + bounds.width_px > asset.original_width_px or bounds.y_px + bounds.height_px > asset.original_height_px:
-            fail(IssueCode.ANALYSIS_REGION_INCOHERENT, "Una región estimada está fuera de la imagen.", "analysis_bounds_outside_image", region_id=region.region_id)
+            fail(IssueCode.ANALYSIS_REGION_INCOHERENT, "Una región estimada está fuera de la imagen.", "analysis_bounds_outside_image", region_id=region.region_id, region_ids=(region.region_id,))
 
 
 def _affine(segmented, settings):
