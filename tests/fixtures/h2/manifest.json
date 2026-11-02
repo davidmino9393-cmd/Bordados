@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1",
-  "set_name": "Conjunto sintético H2 (14 imágenes generadas por código; faltan las 2 escalas de Anime Socks)",
+  "set_name": "Conjunto H2 (14 imágenes sintéticas generadas por código + Anime Socks en 2 escalas)",
   "images": [
     {
       "id": "logo-sol-01",
@@ -427,6 +427,72 @@
         "permission_confirmed": true
       },
       "sha256": "6a6c17c9e0b76a97b36d6c3f4e3fff36682a91f006e3c2de00c75c07f206d886"
+    },
+    {
+      "id": "anime-socks-150",
+      "file": "Anime_Socks.png",
+      "design_family": "anime_socks",
+      "variant_of": null,
+      "category": "few_colors_drawing",
+      "format": "png",
+      "pixel_size": {
+        "width": 1122,
+        "height": 1402
+      },
+      "has_transparency": false,
+      "contains_text": false,
+      "text": null,
+      "expected_colors": 3,
+      "target_size_mm": {
+        "width_mm": 150,
+        "height_mm": 142.8
+      },
+      "expected_outcome": "automatic",
+      "known_traps": [
+        "pétalos y hojas superpuestos",
+        "centros pequeños sobre pétalos"
+      ],
+      "rights": {
+        "owner": "David (coordinador del proyecto)",
+        "license": "Referencia propia del proyecto, uso interno de prueba",
+        "permission_confirmed": true,
+        "permission_note": "David confirmó en el chat que Anime_Socks.png (idéntica a Anime_Socks_Bordado/trabajo/Referencia.png) es la referencia."
+      },
+      "sha256": "78c30948478de017b321403807d8be0f03b3c057a05518c1c1a5a25dd1b9ea7c",
+      "notes": "Mismo archivo en dos escalas objetivo; resultado de referencia ya medido en Anime_Socks_Informe.md (3 tonos)."
+    },
+    {
+      "id": "anime-socks-126",
+      "file": "Anime_Socks.png",
+      "design_family": "anime_socks",
+      "variant_of": "anime-socks-150",
+      "category": "few_colors_drawing",
+      "format": "png",
+      "pixel_size": {
+        "width": 1122,
+        "height": 1402
+      },
+      "has_transparency": false,
+      "contains_text": false,
+      "text": null,
+      "expected_colors": 3,
+      "target_size_mm": {
+        "width_mm": 126.2,
+        "height_mm": 120
+      },
+      "expected_outcome": "automatic",
+      "known_traps": [
+        "pétalos y hojas superpuestos",
+        "centros pequeños sobre pétalos"
+      ],
+      "rights": {
+        "owner": "David (coordinador del proyecto)",
+        "license": "Referencia propia del proyecto, uso interno de prueba",
+        "permission_confirmed": true,
+        "permission_note": "David confirmó en el chat que Anime_Socks.png (idéntica a Anime_Socks_Bordado/trabajo/Referencia.png) es la referencia."
+      },
+      "sha256": "78c30948478de017b321403807d8be0f03b3c057a05518c1c1a5a25dd1b9ea7c",
+      "notes": "Mismo archivo en dos escalas objetivo; resultado de referencia ya medido en Anime_Socks_Informe.md (3 tonos)."
     }
   ]
 }
