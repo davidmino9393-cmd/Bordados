@@ -1,0 +1,432 @@
+{
+  "schema_version": "0.1",
+  "set_name": "Conjunto sintético H2 (14 imágenes generadas por código; faltan las 2 escalas de Anime Socks)",
+  "images": [
+    {
+      "id": "logo-sol-01",
+      "file": "nuevos/logo_sol_01.png",
+      "design_family": "logo-sol-01",
+      "variant_of": null,
+      "category": "flat_logo",
+      "format": "png",
+      "pixel_size": {
+        "width": 1200,
+        "height": 900
+      },
+      "has_transparency": false,
+      "contains_text": false,
+      "text": null,
+      "expected_colors": 2,
+      "target_size_mm": {
+        "width_mm": 100,
+        "height_mm": 75
+      },
+      "expected_outcome": "automatic",
+      "known_traps": [
+        "rayos redondeados cerca del aro"
+      ],
+      "rights": {
+        "owner": "Generado por código",
+        "license": "Propia, uso interno de prueba",
+        "permission_confirmed": true
+      },
+      "sha256": "ff012e19cdf1330c5e7a56c0203dde02150797fa28a54a7acff54142d75038de"
+    },
+    {
+      "id": "logo-hoja-01",
+      "file": "nuevos/logo_hoja_01.png",
+      "design_family": "logo-hoja-01",
+      "variant_of": null,
+      "category": "transparency",
+      "format": "png",
+      "pixel_size": {
+        "width": 1000,
+        "height": 1000
+      },
+      "has_transparency": true,
+      "contains_text": false,
+      "text": null,
+      "expected_colors": 2,
+      "target_size_mm": {
+        "width_mm": 90,
+        "height_mm": 90
+      },
+      "expected_outcome": "automatic",
+      "known_traps": [
+        "fondo transparente",
+        "nervadura fina dentro de la hoja"
+      ],
+      "rights": {
+        "owner": "Generado por código",
+        "license": "Propia, uso interno de prueba",
+        "permission_confirmed": true
+      },
+      "sha256": "0752ab9ae928804c4c3eb71c5330b34aa4b70031bea36ca68c0ca37596da8241"
+    },
+    {
+      "id": "logo-escudo-01",
+      "file": "nuevos/logo_escudo_01.png",
+      "design_family": "logo-escudo-01",
+      "variant_of": null,
+      "category": "flat_logo",
+      "format": "png",
+      "pixel_size": {
+        "width": 1000,
+        "height": 1200
+      },
+      "has_transparency": false,
+      "contains_text": false,
+      "text": null,
+      "expected_colors": 3,
+      "target_size_mm": {
+        "width_mm": 80,
+        "height_mm": 96
+      },
+      "expected_outcome": "automatic",
+      "known_traps": [
+        "estrella con puntas agudas"
+      ],
+      "rights": {
+        "owner": "Generado por código",
+        "license": "Propia, uso interno de prueba",
+        "permission_confirmed": true
+      },
+      "sha256": "d5ffbcdbaafa9dce98c38a33e638bcede042187bd7b80199d7c914ee4b1ea4cf"
+    },
+    {
+      "id": "logo-ola-01",
+      "file": "nuevos/logo_ola_01.png",
+      "design_family": "logo-ola-01",
+      "variant_of": null,
+      "category": "few_colors_drawing",
+      "format": "png",
+      "pixel_size": {
+        "width": 1200,
+        "height": 800
+      },
+      "has_transparency": false,
+      "contains_text": false,
+      "text": null,
+      "expected_colors": 3,
+      "target_size_mm": {
+        "width_mm": 120,
+        "height_mm": 80
+      },
+      "expected_outcome": "automatic",
+      "known_traps": [
+        "tres azules parecidos"
+      ],
+      "rights": {
+        "owner": "Generado por código",
+        "license": "Propia, uso interno de prueba",
+        "permission_confirmed": true
+      },
+      "sha256": "9df608988507c7152175d911f4ca3334092bb10d777f14b39a4518f37c38ae09"
+    },
+    {
+      "id": "linea-casa-01",
+      "file": "nuevos/linea_casa_01.png",
+      "design_family": "linea-casa-01",
+      "variant_of": null,
+      "category": "line_art",
+      "format": "png",
+      "pixel_size": {
+        "width": 1000,
+        "height": 1000
+      },
+      "has_transparency": false,
+      "contains_text": false,
+      "text": null,
+      "expected_colors": 1,
+      "target_size_mm": {
+        "width_mm": 80,
+        "height_mm": 80
+      },
+      "expected_outcome": "automatic",
+      "known_traps": [
+        "solo contornos, sin relleno"
+      ],
+      "rights": {
+        "owner": "Generado por código",
+        "license": "Propia, uso interno de prueba",
+        "permission_confirmed": true
+      },
+      "notes": "trazo de unos 1,3 mm a 80 mm",
+      "sha256": "5b59ab856d1b3f7b612a2aa585516c5e35efbb7b7f0ce955ef7d4af08a8a36e0"
+    },
+    {
+      "id": "linea-arbol-01",
+      "file": "nuevos/linea_arbol_01.svg",
+      "design_family": "linea-arbol-01",
+      "variant_of": null,
+      "category": "line_art",
+      "format": "svg",
+      "has_transparency": true,
+      "contains_text": false,
+      "text": null,
+      "expected_colors": 1,
+      "target_size_mm": {
+        "width_mm": 80,
+        "height_mm": 80
+      },
+      "expected_outcome": "automatic",
+      "known_traps": [
+        "curvas bezier",
+        "fondo transparente"
+      ],
+      "rights": {
+        "owner": "Generado por código",
+        "license": "Propia, uso interno de prueba",
+        "permission_confirmed": true
+      },
+      "sha256": "5f66bcfa9610d15d103514f5b1e4443934e8e4b5fbda3238fc055df5c65c6c07"
+    },
+    {
+      "id": "letras-nova-01",
+      "file": "nuevos/letras_nova_01.png",
+      "design_family": "letras-nova-01",
+      "variant_of": null,
+      "category": "lettering",
+      "format": "png",
+      "pixel_size": {
+        "width": 1200,
+        "height": 600
+      },
+      "has_transparency": false,
+      "contains_text": true,
+      "text": "NOVA",
+      "expected_colors": 2,
+      "target_size_mm": {
+        "width_mm": 120,
+        "height_mm": 60
+      },
+      "expected_outcome": "automatic",
+      "known_traps": [
+        "letra V y A con ángulos agudos"
+      ],
+      "rights": {
+        "owner": "Generado por código",
+        "license": "Propia, uso interno de prueba",
+        "permission_confirmed": true
+      },
+      "notes": "tipografía propia de líneas",
+      "sha256": "dd39553f7b2c17a5480ac3f2d10628132ff4a3424829e09d8d60392f1e77c803"
+    },
+    {
+      "id": "monograma-mk-01",
+      "file": "nuevos/monograma_mk_01.png",
+      "design_family": "monograma-mk-01",
+      "variant_of": null,
+      "category": "lettering",
+      "format": "png",
+      "pixel_size": {
+        "width": 1000,
+        "height": 1000
+      },
+      "has_transparency": false,
+      "contains_text": true,
+      "text": "MK",
+      "expected_colors": 2,
+      "target_size_mm": {
+        "width_mm": 80,
+        "height_mm": 80
+      },
+      "expected_outcome": "automatic",
+      "known_traps": [
+        "letras dentro de un aro cerrado"
+      ],
+      "rights": {
+        "owner": "Generado por código",
+        "license": "Propia, uso interno de prueba",
+        "permission_confirmed": true
+      },
+      "notes": "tipografía propia de líneas",
+      "sha256": "3976674c5f49f3bf968f542bfe6a9da8f66197f5dbbf4d1d0b2f768efe6f8f9f"
+    },
+    {
+      "id": "anillo-doble-01",
+      "file": "nuevos/anillo_doble_01.png",
+      "design_family": "anillo-doble-01",
+      "variant_of": null,
+      "category": "closed_curves_with_holes",
+      "format": "png",
+      "pixel_size": {
+        "width": 1000,
+        "height": 1000
+      },
+      "has_transparency": false,
+      "contains_text": false,
+      "text": null,
+      "expected_colors": 2,
+      "target_size_mm": {
+        "width_mm": 90,
+        "height_mm": 90
+      },
+      "expected_outcome": "automatic",
+      "known_traps": [
+        "dos huecos concéntricos"
+      ],
+      "rights": {
+        "owner": "Generado por código",
+        "license": "Propia, uso interno de prueba",
+        "permission_confirmed": true
+      },
+      "sha256": "ab8d7dbb964c737946ba5dcd46271ff5b2187a91d952bcabde1f02a937717f0f"
+    },
+    {
+      "id": "formas-huecos-01",
+      "file": "nuevos/formas_huecos_01.svg",
+      "design_family": "formas-huecos-01",
+      "variant_of": null,
+      "category": "closed_curves_with_holes",
+      "format": "svg",
+      "has_transparency": true,
+      "contains_text": false,
+      "text": null,
+      "expected_colors": 1,
+      "target_size_mm": {
+        "width_mm": 90,
+        "height_mm": 90
+      },
+      "expected_outcome": "automatic",
+      "known_traps": [
+        "tres huecos (fill-rule evenodd)",
+        "fondo transparente"
+      ],
+      "rights": {
+        "owner": "Generado por código",
+        "license": "Propia, uso interno de prueba",
+        "permission_confirmed": true
+      },
+      "sha256": "2f93fcf905ccb89e2a6274d5d6f13550a3af8daca72710b241a7bdda7e46290d"
+    },
+    {
+      "id": "dificil-lineas-finas-01",
+      "file": "nuevos/dificil_lineas_finas_01.png",
+      "design_family": "dificil-lineas-finas-01",
+      "variant_of": null,
+      "category": "expects_review",
+      "format": "png",
+      "pixel_size": {
+        "width": 1200,
+        "height": 1200
+      },
+      "has_transparency": false,
+      "contains_text": false,
+      "text": null,
+      "expected_colors": 1,
+      "target_size_mm": {
+        "width_mm": 80,
+        "height_mm": 80
+      },
+      "expected_outcome": "needs_review",
+      "expected_review_reason": "trazos de unos 0,13 mm de ancho a este tamaño (menos de 1 mm)",
+      "known_traps": [
+        "líneas muy finas",
+        "muchas líneas cercanas"
+      ],
+      "rights": {
+        "owner": "Generado por código",
+        "license": "Propia, uso interno de prueba",
+        "permission_confirmed": true
+      },
+      "sha256": "15bdeb97d02bd361742fcb1e727b546d12657615cd93b53d6a8067c4bed8e892"
+    },
+    {
+      "id": "dificil-texto-chico-01",
+      "file": "nuevos/dificil_texto_chico_01.png",
+      "design_family": "dificil-texto-chico-01",
+      "variant_of": null,
+      "category": "expects_review",
+      "format": "png",
+      "pixel_size": {
+        "width": 1200,
+        "height": 800
+      },
+      "has_transparency": false,
+      "contains_text": true,
+      "text": "LUNA NOVA TALLER",
+      "expected_colors": 1,
+      "target_size_mm": {
+        "width_mm": 100,
+        "height_mm": 67
+      },
+      "expected_outcome": "needs_review",
+      "expected_review_reason": "letras de la segunda línea de unos 1,8 mm de alto (menos de 4 mm)",
+      "known_traps": [
+        "texto muy chico",
+        "trazo de 3 px"
+      ],
+      "rights": {
+        "owner": "Generado por código",
+        "license": "Propia, uso interno de prueba",
+        "permission_confirmed": true
+      },
+      "notes": "tipografía propia de líneas",
+      "sha256": "28f9b40944f0dcd19b18a76fffebb2996811b34140c6983b4d14b01c37127d47"
+    },
+    {
+      "id": "dificil-degradado-01",
+      "file": "nuevos/dificil_degradado_01.jpg",
+      "design_family": "dificil-degradado-01",
+      "variant_of": null,
+      "category": "expects_review",
+      "format": "jpeg",
+      "pixel_size": {
+        "width": 1200,
+        "height": 1200
+      },
+      "has_transparency": false,
+      "contains_text": false,
+      "text": null,
+      "expected_colors": 3,
+      "target_size_mm": {
+        "width_mm": 90,
+        "height_mm": 90
+      },
+      "expected_outcome": "needs_review",
+      "expected_review_reason": "degradado de color y sombra suave: no se pueden bordar con un solo color por zona",
+      "known_traps": [
+        "degradado",
+        "sombra difusa",
+        "ruido JPEG"
+      ],
+      "rights": {
+        "owner": "Generado por código",
+        "license": "Propia, uso interno de prueba",
+        "permission_confirmed": true
+      },
+      "sha256": "1ed07c8aa5b7e1218083a988dd84ce5375346ef1ae4179476b66e3c145faaeab"
+    },
+    {
+      "id": "jpeg-simple-01",
+      "file": "nuevos/jpeg_simple_01.jpg",
+      "design_family": "jpeg-simple-01",
+      "variant_of": null,
+      "category": "flat_logo",
+      "format": "jpeg",
+      "pixel_size": {
+        "width": 1000,
+        "height": 1000
+      },
+      "has_transparency": false,
+      "contains_text": false,
+      "text": null,
+      "expected_colors": 2,
+      "target_size_mm": {
+        "width_mm": 80,
+        "height_mm": 80
+      },
+      "expected_outcome": "automatic",
+      "known_traps": [
+        "bordes con ruido de compresión JPEG"
+      ],
+      "rights": {
+        "owner": "Generado por código",
+        "license": "Propia, uso interno de prueba",
+        "permission_confirmed": true
+      },
+      "sha256": "6a6c17c9e0b76a97b36d6c3f4e3fff36682a91f006e3c2de00c75c07f206d886"
+    }
+  ]
+}
