@@ -9,7 +9,7 @@ Estado: **autorizado (parche y backend en `claude/web`, sin merge a `main`)**. H
 | C. Adaptador Ollama | Pendiente; figura «no disponible» en el catálogo |
 | D. Pipeline de imagen | **Hecho**: `analyzing`, `analysis`, `analysis-decision`, `analysis_retry`, continuación (14 pruebas HTTP). La vectorización no existe: el job termina en `failed` / `vectorization_not_implemented` |
 | E. Vector y geometría | Pendiente; necesita el conjunto de imágenes |
-| F. Evaluación | Pendiente |
+| F. Evaluación | **Arnés listo** (`tests/h2_eval/`, 6 pruebas); espera `vectorize()` de Codex. IoU, huecos y texto aún sin medir |
 | G. Web | Pendiente del backend real con una clave |
 
 
