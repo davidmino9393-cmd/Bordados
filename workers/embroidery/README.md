@@ -2,7 +2,7 @@
 
 Propósito: probar SVG preparado → JEF → relectura/preview sin intervención de escritorio. Standalone, sin FastAPI; contratos v0.1 congelados sin modificar.
 
-Contenido: [Uso](#uso), [salidas](#salidas), [límites](#limites), [relacionados](#relacionados).
+Contenido: [Uso](#uso), [verificación](#verificacion), [salidas](#salidas), [límites](#limites), [relacionados](#relacionados).
 
 ## Uso
 
@@ -18,6 +18,14 @@ python workers/embroidery/worker.py `
 ```
 
 `--inkscape` solo verifica versión: la exportación se invoca directamente mediante las extensiones CLI de Ink/Stitch. Preview por Pillow desde JEF; no rasterización del vector. El entorno usado aquí tiene pyembroidery en `.deps`: añadir ese directorio a PYTHONPATH; no es necesario si se instala requirements en el venv.
+
+## Verificación
+
+```powershell
+python workers/embroidery/verify_commands.py workers/embroidery/evidence/cli-main-final/raw-commands.json services/api/evidence/h0-04/raw-commands.json
+```
+
+Parsea JSON, no bytes (CRLF/LF no afecta). Reporta conteos, índices y veredicto.
 
 ## Salidas
 
