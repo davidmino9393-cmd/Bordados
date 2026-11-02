@@ -28,6 +28,15 @@ class ApiConfig:
     dimension_tolerance_mm: float = 0.2
     worker_python_paths: tuple[Path, ...] = field(default_factory=tuple)
     worker_script: Path = ROOT / "workers" / "embroidery" / "worker.py"
+    # H2: proveedores de visión. Las claves solo viven en esta configuración privada.
+    openai_api_key: str | None = field(default=None, repr=False)
+    openai_model: str | None = None
+    openai_base_url: str = "https://api.openai.com"
+    analysis_timeout_s: float = 60
+    # H2: modelo de visión local (Ollama). Sin `ollama_model` el proveedor figura no disponible.
+    ollama_model: str | None = None
+    ollama_base_url: str = "http://127.0.0.1:11434"
+    ollama_timeout_s: float = 120
 
     def __post_init__(self):
         for name in ("data_root", "profiles_path", "python_executable", "inkstitch_executable", "worker_script"):
@@ -37,6 +46,14 @@ class ApiConfig:
         object.__setattr__(self, "worker_python_paths", tuple(Path(p).resolve() for p in self.worker_python_paths))
         if not self.service_token and not (self.basic_username and self.basic_password):
             raise ValueError("Configure service_token or basic_username/basic_password")
+        if bool(self.openai_api_key) != bool(self.openai_model):
+            raise ValueError("openai_api_key and openai_model must be configured together")
+        if not math.isfinite(self.analysis_timeout_s) or self.analysis_timeout_s <= 0:
+            raise ValueError("analysis_timeout_s must be positive")
+        if not math.isfinite(self.ollama_timeout_s) or self.ollama_timeout_s <= 0:
+            raise ValueError("ollama_timeout_s must be positive")
+        if not self.ollama_base_url.startswith(("http://", "https://")):
+            raise ValueError("ollama_base_url must be an explicit HTTP(S) origin")
         if len(self.signing_key.encode()) < 32:
             raise ValueError("A private signing_key of at least 32 bytes is required")
         if not self.public_base_url.startswith(("http://", "https://")):

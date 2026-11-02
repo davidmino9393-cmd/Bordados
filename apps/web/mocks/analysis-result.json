@@ -1,0 +1,83 @@
+{
+  "schema_version": "0.1",
+  "simulated": true,
+  "case": "analysis-result",
+  "model": "AnalysisSpec",
+  "direction": "response",
+  "endpoint": "GET /api/v1/jobs/{id}/analysis  (CAMBIO PROPUESTO: no existe en OpenAPI v0.1)",
+  "note": "SIMULADO. Forma de AnalysisSpec congelada en contratos-v0.1 (design.py); ningun endpoint la devuelve todavia, asi que el cliente simulado la sirve para preparar la UI de H2. Las regiones estan definidas sobre una imagen de referencia de 800 x 600 px y el mock las escala al tamano real del original. Los textos, colores y cajas son inventados: ninguna IA analizo nada. 'ambiguity_sets' dice que regiones llevan incertidumbre en cada guion del mock (nombre de archivo con 'analisis' o 'ambiguo').",
+  "contract_revision": "B2",
+  "reference_size_px": { "width": 800, "height": 600 },
+  "ambiguity_sets": {
+    "analisis": ["region_3"],
+    "ambiguo": ["region_3", "region_5", "region_6"]
+  },
+  "payload": {
+    "schema_version": "0.1",
+    "analysis_id": "analysis_mock_1",
+    "asset_id": "asset_mock_image",
+    "provider": "openai",
+    "model": "modelo-simulado",
+    "prompt_version": "prompt-simulado-0",
+    "original_response_artifact_id": "artifact_mock_provider_raw",
+    "regions": [
+      {
+        "region_id": "region_1",
+        "bounds_px": { "x_px": 120, "y_px": 80, "width_px": 560, "height_px": 140 },
+        "representation": "estimated_bbox",
+        "visual_role": "Texto principal del logo",
+        "observed_text": "ESTRELLA",
+        "suggested_colors": ["#1F3A93"],
+        "uncertainties": []
+      },
+      {
+        "region_id": "region_2",
+        "bounds_px": { "x_px": 330, "y_px": 240, "width_px": 140, "height_px": 140 },
+        "representation": "estimated_bbox",
+        "visual_role": "Icono central (estrella)",
+        "observed_text": null,
+        "suggested_colors": ["#F2B705", "#1F3A93"],
+        "uncertainties": []
+      },
+      {
+        "region_id": "region_3",
+        "bounds_px": { "x_px": 260, "y_px": 420, "width_px": 280, "height_px": 40 },
+        "representation": "estimated_bbox",
+        "visual_role": "Texto secundario",
+        "observed_text": "Est. 2019",
+        "suggested_colors": ["#555555"],
+        "uncertainties": ["Texto muy fino: puede perderse al bordar a este tamaño"]
+      },
+      {
+        "region_id": "region_4",
+        "bounds_px": { "x_px": 40, "y_px": 40, "width_px": 720, "height_px": 520 },
+        "representation": "estimated_bbox",
+        "visual_role": "Marco decorativo",
+        "observed_text": null,
+        "suggested_colors": ["#1F3A93"],
+        "uncertainties": []
+      },
+      {
+        "region_id": "region_5",
+        "bounds_px": { "x_px": 150, "y_px": 380, "width_px": 500, "height_px": 8 },
+        "representation": "estimated_bbox",
+        "visual_role": "Línea fina de adorno",
+        "observed_text": null,
+        "suggested_colors": ["#F2B705"],
+        "uncertainties": ["Línea más fina que 1 mm a este tamaño"]
+      },
+      {
+        "region_id": "region_6",
+        "bounds_px": { "x_px": 300, "y_px": 390, "width_px": 200, "height_px": 60 },
+        "representation": "estimated_bbox",
+        "visual_role": "Zona difusa (¿sombra o forma?)",
+        "observed_text": null,
+        "suggested_colors": ["#999999", "#CCCCCC"],
+        "uncertainties": ["No está claro si es una sombra o una forma de relleno"]
+      }
+    ],
+    "duration_ms": 4200,
+    "input_tokens": null,
+    "output_tokens": null
+  }
+}

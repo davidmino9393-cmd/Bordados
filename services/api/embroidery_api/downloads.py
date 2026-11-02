@@ -12,6 +12,9 @@ from .errors import ApiProblem
 from .store import canonical
 
 
+ASSET_SCOPE = "asset"
+
+
 def utc_now():
     return datetime.now(timezone.utc)
 
@@ -31,10 +34,16 @@ class DownloadSigner:
         self.clock = clock
 
     def issue(self, owner, job_id, artifact):
+        return self._issue({"owner": owner, "job_id": job_id, "artifact_id": artifact.artifact_id, "sha256": artifact.sha256})
+
+    def issue_asset(self, owner, asset):
+        """Descarga del original subido (misma duración y firma). `job_id` lleva el proyecto, `artifact_id` el asset."""
+        return self._issue({"owner": owner, "job_id": asset.project_id, "artifact_id": asset.asset_id, "sha256": asset.sha256, "scope": ASSET_SCOPE})
+
+    def _issue(self, grant):
         issued = self.clock().astimezone(timezone.utc)
         expires = issued + timedelta(seconds=DOWNLOAD_TTL_SECONDS)
-        grant = {"owner": owner, "job_id": job_id, "artifact_id": artifact.artifact_id,
-                 "sha256": artifact.sha256, "expires": expires.timestamp(), "nonce": secrets.token_urlsafe(18)}
+        grant = {**grant, "expires": expires.timestamp(), "nonce": secrets.token_urlsafe(18)}
         payload = encode(canonical(grant).encode())
         signature = encode(hmac.new(self.secret, payload.encode(), hashlib.sha256).digest())
         return ArtifactDownload(url=f"{self.base_url}/downloads/{payload}.{signature}", issued_at=issued, expires_at=expires)

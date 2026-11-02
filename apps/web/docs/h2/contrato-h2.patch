@@ -1,0 +1,1398 @@
+diff -ruN a/packages/contracts/embroidery_contracts/__init__.py b/packages/contracts/embroidery_contracts/__init__.py
+--- a/packages/contracts/embroidery_contracts/__init__.py	2026-11-01 21:36:27.000000000 -0300
++++ b/packages/contracts/embroidery_contracts/__init__.py	2026-11-01 22:43:55.329949100 -0300
+@@ -13,6 +13,7 @@
+ from .profiles import ProfileCatalog
+ from .queries import ProjectDetail, ProjectList, RevisionList
+ from .revisions import CorrectionRevision, RevisionRequest, SizeVariantRevision
++from .analysis_decision import AnalysisApprove, AnalysisChangeProvider, AnalysisDecision
+ 
+ __all__ = [
+     "SCHEMA_VERSION", "AnalysisSpec", "EmbroideryDocument", "JobCreate", "JobResponse",
+@@ -24,4 +25,5 @@
+     "ProfileCatalog", "ProjectDetail", "ProjectList", "RevisionList", "RevisionRequest",
+     "SizeVariantRevision", "CorrectionRevision",
+     "AuthorizedArtifactManifest",
++    "AnalysisApprove", "AnalysisChangeProvider", "AnalysisDecision",
+ ]
+diff -ruN a/packages/contracts/embroidery_contracts/analysis_decision.py b/packages/contracts/embroidery_contracts/analysis_decision.py
+--- a/packages/contracts/embroidery_contracts/analysis_decision.py	1969-12-31 21:00:00.000000000 -0300
++++ b/packages/contracts/embroidery_contracts/analysis_decision.py	2026-11-01 22:43:55.328403300 -0300
+@@ -0,0 +1,37 @@
++"""H2: decisión del usuario sobre un análisis visual que terminó en needs_review.
++
++Ambas decisiones crean un job nuevo (parent_job_id = el original, que no cambia). El cliente nunca fija estados.
++"""
++from typing import Annotated, Literal
++
++from pydantic import ConfigDict, Field, RootModel, model_validator
++
++from .base import Identifier, Versioned
++
++
++class AnalysisApprove(Versioned):
++    """Aprobar el análisis: misma revisión, mismo asset; `analyzing` queda omitido con motivo."""
++
++    action: Literal["approve"]
++    # Metadato de la decisión: no altera geometría, no crea incidencias y no bloquea la aprobación (H3 las usará).
++    flagged_region_ids: tuple[Identifier, ...] = ()
++
++    @model_validator(mode="after")
++    def unique_regions(self):
++        if len(set(self.flagged_region_ids)) != len(self.flagged_region_ids):
++            raise ValueError("flagged_region_ids must not repeat a region")
++        return self
++
++
++class AnalysisChangeProvider(Versioned):
++    """Cambiar de proveedor: ai_provider es parte de JobSettings, así que el servidor crea una revisión analysis_retry."""
++
++    action: Literal["change_provider"]
++    ai_provider: Literal["openai", "ollama"]
++
++
++AnalysisDecisionBody = Annotated[AnalysisApprove | AnalysisChangeProvider, Field(discriminator="action")]
++
++
++class AnalysisDecision(RootModel[AnalysisDecisionBody]):
++    model_config = ConfigDict(frozen=True)
+diff -ruN a/packages/contracts/embroidery_contracts/jobs.py b/packages/contracts/embroidery_contracts/jobs.py
+--- a/packages/contracts/embroidery_contracts/jobs.py	2026-11-01 21:36:27.000000000 -0300
++++ b/packages/contracts/embroidery_contracts/jobs.py	2026-11-01 22:43:55.330957300 -0300
+@@ -157,7 +157,7 @@
+     base_revision_id: Identifier | None
+     reason: NonEmpty
+     created_at: AwareDatetime
+-    kind: Literal["initial", "size_variant", "correction"] = "initial"
++    kind: Literal["initial", "size_variant", "correction", "analysis_retry"] = "initial"
+     parent_job_id: Identifier | None = None
+     job_id: Identifier | None = None
+ 
+diff -ruN a/packages/contracts/embroidery_contracts/states.py b/packages/contracts/embroidery_contracts/states.py
+--- a/packages/contracts/embroidery_contracts/states.py	2026-11-01 21:36:27.000000000 -0300
++++ b/packages/contracts/embroidery_contracts/states.py	2026-11-01 22:43:55.332201100 -0300
+@@ -7,7 +7,7 @@
+ })
+ INTERRUPTIONS = frozenset({JobStatus.FAILED, JobStatus.CANCELLED, JobStatus.NEEDS_REVIEW})
+ ALLOWED_TRANSITIONS = {
+-    JobStatus.QUEUED: frozenset({JobStatus.ANALYZING, JobStatus.DIGITIZING}) | INTERRUPTIONS,
++    JobStatus.QUEUED: frozenset({JobStatus.ANALYZING, JobStatus.VECTORIZING, JobStatus.DIGITIZING}) | INTERRUPTIONS,
+     JobStatus.ANALYZING: frozenset({JobStatus.VECTORIZING}) | INTERRUPTIONS,
+     JobStatus.VECTORIZING: frozenset({JobStatus.DIGITIZING}) | INTERRUPTIONS,
+     JobStatus.DIGITIZING: frozenset({JobStatus.VALIDATING}) | INTERRUPTIONS,
+@@ -30,4 +30,9 @@
+         skipped = {r.stage for r in following.stages if r.outcome == "skipped"}
+         if following.input_kind != "prepared_svg" or not {"analyzing", "vectorizing"}.issubset(skipped):
+             raise ValueError("Only prepared SVG may skip analysis/vectorization, with recorded reasons")
++    if previous.status == JobStatus.QUEUED and following.status == JobStatus.VECTORIZING:
++        analysis = next((r for r in following.stages if r.stage == "analyzing"), None)
++        if (following.input_kind != "raster_image" or following.parent_job_id is None
++                or analysis is None or analysis.outcome != "skipped"):
++            raise ValueError("Only a continuation after an approved analysis may skip analysis, with parent job and recorded reason")
+     return JobResponse.model_validate(following.model_dump())
+diff -ruN a/packages/contracts/openapi.json b/packages/contracts/openapi.json
+--- a/packages/contracts/openapi.json	2026-11-01 21:36:27.000000000 -0300
++++ b/packages/contracts/openapi.json	2026-11-01 22:43:55.830346400 -0300
+@@ -26,6 +26,88 @@
+       }
+     },
+     "schemas": {
++      "AnalysisApprove": {
++        "additionalProperties": false,
++        "description": "Aprobar el análisis: misma revisión, mismo asset; `analyzing` queda omitido con motivo.",
++        "properties": {
++          "action": {
++            "const": "approve",
++            "title": "Action",
++            "type": "string"
++          },
++          "flagged_region_ids": {
++            "default": [],
++            "items": {
++              "maxLength": 128,
++              "minLength": 1,
++              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
++              "type": "string"
++            },
++            "title": "Flagged Region Ids",
++            "type": "array"
++          },
++          "schema_version": {
++            "const": "0.1",
++            "default": "0.1",
++            "title": "Schema Version",
++            "type": "string"
++          }
++        },
++        "required": [
++          "action"
++        ],
++        "title": "AnalysisApprove",
++        "type": "object"
++      },
++      "AnalysisChangeProvider": {
++        "additionalProperties": false,
++        "description": "Cambiar de proveedor: ai_provider es parte de JobSettings, así que el servidor crea una revisión analysis_retry.",
++        "properties": {
++          "action": {
++            "const": "change_provider",
++            "title": "Action",
++            "type": "string"
++          },
++          "ai_provider": {
++            "enum": [
++              "openai",
++              "ollama"
++            ],
++            "title": "Ai Provider",
++            "type": "string"
++          },
++          "schema_version": {
++            "const": "0.1",
++            "default": "0.1",
++            "title": "Schema Version",
++            "type": "string"
++          }
++        },
++        "required": [
++          "action",
++          "ai_provider"
++        ],
++        "title": "AnalysisChangeProvider",
++        "type": "object"
++      },
++      "AnalysisDecision": {
++        "discriminator": {
++          "mapping": {
++            "approve": "#/components/schemas/AnalysisApprove",
++            "change_provider": "#/components/schemas/AnalysisChangeProvider"
++          },
++          "propertyName": "action"
++        },
++        "oneOf": [
++          {
++            "$ref": "#/components/schemas/AnalysisApprove"
++          },
++          {
++            "$ref": "#/components/schemas/AnalysisChangeProvider"
++          }
++        ],
++        "title": "AnalysisDecision"
++      },
+       "AnalysisRegion": {
+         "additionalProperties": false,
+         "properties": {
+@@ -2445,7 +2527,8 @@
+             "enum": [
+               "initial",
+               "size_variant",
+-              "correction"
++              "correction",
++              "analysis_retry"
+             ],
+             "title": "Kind",
+             "type": "string"
+@@ -4565,6 +4648,1024 @@
+         "tags": [
+           "Jobs"
+         ]
++      }
++    },
++    "/api/v1/jobs/{id}/analysis": {
++      "get": {
++        "description": "H2: visual analysis associated with the job (its own, or the approved one of its parent in a continuation job). 404 when the job has none: prepared SVG, still analyzing, or failed before producing it. bounds_px are always in the original image frame (top-left origin, x right, y down)",
++        "operationId": "getJobAnalysis",
++        "parameters": [
++          {
++            "$ref": "#/components/parameters/ResourceId"
++          }
++        ],
++        "responses": {
++          "200": {
++            "content": {
++              "application/json": {
++                "examples": {
++                  "simulated": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "analysis_id": "analysis_mock_1",
++                      "asset_id": "asset_mock_image",
++                      "duration_ms": 4200,
++                      "input_tokens": null,
++                      "model": "SIMULATED model",
++                      "original_response_artifact_id": "artifact_mock_provider_raw",
++                      "output_tokens": null,
++                      "prompt_version": "prompt-mock-0",
++                      "provider": "openai",
++                      "regions": [
++                        {
++                          "bounds_px": {
++                            "height_px": 50.0,
++                            "width_px": 100.0,
++                            "x_px": 10.0,
++                            "y_px": 10.0
++                          },
++                          "observed_text": "LOGO",
++                          "region_id": "region_mock_1",
++                          "representation": "estimated_bbox",
++                          "suggested_colors": [
++                            "#1F3A93"
++                          ],
++                          "uncertainties": [],
++                          "visual_role": "SIMULATED main text"
++                        },
++                        {
++                          "bounds_px": {
++                            "height_px": 50.0,
++                            "width_px": 100.0,
++                            "x_px": 30.0,
++                            "y_px": 10.0
++                          },
++                          "observed_text": "Est. 2019",
++                          "region_id": "region_mock_3",
++                          "representation": "estimated_bbox",
++                          "suggested_colors": [
++                            "#555555"
++                          ],
++                          "uncertainties": [
++                            "SIMULATED: text may be lost at this size"
++                          ],
++                          "visual_role": "SIMULATED thin text"
++                        }
++                      ],
++                      "schema_version": "0.1"
++                    }
++                  }
++                },
++                "schema": {
++                  "$ref": "#/components/schemas/AnalysisSpec"
++                }
++              }
++            },
++            "description": "H2: visual analysis associated with the job (its own, or the approved one of its parent in a continuation job). 404 when the job has none: prepared SVG, still analyzing, or failed before producing it. bounds_px are always in the original image frame (top-left origin, x right, y down)",
++            "headers": {
++              "Cache-Control": {
++                "example": "no-store",
++                "schema": {
++                  "const": "no-store",
++                  "type": "string"
++                }
++              },
++              "X-Request-ID": {
++                "description": "Server correlation identifier",
++                "schema": {
++                  "type": "string"
++                }
++              }
++            }
++          },
++          "400": {
++            "content": {
++              "application/problem+json": {
++                "examples": {
++                  "MALFORMED_REQUEST": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "code": "MALFORMED_REQUEST",
++                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
++                      "errors": [],
++                      "instance": "/api/v1/jobs/resource_mock_1/analysis",
++                      "request_id": "request_mock_1",
++                      "schema_version": "0.1",
++                      "status": 400,
++                      "title": "Malformed Request",
++                      "type": "urn:embroidery:problem:malformed-request"
++                    }
++                  }
++                },
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemResponse"
++                }
++              }
++            },
++            "description": "Controlled error; no storage paths or credentials",
++            "headers": {
++              "Cache-Control": {
++                "example": "no-store",
++                "schema": {
++                  "const": "no-store",
++                  "type": "string"
++                }
++              },
++              "X-Request-ID": {
++                "description": "Server correlation identifier",
++                "schema": {
++                  "type": "string"
++                }
++              }
++            }
++          },
++          "401": {
++            "content": {
++              "application/problem+json": {
++                "examples": {
++                  "UNAUTHENTICATED": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "code": "UNAUTHENTICATED",
++                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
++                      "errors": [],
++                      "instance": "/api/v1/jobs/resource_mock_1/analysis",
++                      "request_id": "request_mock_1",
++                      "schema_version": "0.1",
++                      "status": 401,
++                      "title": "Unauthenticated",
++                      "type": "urn:embroidery:problem:unauthenticated"
++                    }
++                  }
++                },
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemResponse"
++                }
++              }
++            },
++            "description": "Controlled error; no storage paths or credentials",
++            "headers": {
++              "Cache-Control": {
++                "example": "no-store",
++                "schema": {
++                  "const": "no-store",
++                  "type": "string"
++                }
++              },
++              "WWW-Authenticate": {
++                "description": "Challenge for the enabled authentication mechanism",
++                "examples": {
++                  "basic": {
++                    "value": "Basic realm=\"embroidery\", charset=\"UTF-8\""
++                  },
++                  "serviceBearer": {
++                    "value": "Bearer"
++                  }
++                },
++                "schema": {
++                  "type": "string"
++                }
++              },
++              "X-Request-ID": {
++                "description": "Server correlation identifier",
++                "schema": {
++                  "type": "string"
++                }
++              }
++            }
++          },
++          "403": {
++            "content": {
++              "application/problem+json": {
++                "examples": {
++                  "FORBIDDEN": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "code": "FORBIDDEN",
++                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
++                      "errors": [],
++                      "instance": "/api/v1/jobs/resource_mock_1/analysis",
++                      "request_id": "request_mock_1",
++                      "schema_version": "0.1",
++                      "status": 403,
++                      "title": "Forbidden",
++                      "type": "urn:embroidery:problem:forbidden"
++                    }
++                  }
++                },
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemResponse"
++                }
++              }
++            },
++            "description": "Controlled error; no storage paths or credentials",
++            "headers": {
++              "Cache-Control": {
++                "example": "no-store",
++                "schema": {
++                  "const": "no-store",
++                  "type": "string"
++                }
++              },
++              "X-Request-ID": {
++                "description": "Server correlation identifier",
++                "schema": {
++                  "type": "string"
++                }
++              }
++            }
++          },
++          "404": {
++            "content": {
++              "application/problem+json": {
++                "examples": {
++                  "NOT_FOUND": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "code": "NOT_FOUND",
++                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
++                      "errors": [],
++                      "instance": "/api/v1/jobs/resource_mock_1/analysis",
++                      "request_id": "request_mock_1",
++                      "schema_version": "0.1",
++                      "status": 404,
++                      "title": "Not Found",
++                      "type": "urn:embroidery:problem:not-found"
++                    }
++                  }
++                },
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemResponse"
++                }
++              }
++            },
++            "description": "Controlled error; no storage paths or credentials",
++            "headers": {
++              "Cache-Control": {
++                "example": "no-store",
++                "schema": {
++                  "const": "no-store",
++                  "type": "string"
++                }
++              },
++              "X-Request-ID": {
++                "description": "Server correlation identifier",
++                "schema": {
++                  "type": "string"
++                }
++              }
++            }
++          },
++          "422": {
++            "content": {
++              "application/problem+json": {
++                "examples": {
++                  "INVALID_REQUEST": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "code": "INVALID_REQUEST",
++                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
++                      "errors": [
++                        {
++                          "field": "body",
++                          "message": "Request violates the published schema or semantic guard."
++                        }
++                      ],
++                      "instance": "/api/v1/jobs/resource_mock_1/analysis",
++                      "request_id": "request_mock_1",
++                      "schema_version": "0.1",
++                      "status": 422,
++                      "title": "Invalid Request",
++                      "type": "urn:embroidery:problem:invalid-request"
++                    }
++                  }
++                },
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemResponse"
++                }
++              }
++            },
++            "description": "Controlled error; no storage paths or credentials",
++            "headers": {
++              "Cache-Control": {
++                "example": "no-store",
++                "schema": {
++                  "const": "no-store",
++                  "type": "string"
++                }
++              },
++              "X-Request-ID": {
++                "description": "Server correlation identifier",
++                "schema": {
++                  "type": "string"
++                }
++              }
++            }
++          },
++          "429": {
++            "content": {
++              "application/problem+json": {
++                "examples": {
++                  "RATE_LIMITED": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "code": "RATE_LIMITED",
++                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
++                      "errors": [],
++                      "instance": "/api/v1/jobs/resource_mock_1/analysis",
++                      "request_id": "request_mock_1",
++                      "schema_version": "0.1",
++                      "status": 429,
++                      "title": "Rate Limited",
++                      "type": "urn:embroidery:problem:rate-limited"
++                    }
++                  }
++                },
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemResponse"
++                }
++              }
++            },
++            "description": "Controlled error; no storage paths or credentials",
++            "headers": {
++              "Cache-Control": {
++                "example": "no-store",
++                "schema": {
++                  "const": "no-store",
++                  "type": "string"
++                }
++              },
++              "Retry-After": {
++                "description": "Optional retry delay in seconds",
++                "schema": {
++                  "type": "string"
++                }
++              },
++              "X-Request-ID": {
++                "description": "Server correlation identifier",
++                "schema": {
++                  "type": "string"
++                }
++              }
++            }
++          },
++          "500": {
++            "content": {
++              "application/problem+json": {
++                "examples": {
++                  "INTERNAL_ERROR": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "code": "INTERNAL_ERROR",
++                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
++                      "errors": [],
++                      "instance": "/api/v1/jobs/resource_mock_1/analysis",
++                      "request_id": "request_mock_1",
++                      "schema_version": "0.1",
++                      "status": 500,
++                      "title": "Internal Error",
++                      "type": "urn:embroidery:problem:internal-error"
++                    }
++                  }
++                },
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemResponse"
++                }
++              }
++            },
++            "description": "Controlled error; no storage paths or credentials",
++            "headers": {
++              "Cache-Control": {
++                "example": "no-store",
++                "schema": {
++                  "const": "no-store",
++                  "type": "string"
++                }
++              },
++              "X-Request-ID": {
++                "description": "Server correlation identifier",
++                "schema": {
++                  "type": "string"
++                }
++              }
++            }
++          },
++          "503": {
++            "content": {
++              "application/problem+json": {
++                "examples": {
++                  "SERVICE_UNAVAILABLE": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "code": "SERVICE_UNAVAILABLE",
++                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
++                      "errors": [],
++                      "instance": "/api/v1/jobs/resource_mock_1/analysis",
++                      "request_id": "request_mock_1",
++                      "schema_version": "0.1",
++                      "status": 503,
++                      "title": "Service Unavailable",
++                      "type": "urn:embroidery:problem:service-unavailable"
++                    }
++                  }
++                },
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemResponse"
++                }
++              }
++            },
++            "description": "Controlled error; no storage paths or credentials",
++            "headers": {
++              "Cache-Control": {
++                "example": "no-store",
++                "schema": {
++                  "const": "no-store",
++                  "type": "string"
++                }
++              },
++              "Retry-After": {
++                "description": "Optional retry delay in seconds",
++                "schema": {
++                  "type": "string"
++                }
++              },
++              "X-Request-ID": {
++                "description": "Server correlation identifier",
++                "schema": {
++                  "type": "string"
++                }
++              }
++            }
++          }
++        },
++        "summary": "H2: visual analysis associated with the job (its own, or the approved one of its parent in a continuation job). 404 when the job has none: prepared SVG, still analyzing, or failed before producing it. bounds_px are always in the original image frame (top-left origin, x right, y down)",
++        "tags": [
++          "Jobs"
++        ]
++      }
++    },
++    "/api/v1/jobs/{id}/analysis-decision": {
++      "post": {
++        "description": "H2: decide an analysis in needs_review with a review_required analysis issue. approve keeps the revision and asset and skips analysis; change_provider creates an analysis_retry revision. Both return a NEW queued job whose parent_job_id is the original, which is unchanged. 409 REVISION_CONFLICT if the original is not in that state; 422 for an unavailable or identical provider or flagged_region_ids outside the analysis",
++        "operationId": "decideJobAnalysis",
++        "parameters": [
++          {
++            "$ref": "#/components/parameters/ResourceId"
++          },
++          {
++            "$ref": "#/components/parameters/IdempotencyKey"
++          }
++        ],
++        "requestBody": {
++          "content": {
++            "application/json": {
++              "examples": {
++                "change_provider": {
++                  "summary": "SIMULATED contract example; no worker or physical test",
++                  "value": {
++                    "action": "change_provider",
++                    "ai_provider": "ollama",
++                    "schema_version": "0.1"
++                  }
++                },
++                "simulated": {
++                  "summary": "SIMULATED contract example; no worker or physical test",
++                  "value": {
++                    "action": "approve",
++                    "flagged_region_ids": [
++                      "region_mock_3"
++                    ],
++                    "schema_version": "0.1"
++                  }
++                }
++              },
++              "schema": {
++                "$ref": "#/components/schemas/AnalysisDecision"
++              }
++            }
++          },
++          "required": true
++        },
++        "responses": {
++          "202": {
++            "content": {
++              "application/json": {
++                "examples": {
++                  "approve": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "artifact_manifest": null,
++                      "asset_id": "asset_mock_svg",
++                      "cancellation_requested": false,
++                      "diagnostics": [],
++                      "estimated_remaining_s": null,
++                      "failure": null,
++                      "input_kind": "raster_image",
++                      "issues": [],
++                      "job_id": "job_mock_2",
++                      "parent_job_id": "job_mock_1",
++                      "project_id": "project_mock_1",
++                      "review": null,
++                      "revision_id": "rev_mock_1",
++                      "schema_version": "0.1",
++                      "settings_snapshot": {
++                        "ai_model": null,
++                        "ai_provider": "openai",
++                        "color_limit": 3,
++                        "fabric_profile": "gabardina_inicial",
++                        "fabric_profile_version": "0.1",
++                        "hoop": {
++                          "height_mm": 200.0,
++                          "jef_hoop_code": 4,
++                          "profile_id": "sq20b",
++                          "profile_version": "0.1",
++                          "width_mm": 200.0
++                        },
++                        "hoop_profile": "sq20b",
++                        "machine_profile": "janome_mc550e",
++                        "machine_profile_version": "0.1",
++                        "schema_version": "0.1",
++                        "target": {
++                          "fit": "contain",
++                          "height_mm": 150.0,
++                          "width_mm": 150.0
++                        },
++                        "thread_profile": "embroidery_thread_initial"
++                      },
++                      "sewout_record": null,
++                      "sewout_status": "untested",
++                      "stages": [
++                        {
++                          "measured_duration_ms": null,
++                          "outcome": "skipped",
++                          "reason": "análisis aprobado en job_mock_1",
++                          "stage": "analyzing"
++                        },
++                        {
++                          "measured_duration_ms": null,
++                          "outcome": "pending",
++                          "reason": null,
++                          "stage": "vectorizing"
++                        },
++                        {
++                          "measured_duration_ms": null,
++                          "outcome": "pending",
++                          "reason": null,
++                          "stage": "digitizing"
++                        },
++                        {
++                          "measured_duration_ms": null,
++                          "outcome": "pending",
++                          "reason": null,
++                          "stage": "validating"
++                        }
++                      ],
++                      "status": "queued",
++                      "validation_report": null
++                    }
++                  }
++                },
++                "schema": {
++                  "$ref": "#/components/schemas/JobResponse"
++                }
++              }
++            },
++            "description": "H2: decide an analysis in needs_review with a review_required analysis issue. approve keeps the revision and asset and skips analysis; change_provider creates an analysis_retry revision. Both return a NEW queued job whose parent_job_id is the original, which is unchanged. 409 REVISION_CONFLICT if the original is not in that state; 422 for an unavailable or identical provider or flagged_region_ids outside the analysis",
++            "headers": {
++              "Cache-Control": {
++                "example": "no-store",
++                "schema": {
++                  "const": "no-store",
++                  "type": "string"
++                }
++              },
++              "X-Request-ID": {
++                "description": "Server correlation identifier",
++                "schema": {
++                  "type": "string"
++                }
++              }
++            }
++          },
++          "400": {
++            "content": {
++              "application/problem+json": {
++                "examples": {
++                  "MALFORMED_REQUEST": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "code": "MALFORMED_REQUEST",
++                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
++                      "errors": [],
++                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
++                      "request_id": "request_mock_1",
++                      "schema_version": "0.1",
++                      "status": 400,
++                      "title": "Malformed Request",
++                      "type": "urn:embroidery:problem:malformed-request"
++                    }
++                  }
++                },
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemResponse"
++                }
++              }
++            },
++            "description": "Controlled error; no storage paths or credentials",
++            "headers": {
++              "Cache-Control": {
++                "example": "no-store",
++                "schema": {
++                  "const": "no-store",
++                  "type": "string"
++                }
++              },
++              "X-Request-ID": {
++                "description": "Server correlation identifier",
++                "schema": {
++                  "type": "string"
++                }
++              }
++            }
++          },
++          "401": {
++            "content": {
++              "application/problem+json": {
++                "examples": {
++                  "UNAUTHENTICATED": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "code": "UNAUTHENTICATED",
++                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
++                      "errors": [],
++                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
++                      "request_id": "request_mock_1",
++                      "schema_version": "0.1",
++                      "status": 401,
++                      "title": "Unauthenticated",
++                      "type": "urn:embroidery:problem:unauthenticated"
++                    }
++                  }
++                },
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemResponse"
++                }
++              }
++            },
++            "description": "Controlled error; no storage paths or credentials",
++            "headers": {
++              "Cache-Control": {
++                "example": "no-store",
++                "schema": {
++                  "const": "no-store",
++                  "type": "string"
++                }
++              },
++              "WWW-Authenticate": {
++                "description": "Challenge for the enabled authentication mechanism",
++                "examples": {
++                  "basic": {
++                    "value": "Basic realm=\"embroidery\", charset=\"UTF-8\""
++                  },
++                  "serviceBearer": {
++                    "value": "Bearer"
++                  }
++                },
++                "schema": {
++                  "type": "string"
++                }
++              },
++              "X-Request-ID": {
++                "description": "Server correlation identifier",
++                "schema": {
++                  "type": "string"
++                }
++              }
++            }
++          },
++          "403": {
++            "content": {
++              "application/problem+json": {
++                "examples": {
++                  "FORBIDDEN": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "code": "FORBIDDEN",
++                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
++                      "errors": [],
++                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
++                      "request_id": "request_mock_1",
++                      "schema_version": "0.1",
++                      "status": 403,
++                      "title": "Forbidden",
++                      "type": "urn:embroidery:problem:forbidden"
++                    }
++                  }
++                },
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemResponse"
++                }
++              }
++            },
++            "description": "Controlled error; no storage paths or credentials",
++            "headers": {
++              "Cache-Control": {
++                "example": "no-store",
++                "schema": {
++                  "const": "no-store",
++                  "type": "string"
++                }
++              },
++              "X-Request-ID": {
++                "description": "Server correlation identifier",
++                "schema": {
++                  "type": "string"
++                }
++              }
++            }
++          },
++          "404": {
++            "content": {
++              "application/problem+json": {
++                "examples": {
++                  "NOT_FOUND": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "code": "NOT_FOUND",
++                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
++                      "errors": [],
++                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
++                      "request_id": "request_mock_1",
++                      "schema_version": "0.1",
++                      "status": 404,
++                      "title": "Not Found",
++                      "type": "urn:embroidery:problem:not-found"
++                    }
++                  }
++                },
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemResponse"
++                }
++              }
++            },
++            "description": "Controlled error; no storage paths or credentials",
++            "headers": {
++              "Cache-Control": {
++                "example": "no-store",
++                "schema": {
++                  "const": "no-store",
++                  "type": "string"
++                }
++              },
++              "X-Request-ID": {
++                "description": "Server correlation identifier",
++                "schema": {
++                  "type": "string"
++                }
++              }
++            }
++          },
++          "409": {
++            "content": {
++              "application/problem+json": {
++                "examples": {
++                  "IDEMPOTENCY_CONFLICT": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "code": "IDEMPOTENCY_CONFLICT",
++                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
++                      "errors": [],
++                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
++                      "request_id": "request_mock_1",
++                      "schema_version": "0.1",
++                      "status": 409,
++                      "title": "Idempotency Conflict",
++                      "type": "urn:embroidery:problem:idempotency-conflict"
++                    }
++                  },
++                  "REVISION_CONFLICT": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "code": "REVISION_CONFLICT",
++                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
++                      "errors": [],
++                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
++                      "request_id": "request_mock_1",
++                      "schema_version": "0.1",
++                      "status": 409,
++                      "title": "Revision Conflict",
++                      "type": "urn:embroidery:problem:revision-conflict"
++                    }
++                  }
++                },
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemResponse"
++                }
++              }
++            },
++            "description": "Controlled error; no storage paths or credentials",
++            "headers": {
++              "Cache-Control": {
++                "example": "no-store",
++                "schema": {
++                  "const": "no-store",
++                  "type": "string"
++                }
++              },
++              "X-Request-ID": {
++                "description": "Server correlation identifier",
++                "schema": {
++                  "type": "string"
++                }
++              }
++            }
++          },
++          "422": {
++            "content": {
++              "application/problem+json": {
++                "examples": {
++                  "INVALID_REQUEST": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "code": "INVALID_REQUEST",
++                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
++                      "errors": [
++                        {
++                          "field": "body",
++                          "message": "Request violates the published schema or semantic guard."
++                        }
++                      ],
++                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
++                      "request_id": "request_mock_1",
++                      "schema_version": "0.1",
++                      "status": 422,
++                      "title": "Invalid Request",
++                      "type": "urn:embroidery:problem:invalid-request"
++                    }
++                  }
++                },
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemResponse"
++                }
++              }
++            },
++            "description": "Controlled error; no storage paths or credentials",
++            "headers": {
++              "Cache-Control": {
++                "example": "no-store",
++                "schema": {
++                  "const": "no-store",
++                  "type": "string"
++                }
++              },
++              "X-Request-ID": {
++                "description": "Server correlation identifier",
++                "schema": {
++                  "type": "string"
++                }
++              }
++            }
++          },
++          "429": {
++            "content": {
++              "application/problem+json": {
++                "examples": {
++                  "RATE_LIMITED": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "code": "RATE_LIMITED",
++                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
++                      "errors": [],
++                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
++                      "request_id": "request_mock_1",
++                      "schema_version": "0.1",
++                      "status": 429,
++                      "title": "Rate Limited",
++                      "type": "urn:embroidery:problem:rate-limited"
++                    }
++                  }
++                },
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemResponse"
++                }
++              }
++            },
++            "description": "Controlled error; no storage paths or credentials",
++            "headers": {
++              "Cache-Control": {
++                "example": "no-store",
++                "schema": {
++                  "const": "no-store",
++                  "type": "string"
++                }
++              },
++              "Retry-After": {
++                "description": "Optional retry delay in seconds",
++                "schema": {
++                  "type": "string"
++                }
++              },
++              "X-Request-ID": {
++                "description": "Server correlation identifier",
++                "schema": {
++                  "type": "string"
++                }
++              }
++            }
++          },
++          "500": {
++            "content": {
++              "application/problem+json": {
++                "examples": {
++                  "INTERNAL_ERROR": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "code": "INTERNAL_ERROR",
++                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
++                      "errors": [],
++                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
++                      "request_id": "request_mock_1",
++                      "schema_version": "0.1",
++                      "status": 500,
++                      "title": "Internal Error",
++                      "type": "urn:embroidery:problem:internal-error"
++                    }
++                  }
++                },
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemResponse"
++                }
++              }
++            },
++            "description": "Controlled error; no storage paths or credentials",
++            "headers": {
++              "Cache-Control": {
++                "example": "no-store",
++                "schema": {
++                  "const": "no-store",
++                  "type": "string"
++                }
++              },
++              "X-Request-ID": {
++                "description": "Server correlation identifier",
++                "schema": {
++                  "type": "string"
++                }
++              }
++            }
++          },
++          "503": {
++            "content": {
++              "application/problem+json": {
++                "examples": {
++                  "SERVICE_UNAVAILABLE": {
++                    "summary": "SIMULATED contract example; no worker or physical test",
++                    "value": {
++                      "code": "SERVICE_UNAVAILABLE",
++                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
++                      "errors": [],
++                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
++                      "request_id": "request_mock_1",
++                      "schema_version": "0.1",
++                      "status": 503,
++                      "title": "Service Unavailable",
++                      "type": "urn:embroidery:problem:service-unavailable"
++                    }
++                  }
++                },
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemResponse"
++                }
++              }
++            },
++            "description": "Controlled error; no storage paths or credentials",
++            "headers": {
++              "Cache-Control": {
++                "example": "no-store",
++                "schema": {
++                  "const": "no-store",
++                  "type": "string"
++                }
++              },
++              "Retry-After": {
++                "description": "Optional retry delay in seconds",
++                "schema": {
++                  "type": "string"
++                }
++              },
++              "X-Request-ID": {
++                "description": "Server correlation identifier",
++                "schema": {
++                  "type": "string"
++                }
++              }
++            }
++          }
++        },
++        "summary": "H2: decide an analysis in needs_review with a review_required analysis issue. approve keeps the revision and asset and skips analysis; change_provider creates an analysis_retry revision. Both return a NEW queued job whose parent_job_id is the original, which is unchanged. 409 REVISION_CONFLICT if the original is not in that state; 422 for an unavailable or identical provider or flagged_region_ids outside the analysis",
++        "tags": [
++          "Jobs"
++        ]
+       }
+     },
+     "/api/v1/jobs/{id}/artifacts": {
+diff -ruN a/services/api/build_openapi.py b/services/api/build_openapi.py
+--- a/services/api/build_openapi.py	2026-11-01 21:36:27.000000000 -0300
++++ b/services/api/build_openapi.py	2026-11-01 22:43:55.335204000 -0300
+@@ -15,6 +15,7 @@
+     RevisionCreate, RevisionResponse, SewoutRecord, SewoutResponse, SourceAsset,
+     StitchPlan, ValidationReport, ProfileCatalog, ProjectDetail, ProjectList,
+     RevisionList, RevisionRequest, SizeVariantRevision, CorrectionRevision, AuthorizedArtifactManifest,
++    AnalysisDecision, AnalysisApprove, AnalysisChangeProvider,
+ )
+ from embroidery_contracts.http import ERROR_STATUS, ErrorCode
+ from embroidery_contracts.issues import ISSUE_RULES
+@@ -26,7 +27,7 @@
+     AssetUpload, CancelRequest, ProblemResponse,
+     ProfileCatalog, ProjectDetail, ProjectList, RevisionList, RevisionRequest,
+     SizeVariantRevision, CorrectionRevision,
+-    AuthorizedArtifactManifest,
++    AuthorizedArtifactManifest, AnalysisDecision, AnalysisApprove, AnalysisChangeProvider,
+ )
+ COMMON_ERRORS = (
+     ErrorCode.MALFORMED_REQUEST, ErrorCode.UNAUTHENTICATED, ErrorCode.FORBIDDEN,
+@@ -71,6 +72,31 @@
+     return payload
+ 
+ 
++def analysis_example():
++    def region(number, role, text, colors, uncertainties):
++        return {"region_id": f"region_mock_{number}", "bounds_px": {"x_px": 10 * number, "y_px": 10, "width_px": 100, "height_px": 50},
++                "representation": "estimated_bbox", "visual_role": role, "observed_text": text,
++                "suggested_colors": colors, "uncertainties": uncertainties}
++    return {"schema_version": "0.1", "analysis_id": "analysis_mock_1", "asset_id": "asset_mock_image", "provider": "openai",
++            "model": "SIMULATED model", "prompt_version": "prompt-mock-0", "original_response_artifact_id": "artifact_mock_provider_raw",
++            "regions": [region(1, "SIMULATED main text", "LOGO", ["#1F3A93"], []),
++                        region(3, "SIMULATED thin text", "Est. 2019", ["#555555"], ["SIMULATED: text may be lost at this size"])],
++            "duration_ms": 4200}
++
++
++def continuation_example():
++    """Job nuevo tras aprobar un análisis: misma revisión, `analyzing` omitido con motivo."""
++    payload = job_example("queued")
++    payload.update(job_id="job_mock_2", parent_job_id="job_mock_1", input_kind="raster_image")
++    payload["settings_snapshot"]["ai_provider"] = "openai"
++    for record in payload["stages"]:
++        if record["stage"] == "analyzing":
++            record.update(outcome="skipped", reason="análisis aprobado en job_mock_1")
++        elif record["stage"] == "vectorizing":
++            record.update(outcome="pending", reason=None)
++    return payload
++
++
+ def problem_example(code, path):
+     payload = {
+         "schema_version": "0.1", "type": "urn:embroidery:problem:" + code.lower().replace("_", "-"),
+@@ -172,6 +198,14 @@
+         cancel_path: {"post": operation(cancel_path, "post", "cancelJob", "Always 202 for accepted requests, including terminal jobs. Preserve observed status; cancelled only after processes stop. Never restart a terminal job", JobResponse, 202,
+                          {"requested": example(JobResponse, job_example("digitizing", True)), "terminal": example(JobResponse, fixture("cancellation"))}, CancelRequest, {"schema_version": "0.1"}, POST_ERRORS + (ErrorCode.NOT_FOUND,))},
+     }
++    analysis_path, decision_path = get_path + "/analysis", get_path + "/analysis-decision"
++    jobs[analysis_path] = {"get": operation(analysis_path, "get", "getJobAnalysis", "H2: visual analysis associated with the job (its own, or the approved one of its parent in a continuation job). 404 when the job has none: prepared SVG, still analyzing, or failed before producing it. bounds_px are always in the original image frame (top-left origin, x right, y down)", AnalysisSpec, 200,
++                                {"simulated": example(AnalysisSpec, analysis_example())}, errors=existing)}
++    jobs[decision_path] = {"post": operation(decision_path, "post", "decideJobAnalysis", "H2: decide an analysis in needs_review with a review_required analysis issue. approve keeps the revision and asset and skips analysis; change_provider creates an analysis_retry revision. Both return a NEW queued job whose parent_job_id is the original, which is unchanged. 409 REVISION_CONFLICT if the original is not in that state; 422 for an unavailable or identical provider or flagged_region_ids outside the analysis", JobResponse, 202,
++                               {"approve": example(JobResponse, continuation_example())}, AnalysisDecision,
++                               {"action": "approve", "flagged_region_ids": ["region_mock_3"]}, POST_ERRORS + (ErrorCode.NOT_FOUND, ErrorCode.REVISION_CONFLICT))}
++    jobs[decision_path]["post"]["requestBody"]["content"]["application/json"]["examples"]["change_provider"] = example(
++        AnalysisDecision, {"action": "change_provider", "ai_provider": "ollama"})
+     jobs[create_path]["post"]["description"] += (
+         ". One revision admits N distinct jobs: failure, retry or regeneration may create a new job on the same revision. "
+         "Each job preserves its identity, input/settings snapshot and completed artifacts; previous artifacts are never overwritten. "
+@@ -343,7 +377,7 @@
+     outputs = {"openapi.json": build_openapi(), "issue-catalog.json": build_issue_catalog()}
+     for filename, document in outputs.items():
+         (CONTRACTS / filename).write_text(render_json(document), encoding="utf-8")
+-    print("Generated OpenAPI for 12 operations and the v0.1 B2 incidence catalogue")
++    print("Generated OpenAPI for 14 operations and the v0.1 B2 incidence catalogue")
+ 
+ 
+ if __name__ == "__main__":
+diff -ruN a/tests/engine/test_analysis_decision.py b/tests/engine/test_analysis_decision.py
+--- a/tests/engine/test_analysis_decision.py	1969-12-31 21:00:00.000000000 -0300
++++ b/tests/engine/test_analysis_decision.py	2026-11-01 22:43:55.337200200 -0300
+@@ -0,0 +1,79 @@
++"""H2: decisiones sobre un análisis visual, revisión analysis_retry y continuación tras aprobar."""
++import importlib.util
++from pathlib import Path
++import sys
++import unittest
++
++from pydantic import ValidationError
++
++ROOT = Path(__file__).resolve().parents[2]
++sys.path.insert(0, str(ROOT / "packages" / "contracts"))
++SPEC = importlib.util.spec_from_file_location("build_openapi", ROOT / "services" / "api" / "build_openapi.py")
++builder = importlib.util.module_from_spec(SPEC)
++SPEC.loader.exec_module(builder)
++
++from embroidery_contracts import AnalysisDecision, JobResponse, RevisionResponse, validate_transition
++
++
++class AnalysisDecisionTests(unittest.TestCase):
++    def test_approve_and_change_provider_validate(self):
++        approve = AnalysisDecision.model_validate({"action": "approve"})
++        self.assertEqual(approve.root.flagged_region_ids, ())
++        marked = AnalysisDecision.model_validate({"action": "approve", "flagged_region_ids": ["region_3", "region_6"]})
++        self.assertEqual(marked.root.flagged_region_ids, ("region_3", "region_6"))
++        self.assertEqual(AnalysisDecision.model_validate({"action": "change_provider", "ai_provider": "ollama"}).root.ai_provider, "ollama")
++
++    def test_rejects_client_state_unknown_provider_and_repeated_regions(self):
++        for bad in (
++            {"action": "approve", "status": "ready_for_sewout"},
++            {"action": "change_provider", "ai_provider": "none"},
++            {"action": "change_provider"},
++            {"action": "approve", "flagged_region_ids": ["region_3", "region_3"]},
++            {"action": "delete"},
++        ):
++            with self.subTest(bad=bad), self.assertRaises(ValidationError):
++                AnalysisDecision.model_validate(bad)
++
++    def test_analysis_retry_revision_needs_parent_base_and_job(self):
++        ok = {"revision_id": "rev_2", "project_id": "p", "base_revision_id": "rev_1", "reason": "x", "created_at": "2026-11-01T10:00:00Z",
++              "kind": "analysis_retry", "parent_job_id": "job_1", "job_id": "job_2"}
++        self.assertEqual(RevisionResponse.model_validate(ok).kind, "analysis_retry")
++        with self.assertRaises(ValidationError):
++            RevisionResponse.model_validate(dict(ok, base_revision_id=None))
++
++    def _continuation(self, status, vectorizing):
++        payload = builder.continuation_example()
++        payload.update(status=status)
++        for record in payload["stages"]:
++            if record["stage"] == "vectorizing":
++                record["outcome"] = vectorizing
++        return JobResponse.model_validate(payload)
++
++    def test_continuation_after_approval_may_skip_analysis(self):
++        previous = self._continuation("queued", "pending")
++        following = self._continuation("vectorizing", "running")
++        self.assertEqual(validate_transition(previous, following).status, "vectorizing")
++
++    def test_other_jobs_still_cannot_skip_analysis(self):
++        payload = builder.continuation_example()
++        payload.update(status="queued", parent_job_id=None)
++        previous = JobResponse.model_validate(payload)
++        running = dict(payload, status="vectorizing")
++        running["stages"] = [dict(r, outcome="running") if r["stage"] == "vectorizing" else r for r in payload["stages"]]
++        with self.assertRaises(ValueError):
++            validate_transition(previous, JobResponse.model_validate(running))
++        analysis_not_skipped = dict(running, parent_job_id="job_mock_1")
++        analysis_not_skipped["stages"] = [dict(r, outcome="completed", reason=None) if r["stage"] == "analyzing" else r for r in running["stages"]]
++        with self.assertRaises(ValueError):
++            validate_transition(self._continuation("queued", "pending"), JobResponse.model_validate(analysis_not_skipped))
++
++    def test_openapi_documents_both_operations(self):
++        document = builder.build_openapi()
++        self.assertIn("get", document["paths"]["/api/v1/jobs/{id}/analysis"])
++        decision = document["paths"]["/api/v1/jobs/{id}/analysis-decision"]["post"]
++        self.assertEqual(set(decision["responses"]) & {"202", "404", "409", "422"}, {"202", "404", "409", "422"})
++        self.assertIn("analysis_retry", document["components"]["schemas"]["RevisionResponse"]["properties"]["kind"]["enum"])
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff -ruN a/tests/engine/test_openapi.py b/tests/engine/test_openapi.py
+--- a/tests/engine/test_openapi.py	2026-11-01 21:36:27.000000000 -0300
++++ b/tests/engine/test_openapi.py	2026-11-01 22:43:55.337200200 -0300
+@@ -37,7 +37,7 @@
+             with self.subTest(filename=filename):
+                 self.assertEqual((builder.CONTRACTS / filename).read_text(encoding="utf-8"), builder.render_json(generated))
+ 
+-    def test_twelve_operations_refs_and_examples_are_coherent(self):
++    def test_fourteen_operations_refs_and_examples_are_coherent(self):
+         document = builder.build_openapi()
+         expected = {
+             ("/api/v1/projects", "post"), ("/api/v1/projects/{id}/assets", "post"),
+@@ -46,6 +46,7 @@
+             ("/api/v1/projects/{id}/revisions", "post"), ("/api/v1/projects/{id}/sewouts", "post"),
+             ("/api/v1/projects", "get"), ("/api/v1/projects/{id}", "get"),
+             ("/api/v1/profiles", "get"), ("/api/v1/projects/{id}/revisions", "get"),
++            ("/api/v1/jobs/{id}/analysis", "get"), ("/api/v1/jobs/{id}/analysis-decision", "post"),
+         }
+         self.assertEqual({(path, method) for path, entry in document["paths"].items() for method in entry}, expected)
+         self._check_references(document)

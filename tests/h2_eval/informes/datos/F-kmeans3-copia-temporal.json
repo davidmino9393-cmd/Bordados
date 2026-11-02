@@ -1,0 +1,619 @@
+{
+  "status": "passed",
+  "manifest": "manifest.json",
+  "vectorize_source": "copia temporal de 4a7fd6b con kmeans=3 (experimento, no producción)",
+  "not_measured": [
+    "holes_preserved_as_count",
+    "text_as_annotation",
+    "background_assumption"
+  ],
+  "static_review": {
+    "per_logo_literals": []
+  },
+  "summary": {
+    "images": 16,
+    "skipped": 2,
+    "errors": 0,
+    "checks": {
+      "colors_within_limit": {
+        "passed": 14,
+        "of": 14
+      },
+      "deterministic": {
+        "passed": 14,
+        "of": 14
+      },
+      "document_valid": {
+        "passed": 14,
+        "of": 14
+      },
+      "geometry_kinds_allowed": {
+        "passed": 14,
+        "of": 14
+      },
+      "has_objects": {
+        "passed": 14,
+        "of": 14
+      },
+      "provisional_values_marked": {
+        "passed": 14,
+        "of": 14
+      },
+      "within_target_contain": {
+        "passed": 14,
+        "of": 14
+      }
+    },
+    "foreground_iou": {
+      "min": 0.999917,
+      "median": 1.0,
+      "measured": 14,
+      "of": 14
+    },
+    "duration_ms": {
+      "median": 758.0,
+      "max": 3093,
+      "runs": 28
+    }
+  },
+  "images": [
+    {
+      "id": "logo-sol-01",
+      "category": "flat_logo",
+      "status": "ok",
+      "checks": {
+        "document_valid": true,
+        "within_target_contain": true,
+        "colors_within_limit": true,
+        "geometry_kinds_allowed": true,
+        "provisional_values_marked": true,
+        "has_objects": true,
+        "deterministic": true
+      },
+      "outcome": {
+        "expected_outcome": "automatic",
+        "issue_severities": [
+          "review_required"
+        ],
+        "review_required_reported": true
+      },
+      "objects": 2,
+      "duration_ms": [
+        602,
+        558
+      ],
+      "fidelity": {
+        "foreground_iou": 1.0,
+        "original_foreground_px": 218688,
+        "rendered_px": 218688,
+        "missing_px": 0,
+        "extra_px": 0,
+        "large_error_px": 5972,
+        "large_error_fraction": 0.027308,
+        "p95_max_channel_error": 6,
+        "large_error_threshold": 64,
+        "mean_abs_rgb_error": 5.2703,
+        "background_rule": "alpha<128 o RGB>=250"
+      }
+    },
+    {
+      "id": "logo-hoja-01",
+      "category": "transparency",
+      "status": "ok",
+      "checks": {
+        "document_valid": true,
+        "within_target_contain": true,
+        "colors_within_limit": true,
+        "geometry_kinds_allowed": true,
+        "provisional_values_marked": true,
+        "has_objects": true,
+        "deterministic": true
+      },
+      "outcome": {
+        "expected_outcome": "automatic",
+        "issue_severities": [
+          "review_required"
+        ],
+        "review_required_reported": true
+      },
+      "objects": 2,
+      "duration_ms": [
+        408,
+        371
+      ],
+      "fidelity": {
+        "foreground_iou": 1.0,
+        "original_foreground_px": 146707,
+        "rendered_px": 146707,
+        "missing_px": 0,
+        "extra_px": 0,
+        "large_error_px": 0,
+        "large_error_fraction": 0.0,
+        "p95_max_channel_error": 0,
+        "large_error_threshold": 64,
+        "mean_abs_rgb_error": 0.1187,
+        "background_rule": "alpha<128 o RGB>=250"
+      }
+    },
+    {
+      "id": "logo-escudo-01",
+      "category": "flat_logo",
+      "status": "ok",
+      "checks": {
+        "document_valid": true,
+        "within_target_contain": true,
+        "colors_within_limit": true,
+        "geometry_kinds_allowed": true,
+        "provisional_values_marked": true,
+        "has_objects": true,
+        "deterministic": true
+      },
+      "outcome": {
+        "expected_outcome": "automatic",
+        "issue_severities": [
+          "review_required"
+        ],
+        "review_required_reported": true
+      },
+      "objects": 3,
+      "duration_ms": [
+        1121,
+        1130
+      ],
+      "fidelity": {
+        "foreground_iou": 1.0,
+        "original_foreground_px": 483560,
+        "rendered_px": 483560,
+        "missing_px": 0,
+        "extra_px": 0,
+        "large_error_px": 1102,
+        "large_error_fraction": 0.002279,
+        "p95_max_channel_error": 4,
+        "large_error_threshold": 64,
+        "mean_abs_rgb_error": 0.2701,
+        "background_rule": "alpha<128 o RGB>=250"
+      }
+    },
+    {
+      "id": "logo-ola-01",
+      "category": "few_colors_drawing",
+      "status": "ok",
+      "checks": {
+        "document_valid": true,
+        "within_target_contain": true,
+        "colors_within_limit": true,
+        "geometry_kinds_allowed": true,
+        "provisional_values_marked": true,
+        "has_objects": true,
+        "deterministic": true
+      },
+      "outcome": {
+        "expected_outcome": "automatic",
+        "issue_severities": [
+          "review_required"
+        ],
+        "review_required_reported": true
+      },
+      "objects": 3,
+      "duration_ms": [
+        763,
+        827
+      ],
+      "fidelity": {
+        "foreground_iou": 1.0,
+        "original_foreground_px": 265883,
+        "rendered_px": 265883,
+        "missing_px": 0,
+        "extra_px": 0,
+        "large_error_px": 2068,
+        "large_error_fraction": 0.007778,
+        "p95_max_channel_error": 3,
+        "large_error_threshold": 64,
+        "mean_abs_rgb_error": 1.1238,
+        "background_rule": "alpha<128 o RGB>=250"
+      }
+    },
+    {
+      "id": "linea-casa-01",
+      "category": "line_art",
+      "status": "ok",
+      "checks": {
+        "document_valid": true,
+        "within_target_contain": true,
+        "colors_within_limit": true,
+        "geometry_kinds_allowed": true,
+        "provisional_values_marked": true,
+        "has_objects": true,
+        "deterministic": true
+      },
+      "outcome": {
+        "expected_outcome": "automatic",
+        "issue_severities": [
+          "review_required"
+        ],
+        "review_required_reported": true
+      },
+      "objects": 1,
+      "duration_ms": [
+        309,
+        285
+      ],
+      "fidelity": {
+        "foreground_iou": 1.0,
+        "original_foreground_px": 58365,
+        "rendered_px": 58365,
+        "missing_px": 0,
+        "extra_px": 0,
+        "large_error_px": 1812,
+        "large_error_fraction": 0.031046,
+        "p95_max_channel_error": 5,
+        "large_error_threshold": 64,
+        "mean_abs_rgb_error": 9.4663,
+        "background_rule": "alpha<128 o RGB>=250"
+      }
+    },
+    {
+      "id": "linea-arbol-01",
+      "category": "line_art",
+      "status": "skipped",
+      "reason": "svg_uses_prepared_svg_path"
+    },
+    {
+      "id": "letras-nova-01",
+      "category": "lettering",
+      "status": "ok",
+      "checks": {
+        "document_valid": true,
+        "within_target_contain": true,
+        "colors_within_limit": true,
+        "geometry_kinds_allowed": true,
+        "provisional_values_marked": true,
+        "has_objects": true,
+        "deterministic": true
+      },
+      "outcome": {
+        "expected_outcome": "automatic",
+        "issue_severities": [
+          "review_required"
+        ],
+        "review_required_reported": true
+      },
+      "objects": 2,
+      "duration_ms": [
+        561,
+        560
+      ],
+      "fidelity": {
+        "foreground_iou": 1.0,
+        "original_foreground_px": 170958,
+        "rendered_px": 170958,
+        "missing_px": 0,
+        "extra_px": 0,
+        "large_error_px": 3312,
+        "large_error_fraction": 0.019373,
+        "p95_max_channel_error": 21,
+        "large_error_threshold": 64,
+        "mean_abs_rgb_error": 4.5305,
+        "background_rule": "alpha<128 o RGB>=250"
+      }
+    },
+    {
+      "id": "monograma-mk-01",
+      "category": "lettering",
+      "status": "ok",
+      "checks": {
+        "document_valid": true,
+        "within_target_contain": true,
+        "colors_within_limit": true,
+        "geometry_kinds_allowed": true,
+        "provisional_values_marked": true,
+        "has_objects": true,
+        "deterministic": true
+      },
+      "outcome": {
+        "expected_outcome": "automatic",
+        "issue_severities": [
+          "review_required"
+        ],
+        "review_required_reported": true
+      },
+      "objects": 2,
+      "duration_ms": [
+        753,
+        728
+      ],
+      "fidelity": {
+        "foreground_iou": 1.0,
+        "original_foreground_px": 256612,
+        "rendered_px": 256612,
+        "missing_px": 0,
+        "extra_px": 0,
+        "large_error_px": 5392,
+        "large_error_fraction": 0.021012,
+        "p95_max_channel_error": 5,
+        "large_error_threshold": 64,
+        "mean_abs_rgb_error": 4.2484,
+        "background_rule": "alpha<128 o RGB>=250"
+      }
+    },
+    {
+      "id": "anillo-doble-01",
+      "category": "closed_curves_with_holes",
+      "status": "ok",
+      "checks": {
+        "document_valid": true,
+        "within_target_contain": true,
+        "colors_within_limit": true,
+        "geometry_kinds_allowed": true,
+        "provisional_values_marked": true,
+        "has_objects": true,
+        "deterministic": true
+      },
+      "outcome": {
+        "expected_outcome": "automatic",
+        "issue_severities": [
+          "review_required"
+        ],
+        "review_required_reported": true
+      },
+      "objects": 2,
+      "duration_ms": [
+        839,
+        908
+      ],
+      "fidelity": {
+        "foreground_iou": 1.0,
+        "original_foreground_px": 313132,
+        "rendered_px": 313132,
+        "missing_px": 0,
+        "extra_px": 0,
+        "large_error_px": 3976,
+        "large_error_fraction": 0.012698,
+        "p95_max_channel_error": 9,
+        "large_error_threshold": 64,
+        "mean_abs_rgb_error": 2.6259,
+        "background_rule": "alpha<128 o RGB>=250"
+      }
+    },
+    {
+      "id": "formas-huecos-01",
+      "category": "closed_curves_with_holes",
+      "status": "skipped",
+      "reason": "svg_uses_prepared_svg_path"
+    },
+    {
+      "id": "dificil-lineas-finas-01",
+      "category": "expects_review",
+      "status": "ok",
+      "checks": {
+        "document_valid": true,
+        "within_target_contain": true,
+        "colors_within_limit": true,
+        "geometry_kinds_allowed": true,
+        "provisional_values_marked": true,
+        "has_objects": true,
+        "deterministic": true
+      },
+      "outcome": {
+        "expected_outcome": "needs_review",
+        "issue_severities": [
+          "review_required"
+        ],
+        "review_required_reported": true
+      },
+      "objects": 1,
+      "duration_ms": [
+        1074,
+        1005
+      ],
+      "fidelity": {
+        "foreground_iou": 1.0,
+        "original_foreground_px": 101992,
+        "rendered_px": 101992,
+        "missing_px": 0,
+        "extra_px": 0,
+        "large_error_px": 64748,
+        "large_error_fraction": 0.634834,
+        "p95_max_channel_error": 136,
+        "large_error_threshold": 64,
+        "mean_abs_rgb_error": 65.9063,
+        "background_rule": "alpha<128 o RGB>=250"
+      }
+    },
+    {
+      "id": "dificil-texto-chico-01",
+      "category": "expects_review",
+      "status": "ok",
+      "checks": {
+        "document_valid": true,
+        "within_target_contain": true,
+        "colors_within_limit": true,
+        "geometry_kinds_allowed": true,
+        "provisional_values_marked": true,
+        "has_objects": true,
+        "deterministic": true
+      },
+      "outcome": {
+        "expected_outcome": "needs_review",
+        "issue_severities": [
+          "review_required"
+        ],
+        "review_required_reported": true
+      },
+      "objects": 1,
+      "duration_ms": [
+        426,
+        429
+      ],
+      "fidelity": {
+        "foreground_iou": 1.0,
+        "original_foreground_px": 84739,
+        "rendered_px": 84739,
+        "missing_px": 0,
+        "extra_px": 0,
+        "large_error_px": 4389,
+        "large_error_fraction": 0.051794,
+        "p95_max_channel_error": 77,
+        "large_error_threshold": 64,
+        "mean_abs_rgb_error": 14.147,
+        "background_rule": "alpha<128 o RGB>=250"
+      }
+    },
+    {
+      "id": "dificil-degradado-01",
+      "category": "expects_review",
+      "status": "ok",
+      "checks": {
+        "document_valid": true,
+        "within_target_contain": true,
+        "colors_within_limit": true,
+        "geometry_kinds_allowed": true,
+        "provisional_values_marked": true,
+        "has_objects": true,
+        "deterministic": true
+      },
+      "outcome": {
+        "expected_outcome": "needs_review",
+        "issue_severities": [
+          "review_required"
+        ],
+        "review_required_reported": true
+      },
+      "objects": 3,
+      "duration_ms": [
+        3093,
+        2884
+      ],
+      "fidelity": {
+        "foreground_iou": 0.999917,
+        "original_foreground_px": 1439881,
+        "rendered_px": 1440000,
+        "missing_px": 0,
+        "extra_px": 119,
+        "large_error_px": 43355,
+        "large_error_fraction": 0.03011,
+        "p95_max_channel_error": 57,
+        "large_error_threshold": 64,
+        "mean_abs_rgb_error": 6.6806,
+        "background_rule": "alpha<128 o RGB>=250"
+      }
+    },
+    {
+      "id": "jpeg-simple-01",
+      "category": "flat_logo",
+      "status": "ok",
+      "checks": {
+        "document_valid": true,
+        "within_target_contain": true,
+        "colors_within_limit": true,
+        "geometry_kinds_allowed": true,
+        "provisional_values_marked": true,
+        "has_objects": true,
+        "deterministic": true
+      },
+      "outcome": {
+        "expected_outcome": "automatic",
+        "issue_severities": [
+          "review_required"
+        ],
+        "review_required_reported": true
+      },
+      "objects": 2,
+      "duration_ms": [
+        676,
+        642
+      ],
+      "fidelity": {
+        "foreground_iou": 1.0,
+        "original_foreground_px": 216028,
+        "rendered_px": 216028,
+        "missing_px": 0,
+        "extra_px": 0,
+        "large_error_px": 6342,
+        "large_error_fraction": 0.029357,
+        "p95_max_channel_error": 48,
+        "large_error_threshold": 64,
+        "mean_abs_rgb_error": 5.6309,
+        "background_rule": "alpha<128 o RGB>=250"
+      }
+    },
+    {
+      "id": "anime-socks-150",
+      "category": "few_colors_drawing",
+      "status": "ok",
+      "checks": {
+        "document_valid": true,
+        "within_target_contain": true,
+        "colors_within_limit": true,
+        "geometry_kinds_allowed": true,
+        "provisional_values_marked": true,
+        "has_objects": true,
+        "deterministic": true
+      },
+      "outcome": {
+        "expected_outcome": "automatic",
+        "issue_severities": [
+          "review_required"
+        ],
+        "review_required_reported": true
+      },
+      "objects": 3,
+      "duration_ms": [
+        2738,
+        2838
+      ],
+      "fidelity": {
+        "foreground_iou": 1.0,
+        "original_foreground_px": 759420,
+        "rendered_px": 759420,
+        "missing_px": 0,
+        "extra_px": 0,
+        "large_error_px": 273,
+        "large_error_fraction": 0.000359,
+        "p95_max_channel_error": 21,
+        "large_error_threshold": 64,
+        "mean_abs_rgb_error": 3.9846,
+        "background_rule": "alpha<128 o RGB>=250"
+      }
+    },
+    {
+      "id": "anime-socks-126",
+      "category": "few_colors_drawing",
+      "status": "ok",
+      "checks": {
+        "document_valid": true,
+        "within_target_contain": true,
+        "colors_within_limit": true,
+        "geometry_kinds_allowed": true,
+        "provisional_values_marked": true,
+        "has_objects": true,
+        "deterministic": true
+      },
+      "outcome": {
+        "expected_outcome": "automatic",
+        "issue_severities": [
+          "review_required"
+        ],
+        "review_required_reported": true
+      },
+      "objects": 3,
+      "duration_ms": [
+        2692,
+        2648
+      ],
+      "fidelity": {
+        "foreground_iou": 1.0,
+        "original_foreground_px": 759420,
+        "rendered_px": 759420,
+        "missing_px": 0,
+        "extra_px": 0,
+        "large_error_px": 273,
+        "large_error_fraction": 0.000359,
+        "p95_max_channel_error": 21,
+        "large_error_threshold": 64,
+        "mean_abs_rgb_error": 3.9846,
+        "background_rule": "alpha<128 o RGB>=250"
+      }
+    }
+  ]
+}

@@ -26,6 +26,88 @@
       }
     },
     "schemas": {
+      "AnalysisApprove": {
+        "additionalProperties": false,
+        "description": "Aprobar el análisis: misma revisión, mismo asset; `analyzing` queda omitido con motivo.",
+        "properties": {
+          "action": {
+            "const": "approve",
+            "title": "Action",
+            "type": "string"
+          },
+          "flagged_region_ids": {
+            "default": [],
+            "items": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            "title": "Flagged Region Ids",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "0.1",
+            "default": "0.1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "title": "AnalysisApprove",
+        "type": "object"
+      },
+      "AnalysisChangeProvider": {
+        "additionalProperties": false,
+        "description": "Cambiar de proveedor: ai_provider es parte de JobSettings, así que el servidor crea una revisión analysis_retry.",
+        "properties": {
+          "action": {
+            "const": "change_provider",
+            "title": "Action",
+            "type": "string"
+          },
+          "ai_provider": {
+            "enum": [
+              "openai",
+              "ollama"
+            ],
+            "title": "Ai Provider",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "0.1",
+            "default": "0.1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "ai_provider"
+        ],
+        "title": "AnalysisChangeProvider",
+        "type": "object"
+      },
+      "AnalysisDecision": {
+        "discriminator": {
+          "mapping": {
+            "approve": "#/components/schemas/AnalysisApprove",
+            "change_provider": "#/components/schemas/AnalysisChangeProvider"
+          },
+          "propertyName": "action"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/AnalysisApprove"
+          },
+          {
+            "$ref": "#/components/schemas/AnalysisChangeProvider"
+          }
+        ],
+        "title": "AnalysisDecision"
+      },
       "AnalysisRegion": {
         "additionalProperties": false,
         "properties": {
@@ -379,7 +461,15 @@
             "$ref": "#/components/schemas/Provenance"
           },
           "reread_metrics": {
-            "$ref": "#/components/schemas/RereadMetrics"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RereadMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           },
           "revision_id": {
             "maxLength": 128,
@@ -408,8 +498,7 @@
           "input_sha256",
           "settings_sha256",
           "geometry_sha256",
-          "artifacts",
-          "reread_metrics"
+          "artifacts"
         ],
         "title": "ArtifactManifest",
         "type": "object"
@@ -468,7 +557,15 @@
             "$ref": "#/components/schemas/Provenance"
           },
           "reread_metrics": {
-            "$ref": "#/components/schemas/RereadMetrics"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RereadMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           },
           "revision_id": {
             "maxLength": 128,
@@ -497,8 +594,7 @@
           "input_sha256",
           "settings_sha256",
           "geometry_sha256",
-          "artifacts",
-          "reread_metrics"
+          "artifacts"
         ],
         "title": "AuthorizedArtifactManifest",
         "type": "object"
@@ -2445,7 +2541,8 @@
             "enum": [
               "initial",
               "size_variant",
-              "correction"
+              "correction",
+              "analysis_retry"
             ],
             "title": "Kind",
             "type": "string"
@@ -2978,6 +3075,15 @@
             "minLength": 1,
             "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
             "title": "Project Id",
+            "type": "string"
+          },
+          "purpose": {
+            "default": "design",
+            "enum": [
+              "design",
+              "sewout_photo"
+            ],
+            "title": "Purpose",
             "type": "string"
           },
           "schema_version": {
@@ -4562,6 +4668,1024 @@
           }
         },
         "summary": "Read observed status, diagnostics and stage durations; polling is supported",
+        "tags": [
+          "Jobs"
+        ]
+      }
+    },
+    "/api/v1/jobs/{id}/analysis": {
+      "get": {
+        "description": "H2: visual analysis associated with the job (its own, or the approved one of its parent in a continuation job). 404 when the job has none: prepared SVG, still analyzing, or failed before producing it. bounds_px are always in the original image frame (top-left origin, x right, y down)",
+        "operationId": "getJobAnalysis",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "simulated": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "analysis_id": "analysis_mock_1",
+                      "asset_id": "asset_mock_image",
+                      "duration_ms": 4200,
+                      "input_tokens": null,
+                      "model": "SIMULATED model",
+                      "original_response_artifact_id": "artifact_mock_provider_raw",
+                      "output_tokens": null,
+                      "prompt_version": "prompt-mock-0",
+                      "provider": "openai",
+                      "regions": [
+                        {
+                          "bounds_px": {
+                            "height_px": 50.0,
+                            "width_px": 100.0,
+                            "x_px": 10.0,
+                            "y_px": 10.0
+                          },
+                          "observed_text": "LOGO",
+                          "region_id": "region_mock_1",
+                          "representation": "estimated_bbox",
+                          "suggested_colors": [
+                            "#1F3A93"
+                          ],
+                          "uncertainties": [],
+                          "visual_role": "SIMULATED main text"
+                        },
+                        {
+                          "bounds_px": {
+                            "height_px": 50.0,
+                            "width_px": 100.0,
+                            "x_px": 30.0,
+                            "y_px": 10.0
+                          },
+                          "observed_text": "Est. 2019",
+                          "region_id": "region_mock_3",
+                          "representation": "estimated_bbox",
+                          "suggested_colors": [
+                            "#555555"
+                          ],
+                          "uncertainties": [
+                            "SIMULATED: text may be lost at this size"
+                          ],
+                          "visual_role": "SIMULATED thin text"
+                        }
+                      ],
+                      "schema_version": "0.1"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisSpec"
+                }
+              }
+            },
+            "description": "H2: visual analysis associated with the job (its own, or the approved one of its parent in a continuation job). 404 when the job has none: prepared SVG, still analyzing, or failed before producing it. bounds_px are always in the original image frame (top-left origin, x right, y down)",
+            "headers": {
+              "Cache-Control": {
+                "example": "no-store",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Server correlation identifier",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "MALFORMED_REQUEST": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "code": "MALFORMED_REQUEST",
+                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
+                      "errors": [],
+                      "instance": "/api/v1/jobs/resource_mock_1/analysis",
+                      "request_id": "request_mock_1",
+                      "schema_version": "0.1",
+                      "status": 400,
+                      "title": "Malformed Request",
+                      "type": "urn:embroidery:problem:malformed-request"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "Controlled error; no storage paths or credentials",
+            "headers": {
+              "Cache-Control": {
+                "example": "no-store",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Server correlation identifier",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "UNAUTHENTICATED": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "code": "UNAUTHENTICATED",
+                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
+                      "errors": [],
+                      "instance": "/api/v1/jobs/resource_mock_1/analysis",
+                      "request_id": "request_mock_1",
+                      "schema_version": "0.1",
+                      "status": 401,
+                      "title": "Unauthenticated",
+                      "type": "urn:embroidery:problem:unauthenticated"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "Controlled error; no storage paths or credentials",
+            "headers": {
+              "Cache-Control": {
+                "example": "no-store",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "WWW-Authenticate": {
+                "description": "Challenge for the enabled authentication mechanism",
+                "examples": {
+                  "basic": {
+                    "value": "Basic realm=\"embroidery\", charset=\"UTF-8\""
+                  },
+                  "serviceBearer": {
+                    "value": "Bearer"
+                  }
+                },
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Server correlation identifier",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "FORBIDDEN": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "code": "FORBIDDEN",
+                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
+                      "errors": [],
+                      "instance": "/api/v1/jobs/resource_mock_1/analysis",
+                      "request_id": "request_mock_1",
+                      "schema_version": "0.1",
+                      "status": 403,
+                      "title": "Forbidden",
+                      "type": "urn:embroidery:problem:forbidden"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "Controlled error; no storage paths or credentials",
+            "headers": {
+              "Cache-Control": {
+                "example": "no-store",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Server correlation identifier",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "NOT_FOUND": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "code": "NOT_FOUND",
+                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
+                      "errors": [],
+                      "instance": "/api/v1/jobs/resource_mock_1/analysis",
+                      "request_id": "request_mock_1",
+                      "schema_version": "0.1",
+                      "status": 404,
+                      "title": "Not Found",
+                      "type": "urn:embroidery:problem:not-found"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "Controlled error; no storage paths or credentials",
+            "headers": {
+              "Cache-Control": {
+                "example": "no-store",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Server correlation identifier",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "INVALID_REQUEST": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "code": "INVALID_REQUEST",
+                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
+                      "errors": [
+                        {
+                          "field": "body",
+                          "message": "Request violates the published schema or semantic guard."
+                        }
+                      ],
+                      "instance": "/api/v1/jobs/resource_mock_1/analysis",
+                      "request_id": "request_mock_1",
+                      "schema_version": "0.1",
+                      "status": 422,
+                      "title": "Invalid Request",
+                      "type": "urn:embroidery:problem:invalid-request"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "Controlled error; no storage paths or credentials",
+            "headers": {
+              "Cache-Control": {
+                "example": "no-store",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Server correlation identifier",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "RATE_LIMITED": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "code": "RATE_LIMITED",
+                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
+                      "errors": [],
+                      "instance": "/api/v1/jobs/resource_mock_1/analysis",
+                      "request_id": "request_mock_1",
+                      "schema_version": "0.1",
+                      "status": 429,
+                      "title": "Rate Limited",
+                      "type": "urn:embroidery:problem:rate-limited"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "Controlled error; no storage paths or credentials",
+            "headers": {
+              "Cache-Control": {
+                "example": "no-store",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Optional retry delay in seconds",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Server correlation identifier",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "INTERNAL_ERROR": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "code": "INTERNAL_ERROR",
+                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
+                      "errors": [],
+                      "instance": "/api/v1/jobs/resource_mock_1/analysis",
+                      "request_id": "request_mock_1",
+                      "schema_version": "0.1",
+                      "status": 500,
+                      "title": "Internal Error",
+                      "type": "urn:embroidery:problem:internal-error"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "Controlled error; no storage paths or credentials",
+            "headers": {
+              "Cache-Control": {
+                "example": "no-store",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Server correlation identifier",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "SERVICE_UNAVAILABLE": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "code": "SERVICE_UNAVAILABLE",
+                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
+                      "errors": [],
+                      "instance": "/api/v1/jobs/resource_mock_1/analysis",
+                      "request_id": "request_mock_1",
+                      "schema_version": "0.1",
+                      "status": 503,
+                      "title": "Service Unavailable",
+                      "type": "urn:embroidery:problem:service-unavailable"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "Controlled error; no storage paths or credentials",
+            "headers": {
+              "Cache-Control": {
+                "example": "no-store",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Optional retry delay in seconds",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Server correlation identifier",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "H2: visual analysis associated with the job (its own, or the approved one of its parent in a continuation job). 404 when the job has none: prepared SVG, still analyzing, or failed before producing it. bounds_px are always in the original image frame (top-left origin, x right, y down)",
+        "tags": [
+          "Jobs"
+        ]
+      }
+    },
+    "/api/v1/jobs/{id}/analysis-decision": {
+      "post": {
+        "description": "H2: decide an analysis in needs_review with a review_required analysis issue. approve keeps the revision and asset and skips analysis; change_provider creates an analysis_retry revision. Both return a NEW queued job whose parent_job_id is the original, which is unchanged. 409 REVISION_CONFLICT if the original is not in that state; 422 for an unavailable or identical provider or flagged_region_ids outside the analysis",
+        "operationId": "decideJobAnalysis",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "change_provider": {
+                  "summary": "SIMULATED contract example; no worker or physical test",
+                  "value": {
+                    "action": "change_provider",
+                    "ai_provider": "ollama",
+                    "schema_version": "0.1"
+                  }
+                },
+                "simulated": {
+                  "summary": "SIMULATED contract example; no worker or physical test",
+                  "value": {
+                    "action": "approve",
+                    "flagged_region_ids": [
+                      "region_mock_3"
+                    ],
+                    "schema_version": "0.1"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisDecision"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "approve": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "artifact_manifest": null,
+                      "asset_id": "asset_mock_svg",
+                      "cancellation_requested": false,
+                      "diagnostics": [],
+                      "estimated_remaining_s": null,
+                      "failure": null,
+                      "input_kind": "raster_image",
+                      "issues": [],
+                      "job_id": "job_mock_2",
+                      "parent_job_id": "job_mock_1",
+                      "project_id": "project_mock_1",
+                      "review": null,
+                      "revision_id": "rev_mock_1",
+                      "schema_version": "0.1",
+                      "settings_snapshot": {
+                        "ai_model": null,
+                        "ai_provider": "openai",
+                        "color_limit": 3,
+                        "fabric_profile": "gabardina_inicial",
+                        "fabric_profile_version": "0.1",
+                        "hoop": {
+                          "height_mm": 200.0,
+                          "jef_hoop_code": 4,
+                          "profile_id": "sq20b",
+                          "profile_version": "0.1",
+                          "width_mm": 200.0
+                        },
+                        "hoop_profile": "sq20b",
+                        "machine_profile": "janome_mc550e",
+                        "machine_profile_version": "0.1",
+                        "schema_version": "0.1",
+                        "target": {
+                          "fit": "contain",
+                          "height_mm": 150.0,
+                          "width_mm": 150.0
+                        },
+                        "thread_profile": "embroidery_thread_initial"
+                      },
+                      "sewout_record": null,
+                      "sewout_status": "untested",
+                      "stages": [
+                        {
+                          "measured_duration_ms": null,
+                          "outcome": "skipped",
+                          "reason": "análisis aprobado en job_mock_1",
+                          "stage": "analyzing"
+                        },
+                        {
+                          "measured_duration_ms": null,
+                          "outcome": "pending",
+                          "reason": null,
+                          "stage": "vectorizing"
+                        },
+                        {
+                          "measured_duration_ms": null,
+                          "outcome": "pending",
+                          "reason": null,
+                          "stage": "digitizing"
+                        },
+                        {
+                          "measured_duration_ms": null,
+                          "outcome": "pending",
+                          "reason": null,
+                          "stage": "validating"
+                        }
+                      ],
+                      "status": "queued",
+                      "validation_report": null
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            },
+            "description": "H2: decide an analysis in needs_review with a review_required analysis issue. approve keeps the revision and asset and skips analysis; change_provider creates an analysis_retry revision. Both return a NEW queued job whose parent_job_id is the original, which is unchanged. 409 REVISION_CONFLICT if the original is not in that state; 422 for an unavailable or identical provider or flagged_region_ids outside the analysis",
+            "headers": {
+              "Cache-Control": {
+                "example": "no-store",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Server correlation identifier",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "MALFORMED_REQUEST": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "code": "MALFORMED_REQUEST",
+                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
+                      "errors": [],
+                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
+                      "request_id": "request_mock_1",
+                      "schema_version": "0.1",
+                      "status": 400,
+                      "title": "Malformed Request",
+                      "type": "urn:embroidery:problem:malformed-request"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "Controlled error; no storage paths or credentials",
+            "headers": {
+              "Cache-Control": {
+                "example": "no-store",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Server correlation identifier",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "UNAUTHENTICATED": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "code": "UNAUTHENTICATED",
+                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
+                      "errors": [],
+                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
+                      "request_id": "request_mock_1",
+                      "schema_version": "0.1",
+                      "status": 401,
+                      "title": "Unauthenticated",
+                      "type": "urn:embroidery:problem:unauthenticated"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "Controlled error; no storage paths or credentials",
+            "headers": {
+              "Cache-Control": {
+                "example": "no-store",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "WWW-Authenticate": {
+                "description": "Challenge for the enabled authentication mechanism",
+                "examples": {
+                  "basic": {
+                    "value": "Basic realm=\"embroidery\", charset=\"UTF-8\""
+                  },
+                  "serviceBearer": {
+                    "value": "Bearer"
+                  }
+                },
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Server correlation identifier",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "FORBIDDEN": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "code": "FORBIDDEN",
+                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
+                      "errors": [],
+                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
+                      "request_id": "request_mock_1",
+                      "schema_version": "0.1",
+                      "status": 403,
+                      "title": "Forbidden",
+                      "type": "urn:embroidery:problem:forbidden"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "Controlled error; no storage paths or credentials",
+            "headers": {
+              "Cache-Control": {
+                "example": "no-store",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Server correlation identifier",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "NOT_FOUND": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "code": "NOT_FOUND",
+                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
+                      "errors": [],
+                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
+                      "request_id": "request_mock_1",
+                      "schema_version": "0.1",
+                      "status": 404,
+                      "title": "Not Found",
+                      "type": "urn:embroidery:problem:not-found"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "Controlled error; no storage paths or credentials",
+            "headers": {
+              "Cache-Control": {
+                "example": "no-store",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Server correlation identifier",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "IDEMPOTENCY_CONFLICT": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "code": "IDEMPOTENCY_CONFLICT",
+                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
+                      "errors": [],
+                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
+                      "request_id": "request_mock_1",
+                      "schema_version": "0.1",
+                      "status": 409,
+                      "title": "Idempotency Conflict",
+                      "type": "urn:embroidery:problem:idempotency-conflict"
+                    }
+                  },
+                  "REVISION_CONFLICT": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "code": "REVISION_CONFLICT",
+                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
+                      "errors": [],
+                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
+                      "request_id": "request_mock_1",
+                      "schema_version": "0.1",
+                      "status": 409,
+                      "title": "Revision Conflict",
+                      "type": "urn:embroidery:problem:revision-conflict"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "Controlled error; no storage paths or credentials",
+            "headers": {
+              "Cache-Control": {
+                "example": "no-store",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Server correlation identifier",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "INVALID_REQUEST": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "code": "INVALID_REQUEST",
+                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
+                      "errors": [
+                        {
+                          "field": "body",
+                          "message": "Request violates the published schema or semantic guard."
+                        }
+                      ],
+                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
+                      "request_id": "request_mock_1",
+                      "schema_version": "0.1",
+                      "status": 422,
+                      "title": "Invalid Request",
+                      "type": "urn:embroidery:problem:invalid-request"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "Controlled error; no storage paths or credentials",
+            "headers": {
+              "Cache-Control": {
+                "example": "no-store",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Server correlation identifier",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "RATE_LIMITED": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "code": "RATE_LIMITED",
+                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
+                      "errors": [],
+                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
+                      "request_id": "request_mock_1",
+                      "schema_version": "0.1",
+                      "status": 429,
+                      "title": "Rate Limited",
+                      "type": "urn:embroidery:problem:rate-limited"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "Controlled error; no storage paths or credentials",
+            "headers": {
+              "Cache-Control": {
+                "example": "no-store",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Optional retry delay in seconds",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Server correlation identifier",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "INTERNAL_ERROR": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "code": "INTERNAL_ERROR",
+                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
+                      "errors": [],
+                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
+                      "request_id": "request_mock_1",
+                      "schema_version": "0.1",
+                      "status": 500,
+                      "title": "Internal Error",
+                      "type": "urn:embroidery:problem:internal-error"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "Controlled error; no storage paths or credentials",
+            "headers": {
+              "Cache-Control": {
+                "example": "no-store",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Server correlation identifier",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "SERVICE_UNAVAILABLE": {
+                    "summary": "SIMULATED contract example; no worker or physical test",
+                    "value": {
+                      "code": "SERVICE_UNAVAILABLE",
+                      "detail": "SIMULATED error example; inspect code and field diagnostics.",
+                      "errors": [],
+                      "instance": "/api/v1/jobs/resource_mock_1/analysis-decision",
+                      "request_id": "request_mock_1",
+                      "schema_version": "0.1",
+                      "status": 503,
+                      "title": "Service Unavailable",
+                      "type": "urn:embroidery:problem:service-unavailable"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            },
+            "description": "Controlled error; no storage paths or credentials",
+            "headers": {
+              "Cache-Control": {
+                "example": "no-store",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Optional retry delay in seconds",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "description": "Server correlation identifier",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "H2: decide an analysis in needs_review with a review_required analysis issue. approve keeps the revision and asset and skips analysis; change_provider creates an analysis_retry revision. Both return a NEW queued job whose parent_job_id is the original, which is unchanged. 409 REVISION_CONFLICT if the original is not in that state; 422 for an unavailable or identical provider or flagged_region_ids outside the analysis",
         "tags": [
           "Jobs"
         ]
@@ -7077,6 +8201,7 @@
                           "original_preserved": true,
                           "original_width_px": null,
                           "project_id": "project_mock_1",
+                          "purpose": "design",
                           "schema_version": "0.1",
                           "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
                         }
@@ -7878,6 +9003,7 @@
                       "original_preserved": true,
                       "original_width_px": null,
                       "project_id": "project_mock_1",
+                      "purpose": "design",
                       "schema_version": "0.1",
                       "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
                     }
@@ -10745,6 +11871,7 @@
           "original_preserved": true,
           "original_width_px": null,
           "project_id": "project_mock_1",
+          "purpose": "design",
           "schema_version": "0.1",
           "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         },

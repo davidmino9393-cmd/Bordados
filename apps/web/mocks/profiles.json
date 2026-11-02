@@ -1,0 +1,33 @@
+{
+  "schema_version": "0.1",
+  "simulated": true,
+  "case": "profiles",
+  "model": "ProfileCatalog",
+  "direction": "response",
+  "endpoint": "GET /api/v1/profiles",
+  "note": "Derivado del ejemplo 'simulated' de openapi.json (no hay fixture de perfiles en packages/contracts). Se agrega un bastidor chico SIMULADO para probar el aviso de encaje.",
+  "contract_revision": "B2",
+  "payload": {
+    "schema_version": "0.1",
+    "catalog_version": "0.1-B2-mock",
+    "fabrics": [
+      { "profile_id": "gabardina_inicial", "profile_version": "0.1", "label": "Gabardina inicial (sin calibrar)", "calibration_status": "proposed", "calibration_record_id": null }
+    ],
+    "hoops": [
+      { "profile_id": "sq20b", "profile_version": "0.1", "label": "SQ20b (propuesto)", "width_mm": 200.0, "height_mm": 200.0, "jef_hoop_code": 4 },
+      { "profile_id": "sim_small", "profile_version": "0.1", "label": "Bastidor chico (SIMULADO)", "width_mm": 126.0, "height_mm": 110.0, "jef_hoop_code": 1 }
+    ],
+    "machines": [
+      { "profile_id": "janome_mc550e", "profile_version": "0.1", "label": "Janome MC 550E (perfil propuesto)", "hoop_profile_ids": ["sq20b", "sim_small"], "max_colors": 16, "calibration_status": "proposed", "calibration_record_id": null }
+    ],
+    "thread_profiles": [
+      { "profile_id": "embroidery_thread_initial", "profile_version": "0.1", "label": "Hilo inicial (simulado)" }
+    ],
+    "max_colors": 16,
+    "providers": [
+      { "provider_id": "openai", "available": true, "unavailable_reason": null },
+      { "provider_id": "ollama", "available": true, "unavailable_reason": null }
+    ],
+    "upload_limits": { "max_bytes": 10485760, "max_decoded_pixels": 40000000, "accepted_mime_types": ["image/png", "image/jpeg", "image/svg+xml"] }
+  }
+}

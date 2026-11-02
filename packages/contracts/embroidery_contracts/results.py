@@ -131,7 +131,8 @@ class ArtifactManifest(Versioned):
     settings_sha256: SHA256
     geometry_sha256: SHA256
     artifacts: tuple[Artifact, ...]
-    reread_metrics: RereadMetrics
+    # H2: None mientras no exista un JEF releído (solo geometría vectorizada); la preparación para muestra lo sigue exigiendo.
+    reread_metrics: RereadMetrics | None = None
 
     @model_validator(mode="after")
     def unique_artifacts(self):
@@ -140,6 +141,8 @@ class ArtifactManifest(Versioned):
             raise ValueError("Artifact identifiers must be unique within a manifest")
         if any(artifact.job_id != self.job_id for artifact in self.artifacts):
             raise ValueError("Every artifact must belong to the manifest job")
+        if self.reread_metrics is None:
+            return self
         raw_id = self.reread_metrics.raw_commands_artifact_id
         if not any(a.artifact_id == raw_id and a.kind == "raw_commands_json" for a in self.artifacts):
             raise ValueError("Reread metrics must reference raw commands in this manifest")

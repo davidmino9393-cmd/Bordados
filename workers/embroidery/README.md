@@ -1,12 +1,12 @@
 # Worker H0-03
 
-Propósito: probar SVG preparado → JEF → relectura/preview sin intervención de escritorio. Standalone, sin FastAPI; contratos v0.1 congelados sin modificar.
+Propósito: probar SVG preparado → JEF → relectura/preview sin escritorio. Standalone, sin FastAPI; contratos v0.1 congelados.
 
-Contenido: [Uso](#uso), [verificación](#verificacion), [salidas](#salidas), [límites](#limites), [relacionados](#relacionados).
+Contenido: [Uso](#uso), [verificación](#verificacion), [regresiones](#regresiones), [salidas](#salidas), [límites](#limites), [relacionados](#relacionados).
 
 ## Uso
 
-Python 3.12 con `pip install -r workers/embroidery/requirements.txt` en un entorno aislado. Ejecutables, versión y directorio de job son argumentos; no hay rutas de esta máquina en el código.
+Python 3.12 con `pip install -r workers/embroidery/requirements.txt` en un entorno aislado. Ejecutables, versión y job-dir son argumentos; sin rutas de esta máquina.
 
 ```powershell
 python workers/embroidery/worker.py `
@@ -17,7 +17,7 @@ python workers/embroidery/worker.py `
   --engine-version "$env:INKSTITCH_VERSION" --timeout 180
 ```
 
-`--inkscape` solo verifica versión: la exportación se invoca directamente mediante las extensiones CLI de Ink/Stitch. Preview por Pillow desde JEF; no rasterización del vector. El entorno usado aquí tiene pyembroidery en `.deps`: añadir ese directorio a PYTHONPATH; no es necesario si se instala requirements en el venv.
+`--inkscape` solo verifica versión; la exportación usa las CLI de Ink/Stitch. Preview con Pillow desde JEF, sin rasterizar. pyembroidery está en `.deps`: agregarlo a PYTHONPATH o instalar requirements.
 
 ## Verificación
 
@@ -26,6 +26,14 @@ python workers/embroidery/verify_commands.py workers/embroidery/evidence/cli-mai
 ```
 
 Parsea JSON, no bytes (CRLF/LF no afecta). Reporta conteos, índices y veredicto.
+
+## Regresiones
+
+```powershell
+python -m unittest tests/engine/test_regressions.py -v
+```
+
+Ambas variantes: dimensiones ±0.2 mm, needle_stitches, thread_blocks y raw-commands contra el JEF. Nueva variante: agregar JEF/raw-commands a `evidence/<caso>/` y el caso al test.
 
 ## Salidas
 
@@ -38,13 +46,13 @@ Parsea JSON, no bytes (CRLF/LF no afecta). Reporta conteos, índices y veredicto
 | *.process.json / *.stderr.txt | Comando, PID, duración, retorno y stderr íntegro |
 | result.json | Métricas o fallo controlado; nunca aprobación física/digital |
 
-No reutilizar directorio de job: se rechaza sin sobrescribir archivos. Código de salida 0 = exportación/relectura completadas, 1 = fallo. `ok` no significa ready_for_sewout. Los diagnósticos sin mapeo de objetos verificado quedan pendientes de revisión.
+No reutilizar directorio de job. Código 0 = exportación/relectura completas; 1 = fallo. `ok` no implica ready_for_sewout; diagnósticos sin mapeo quedan en revisión.
 
 ## Limites
 
 - Solo SVG preparado de esquema Ink/Stitch 3; no migración silenciosa ni digitalización de otros logos.
 - stdin cerrado, shell desactivado, ventanas ocultas y DISPLAY/WAYLAND_DISPLAY retirados. Windows arranca suspendido, asigna Job Object y luego reanuda; SIGKILL por grupo en POSIX (no probado aquí).
-- No es sandbox de contenido SVG ni worker multiusuario de producción. H0-04 debe integrar perfiles/contratos, validación de geometría y permisos.
+- No es sandbox de SVG ni worker multiusuario. H0-04 integra perfiles/contratos, geometría y permisos.
 - Prueba Windows sin interacción; NO certifica Linux ni servicio Windows en sesión 0.
 
 ## Relacionados

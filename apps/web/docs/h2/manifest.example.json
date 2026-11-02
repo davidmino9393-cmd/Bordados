@@ -1,0 +1,51 @@
+{
+  "schema_version": "0.1",
+  "set_name": "EJEMPLO — reemplazar por el conjunto real (15–20 imágenes)",
+  "images": [
+    {
+      "id": "anime-socks-grande",
+      "file": "anime_socks/anime_socks_grande.svg",
+      "design_family": "anime_socks",
+      "variant_of": null,
+      "category": "lettering",
+      "format": "svg",
+      "has_transparency": false,
+      "contains_text": true,
+      "text": "EJEMPLO",
+      "expected_colors": 3,
+      "target_size_mm": { "width_mm": 150, "height_mm": 142.8 },
+      "expected_outcome": "automatic",
+      "known_traps": ["EJEMPLO: letras caligráficas con trazo fino"],
+      "rights": { "owner": "EJEMPLO: quien aporta el diseño", "license": "EJEMPLO: uso interno autorizado", "permission_confirmed": true }
+    },
+    {
+      "id": "logo-plano-01",
+      "file": "nuevos/logo_plano_01.png",
+      "design_family": "logo-plano-01",
+      "category": "flat_logo",
+      "format": "png",
+      "pixel_size": { "width": 1200, "height": 900 },
+      "has_transparency": true,
+      "contains_text": false,
+      "expected_colors": 2,
+      "target_size_mm": { "width_mm": 100, "height_mm": 75 },
+      "expected_outcome": "automatic",
+      "rights": { "owner": "EJEMPLO", "license": "EJEMPLO", "permission_confirmed": false, "permission_note": "EJEMPLO: pendiente de confirmar" }
+    },
+    {
+      "id": "linea-fina-01",
+      "file": "nuevos/linea_fina_01.png",
+      "design_family": "linea-fina-01",
+      "category": "expects_review",
+      "format": "png",
+      "has_transparency": false,
+      "contains_text": false,
+      "expected_colors": 1,
+      "target_size_mm": { "width_mm": 80, "height_mm": 80 },
+      "expected_outcome": "needs_review",
+      "expected_review_reason": "EJEMPLO: trazos más finos de 1 mm a este tamaño",
+      "known_traps": ["líneas muy finas"],
+      "rights": { "owner": "EJEMPLO", "license": "EJEMPLO", "permission_confirmed": false }
+    }
+  ]
+}

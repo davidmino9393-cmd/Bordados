@@ -38,8 +38,21 @@ Los nombres son exactos. `requerido` no tiene default.
 | `dimension_tolerance_mm` | number | `0.2` | Finito y >= 0. |
 | `worker_python_paths` | string[] | `[]` | Se unen en `PYTHONPATH` del worker. |
 | `worker_script` | string | `workers/embroidery/worker.py` | Ruta del worker; normalmente omitir. |
+| `openai_api_key` | string/null | `null` | H2. Clave de OpenAI; solo aquí, nunca en la web ni en variables del navegador. No aparece en `repr`. Va junto con `openai_model`. |
+| `openai_model` | string/null | `null` | H2. Modelo con visión y salida estructurada; se elige con ejemplos reales, no hay valor por defecto. |
+| `openai_base_url` | string | `https://api.openai.com` | H2. Solo para pruebas o un proxy propio. |
+| `ollama_model` | string/null | `null` | H2. Modelo de visión local de Ollama con salida estructurada (debe aceptar imágenes: un modelo solo de código no sirve). Sin él, `ollama` figura no disponible. No hay valor por defecto. |
+| `ollama_base_url` | string | `http://127.0.0.1:11434` | H2. Origen HTTP(S) del servidor de Ollama; puede ser otra máquina de la red. |
+| `ollama_timeout_s` | number | `120` | H2. Espera máxima por respuesta del modelo local; finito y > 0. Un modelo local es más lento que uno en la nube. |
+| `analysis_timeout_s` | number | `60` | H2. Espera máxima por respuesta del proveedor; finito y > 0. |
 
-Se requiere `service_token` o el par `basic_username`/`basic_password`. Si ambos están configurados, se aceptan Bearer y Basic.
+`public_base_url` es el origen de las URLs de descarga. En Windows, con `localhost` y el servidor escuchando solo en `127.0.0.1`, un cliente que no sea el navegador (Python, curl) espera ~2 s por cada descarga (intenta primero IPv6); en desarrollo conviene `http://127.0.0.1:8000`. Medido con el SVG de Anime Socks: 2,1 s con `localhost`, 6 ms con `127.0.0.1`.
+
+Se requiere `service_token` o el par `basic_username`/`basic_password`. Si ambos están configurados, se aceptan Bearer y Basic, pero el desafío `WWW-Authenticate` es `Bearer`: un navegador no pide usuario y contraseña. Para usar la web con Basic, no definir `service_token`.
+
+## Proveedores de IA (H2)
+
+`GET /api/v1/profiles` informa como disponible solo lo configurado aquí: OpenAI si hay `openai_api_key` y `openai_model`; el modelo local (`ollama`) si hay `ollama_model`, **sondeado en vivo** en cada `GET /profiles` (se recuerda 10 s): disponible solo si el servidor responde y el modelo está instalado; si no, `available: false` con el motivo. La validación de un pedido solo exige que esté configurado. Si el modelo local falla durante un trabajo, termina con `LOCAL_MODEL_UNAVAILABLE` (servidor caído, modelo no instalado o sin respuesta a tiempo), `ANALYSIS_INCOMPLETE` (respuesta cortada) o `ANALYSIS_SCHEMA_INVALID`. Si un proveedor falla, el trabajo termina con el código del catálogo; nunca se pasa a otro proveedor en silencio.
 
 ## Ejemplo
 

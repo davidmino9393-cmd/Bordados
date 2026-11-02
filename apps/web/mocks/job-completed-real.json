@@ -1,0 +1,1968 @@
+{
+  "schema_version": "0.1",
+  "simulated": true,
+  "case": "job-completed-real",
+  "model": "JobResponse",
+  "direction": "response",
+  "endpoint": "GET /api/v1/jobs/{id}",
+  "note": "SIMULADO. Forma identica a la de un job real de H0-04 (SVG preparado, needs_review, digital_checks_passed=false, 6 artefactos, 14 avisos SATIN_RUNG_WARNING con los mismos 14 object_ids reales), pero con ids y hashes ficticios (000...001, 000...002...) y sin enlaces: ningun worker produjo estos archivos. Los 14 avisos son identicos y cada uno lista las 14 columnas candidatas (source_object_mapping_verified=false). SourceAsset.original_download llega null del backend real para SVG y el cliente simulado lo reproduce como null (el contrato lo permite): no se simula con una URL ficticia.",
+  "contract_revision": "B2",
+  "payload": {
+    "schema_version": "0.1",
+    "job_id": "job_mock_completed_1",
+    "project_id": "project_mock_1",
+    "revision_id": "rev_mock_1",
+    "asset_id": "asset_mock_svg",
+    "input_kind": "prepared_svg",
+    "settings_snapshot": {
+      "schema_version": "0.1",
+      "target": {
+        "width_mm": 150.0,
+        "height_mm": 150.0,
+        "fit": "contain"
+      },
+      "machine_profile": "janome_mc550e",
+      "machine_profile_version": "0.1",
+      "hoop_profile": "sq20b",
+      "hoop": {
+        "profile_id": "sq20b",
+        "profile_version": "0.1",
+        "width_mm": 200.0,
+        "height_mm": 200.0,
+        "jef_hoop_code": 4
+      },
+      "fabric_profile": "gabardina_inicial",
+      "fabric_profile_version": "0.1",
+      "thread_profile": "embroidery_thread_initial",
+      "color_limit": 3,
+      "ai_provider": "none",
+      "ai_model": null
+    },
+    "status": "needs_review",
+    "stages": [
+      {
+        "stage": "analyzing",
+        "outcome": "skipped",
+        "reason": "Prepared SVG: analysis omitted",
+        "measured_duration_ms": null
+      },
+      {
+        "stage": "vectorizing",
+        "outcome": "skipped",
+        "reason": "Prepared SVG: vectorization omitted",
+        "measured_duration_ms": null
+      },
+      {
+        "stage": "digitizing",
+        "outcome": "completed",
+        "reason": null,
+        "measured_duration_ms": 18655
+      },
+      {
+        "stage": "validating",
+        "outcome": "completed",
+        "reason": null,
+        "measured_duration_ms": 18655
+      }
+    ],
+    "parent_job_id": null,
+    "estimated_remaining_s": null,
+    "sewout_status": "untested",
+    "sewout_record": null,
+    "failure": null,
+    "review": {
+      "cause": "Satin has no rungs",
+      "issues": [
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        }
+      ],
+      "object_ids": [
+        "satin_A_descenso_0",
+        "satin_A_lazo_ascenso_0",
+        "satin_A_lazo_ascenso_2",
+        "satin_A_lazo_ascenso_4",
+        "satin_SOCKS_C_0",
+        "satin_SOCKS_K_diagonales_0",
+        "satin_SOCKS_K_vertical_0",
+        "satin_SOCKS_O_0",
+        "satin_SOCKS_S_1_0",
+        "satin_SOCKS_S_2_0",
+        "satin_e_0",
+        "satin_i_0",
+        "satin_m_0",
+        "satin_n_0"
+      ],
+      "region_ids": []
+    },
+    "diagnostics": [
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      }
+    ],
+    "cancellation_requested": false,
+    "issues": [
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      },
+      {
+        "code": "SATIN_RUNG_WARNING",
+        "severity": "review_required",
+        "stage": "satin",
+        "object_ids": [
+          "satin_A_descenso_0",
+          "satin_SOCKS_S_1_0",
+          "satin_SOCKS_O_0",
+          "satin_SOCKS_C_0",
+          "satin_SOCKS_K_vertical_0",
+          "satin_SOCKS_K_diagonales_0",
+          "satin_SOCKS_S_2_0",
+          "satin_e_0",
+          "satin_m_0",
+          "satin_i_0",
+          "satin_n_0",
+          "satin_A_lazo_ascenso_0",
+          "satin_A_lazo_ascenso_2",
+          "satin_A_lazo_ascenso_4"
+        ],
+        "region_ids": [],
+        "description": "Satin has no rungs",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Satin has no rungs",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      }
+    ],
+    "validation_report": {
+      "schema_version": "0.1",
+      "report_id": "report_mock_completed_1",
+      "job_id": "job_mock_completed_1",
+      "revision_id": "rev_mock_1",
+      "provenance": {
+        "simulated": true,
+        "method": "SIMULATED: forma tomada de la respuesta real de H0-04 (Anime_Socks_InkStitch.svg); hashes ficticios, ningun worker corrio",
+        "engine_version": "v3.2.2",
+        "parser_version": "1.5.1"
+      },
+      "checks": [
+        {
+          "kind": "file",
+          "outcome": "passed",
+          "method": "independent JEF binary parser and pyembroidery reread"
+        },
+        {
+          "kind": "dimensions",
+          "outcome": "passed",
+          "method": "reread bounds within target; tolerance 0.2 mm; no resizing"
+        },
+        {
+          "kind": "hoop",
+          "outcome": "passed",
+          "method": "reread dimensions and unmodified JEF code versus configured profile"
+        },
+        {
+          "kind": "geometry",
+          "outcome": "not_run",
+          "method": "not implemented in H0-04; no inferred approval"
+        },
+        {
+          "kind": "satin",
+          "outcome": "not_run",
+          "method": "not implemented in H0-04; no inferred approval"
+        },
+        {
+          "kind": "routing",
+          "outcome": "not_run",
+          "method": "not implemented in H0-04; no inferred approval"
+        },
+        {
+          "kind": "visual",
+          "outcome": "not_run",
+          "method": "not implemented in H0-04; no inferred approval"
+        }
+      ],
+      "issues": [
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        },
+        {
+          "code": "SATIN_RUNG_WARNING",
+          "severity": "review_required",
+          "stage": "satin",
+          "object_ids": [
+            "satin_A_descenso_0",
+            "satin_SOCKS_S_1_0",
+            "satin_SOCKS_O_0",
+            "satin_SOCKS_C_0",
+            "satin_SOCKS_K_vertical_0",
+            "satin_SOCKS_K_diagonales_0",
+            "satin_SOCKS_S_2_0",
+            "satin_e_0",
+            "satin_m_0",
+            "satin_i_0",
+            "satin_n_0",
+            "satin_A_lazo_ascenso_0",
+            "satin_A_lazo_ascenso_2",
+            "satin_A_lazo_ascenso_4"
+          ],
+          "region_ids": [],
+          "description": "Satin has no rungs",
+          "evidence": {
+            "localization": "candidate columns, native warning unmapped",
+            "native_diagnostic_id": null,
+            "native_text": "Satin has no rungs",
+            "source_object_mapping_verified": false
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+        }
+      ],
+      "digital_checks_passed": false,
+      "metrics": {
+        "stitch_bounds_mm": {
+          "min_x_mm": -75.0,
+          "min_y_mm": -71.4,
+          "max_x_mm": 75.0,
+          "max_y_mm": 71.4
+        },
+        "needle_stitches": 6789,
+        "thread_blocks": 3,
+        "color_changes": 2,
+        "raw_jump_commands": 272,
+        "displacement_jump_commands": 112,
+        "interpreted_trims": 53,
+        "max_stitch_length_mm": 4.870318264754369,
+        "jump_travel_mm": 1107.7101051414345,
+        "processing_duration_ms": 18655,
+        "count_method": "pyembroidery 1.5.1: trims=True,trim_at=3,trim_distance=None,clipping=True; STITCH endpoint bounds; native coordinates /10 to mm; lengths from normalized raw commands /10; native JEF frame",
+        "raw_commands_artifact_id": "job_mock_completed_1_raw_commands_json",
+        "physical_trim_execution_verified": false
+      }
+    },
+    "artifact_manifest": {
+      "schema_version": "0.1",
+      "manifest_id": "manifest_mock_completed_1",
+      "job_id": "job_mock_completed_1",
+      "revision_id": "rev_mock_1",
+      "provenance": {
+        "simulated": true,
+        "method": "SIMULATED: forma tomada de la respuesta real de H0-04 (Anime_Socks_InkStitch.svg); hashes ficticios, ningun worker corrio",
+        "engine_version": "v3.2.2",
+        "parser_version": "1.5.1"
+      },
+      "input_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+      "settings_sha256": "0000000000000000000000000000000000000000000000000000000000000002",
+      "geometry_sha256": "0000000000000000000000000000000000000000000000000000000000000003",
+      "artifacts": [
+        {
+          "artifact_id": "job_mock_completed_1_jef",
+          "job_id": "job_mock_completed_1",
+          "kind": "jef",
+          "filename": "output.jef",
+          "media_type": "application/octet-stream",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000004",
+          "byte_size": 14816,
+          "derived_from": "export",
+          "download": null,
+          "download_url": null,
+          "expires_at": null
+        },
+        {
+          "artifact_id": "job_mock_completed_1_editable_svg",
+          "job_id": "job_mock_completed_1",
+          "kind": "editable_svg",
+          "filename": "editable.svg",
+          "media_type": "image/svg+xml",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000005",
+          "byte_size": 207834,
+          "derived_from": "document",
+          "download": null,
+          "download_url": null,
+          "expires_at": null
+        },
+        {
+          "artifact_id": "job_mock_completed_1_inkstitch_svg",
+          "job_id": "job_mock_completed_1",
+          "kind": "inkstitch_svg",
+          "filename": "inkstitch.svg",
+          "media_type": "image/svg+xml",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000006",
+          "byte_size": 207834,
+          "derived_from": "document",
+          "download": null,
+          "download_url": null,
+          "expires_at": null
+        },
+        {
+          "artifact_id": "job_mock_completed_1_preview_png",
+          "job_id": "job_mock_completed_1",
+          "kind": "preview_png",
+          "filename": "preview.png",
+          "media_type": "image/png",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000007",
+          "byte_size": 81770,
+          "derived_from": "jef_reread",
+          "download": null,
+          "download_url": null,
+          "expires_at": null
+        },
+        {
+          "artifact_id": "job_mock_completed_1_validation_json",
+          "job_id": "job_mock_completed_1",
+          "kind": "validation_json",
+          "filename": "validation.json",
+          "media_type": "application/json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000008",
+          "byte_size": 16099,
+          "derived_from": "validation",
+          "download": null,
+          "download_url": null,
+          "expires_at": null
+        },
+        {
+          "artifact_id": "job_mock_completed_1_raw_commands_json",
+          "job_id": "job_mock_completed_1",
+          "kind": "raw_commands_json",
+          "filename": "raw-commands.json",
+          "media_type": "application/json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000009",
+          "byte_size": 137478,
+          "derived_from": "jef_reread",
+          "download": null,
+          "download_url": null,
+          "expires_at": null
+        }
+      ],
+      "reread_metrics": {
+        "stitch_bounds_mm": {
+          "min_x_mm": -75.0,
+          "min_y_mm": -71.4,
+          "max_x_mm": 75.0,
+          "max_y_mm": 71.4
+        },
+        "needle_stitches": 6789,
+        "thread_blocks": 3,
+        "color_changes": 2,
+        "raw_jump_commands": 272,
+        "displacement_jump_commands": 112,
+        "interpreted_trims": 53,
+        "max_stitch_length_mm": 4.870318264754369,
+        "jump_travel_mm": 1107.7101051414345,
+        "processing_duration_ms": 18655,
+        "count_method": "pyembroidery 1.5.1: trims=True,trim_at=3,trim_distance=None,clipping=True; STITCH endpoint bounds; native coordinates /10 to mm; lengths from normalized raw commands /10; native JEF frame",
+        "raw_commands_artifact_id": "job_mock_completed_1_raw_commands_json",
+        "physical_trim_execution_verified": false
+      }
+    }
+  }
+}
