@@ -25,6 +25,7 @@ Observado: Python 3.12.14, Pillow 12.3.0, Pydantic 2.14.1. Dependencias aisladas
 & $enginePython -m unittest discover -s tests/engine -p 'test_vectorize*.py' -v
 & $enginePython -m unittest discover -s tests/engine -p 'test_quantization_probe.py' -v
 & $enginePython tests/engine/experiments/quantization_probe.py --image tests/fixtures/h2/Anime_Socks.png --colors 3 --output tests/engine/.tmp/color-research
+& $enginePython tests/engine/experiments/trace_candidate.py --output tests/engine/.tmp/trace-recheck
 & $enginePython -m unittest discover -s tests/engine -p 'test_*.py' -v
 ```
 
@@ -35,7 +36,7 @@ Preferir RTK para Git/búsqueda/lectura compatibles; fallback original si falla.
 ## Resultados previos
 
 - Verificación final en `2fbb6ca`, antes de este relevo: **50/50 pruebas completas**, 0 fallos/errores, 19,337 s, fuera del sandbox. Incluye las 49 previas y el control de investigación.
-- Revisión del trazado: 300 máscaras multicolor, paridad por píxel y determinismo.
+- Candidato aislado: 10 casos × 2 variantes × 2 corridas. Máscara total idéntica; topología por color cambia. No promovido.
 - F reportado por Claude: 14/14 raster estructural, 2 SVG omitidos, mediana 0,64 s, máximo 5,1 s. IoU de primer plano 1 usa la misma regla de fondo y no demuestra calidad.
 - Previews del probe a 500 px: solo visualización. Métricas calculadas a resolución original; no son puntadas.
 

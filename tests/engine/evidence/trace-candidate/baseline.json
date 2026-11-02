@@ -1,0 +1,1134 @@
+{
+  "variant": "baseline",
+  "source_hashes": {
+    "__init__.py": "41d5037cff69ec52d6df83274247422d619a9c582b621d6b7b822069c5ee9c0b",
+    "contours.py": "567de873161ddf225dc61a9aa44329fc432263deaa8e28a1419c4ecc5c5ba85c",
+    "inkstitch.py": "2b62ee0b543661f77508ed62bef886ac327c78c7f77f6e19a5148ac3748568b8",
+    "pipeline.py": "8e3af50a9347bb5a9b68612abe8c20a076ca496b860b5d6396a6d7d9bd530dce",
+    "segmentation.py": "37121fde53a64aae4d824837f02b6284618a677d993a595382d79e9a4e6bdb65",
+    "types.py": "af8a23be0607a378ba04dbac04c5bbb8600e83be86e4fcb5402c53a4e9dc470a"
+  },
+  "pre_cancel_result": "JOB_CANCELLED",
+  "records": [
+    {
+      "case": "logo-sol-01",
+      "status": "traced",
+      "checks": {
+        "deterministic": true,
+        "colors_within_limit": true,
+        "within_target": true,
+        "provisional_h3": true,
+        "no_size_filter": true
+      },
+      "input_sha256": "ff012e19cdf1330c5e7a56c0203dde02150797fa28a54a7acff54142d75038de",
+      "frame": {
+        "unit": "mm",
+        "origin": "design_top_left",
+        "x_axis": "right",
+        "y_axis": "down",
+        "transform_version": "raster-contain-v1",
+        "source_px_to_mm": [
+          0.08333333333333333,
+          0.0,
+          0.0,
+          0.08333333333333333,
+          0.0,
+          0.0
+        ]
+      },
+      "bounds_mm": {
+        "min_x_mm": 17.166666666666664,
+        "min_y_mm": 4.666666666666666,
+        "max_x_mm": 82.83333333333333,
+        "max_y_mm": 70.33333333333333
+      },
+      "duration_ms": [
+        836,
+        752
+      ],
+      "document_sha256": "ce2b97e7e99e10a8c0e175e08fca7327b9e2e06dab08024a48c1c7ec2bb9a207",
+      "svg_sha256": "e474dcf8bc3dd5b39b25203f9230d3817bf5ddf41e8974a392f29c68bad2ec85",
+      "svg_bytes": 274061,
+      "masks_per_color": [
+        {
+          "colour": "#162a5c",
+          "pixel_count": 67216,
+          "boundary_edges": 6080,
+          "subpaths": 2,
+          "holes": 1,
+          "exact_area_px2": 67216,
+          "bounds_crop_px": [
+            206,
+            56,
+            994,
+            844
+          ]
+        },
+        {
+          "colour": "#fe9b06",
+          "pixel_count": 151472,
+          "boundary_edges": 12696,
+          "subpaths": 1433,
+          "holes": 0,
+          "exact_area_px2": 151472,
+          "bounds_crop_px": [
+            206,
+            56,
+            994,
+            844
+          ]
+        }
+      ],
+      "segmentation": {
+        "background_method": "white_border_consensus",
+        "alpha_threshold": 128,
+        "partial_alpha_pixels": 0,
+        "white_threshold": 250,
+        "white_border_fraction": 1.0,
+        "white_removed_globally": true,
+        "background_is_assumption": true,
+        "pillow_version": "12.3.0",
+        "quantizer": "Pillow MEDIANCUT; no dithering; foreground pixels only",
+        "foreground_pixels": 218688,
+        "colour_limit": 2,
+        "output_colours": [
+          "#162a5c",
+          "#fe9b06"
+        ],
+        "quantization_is_lossy": true,
+        "changed_rgb_pixels": 218688,
+        "max_channel_error_rgb": 245,
+        "mean_absolute_channel_error_rgb": 5.175763340161936,
+        "source_colour_count_up_to_256": null,
+        "source_more_than_256_colours": true,
+        "source_mask_sha256": "4a220c0405e48b8b6208eb91a8a0ee01f09cb68bc22ea3fb8bbaa3f5011bfebb",
+        "crop_box_px": [
+          0,
+          0,
+          1200,
+          900
+        ],
+        "pixels_discarded_by_size_filter": 0
+      },
+      "issue_codes": [
+        "DENSITY_REVIEW_REQUIRED",
+        "GEOMETRY_REPAIR_AMBIGUOUS",
+        "VISUAL_MISMATCH"
+      ]
+    },
+    {
+      "case": "logo-hoja-01",
+      "status": "traced",
+      "checks": {
+        "deterministic": true,
+        "colors_within_limit": true,
+        "within_target": true,
+        "provisional_h3": true,
+        "no_size_filter": true
+      },
+      "input_sha256": "0752ab9ae928804c4c3eb71c5330b34aa4b70031bea36ca68c0ca37596da8241",
+      "frame": {
+        "unit": "mm",
+        "origin": "design_top_left",
+        "x_axis": "right",
+        "y_axis": "down",
+        "transform_version": "raster-contain-v1",
+        "source_px_to_mm": [
+          0.09,
+          0.0,
+          0.0,
+          0.09,
+          0.0,
+          0.0
+        ]
+      },
+      "bounds_mm": {
+        "min_x_mm": 13.95,
+        "min_y_mm": 22.5,
+        "max_x_mm": 67.5,
+        "max_y_mm": 76.05
+      },
+      "duration_ms": [
+        493,
+        473
+      ],
+      "document_sha256": "6da7ab53d6b021c117218b691ec18bf31d627325f82ac02347602eef1bb69cb1",
+      "svg_sha256": "2f43ecb3e3e6c21c5b419b77f409e9c8dbc819c79a7cee78e2a62c8fba7842e5",
+      "svg_bytes": 65945,
+      "masks_per_color": [
+        {
+          "colour": "#155133",
+          "pixel_count": 18919,
+          "boundary_edges": 2228,
+          "subpaths": 1,
+          "holes": 0,
+          "exact_area_px2": 18919,
+          "bounds_crop_px": [
+            155,
+            288,
+            712,
+            845
+          ]
+        },
+        {
+          "colour": "#2e8b57",
+          "pixel_count": 127788,
+          "boundary_edges": 3776,
+          "subpaths": 1,
+          "holes": 0,
+          "exact_area_px2": 127788,
+          "bounds_crop_px": [
+            250,
+            250,
+            750,
+            750
+          ]
+        }
+      ],
+      "segmentation": {
+        "background_method": "alpha_threshold",
+        "alpha_threshold": 128,
+        "partial_alpha_pixels": 1747,
+        "white_threshold": 250,
+        "white_border_fraction": 0.0,
+        "white_removed_globally": false,
+        "background_is_assumption": false,
+        "pillow_version": "12.3.0",
+        "quantizer": "Pillow MEDIANCUT; no dithering; foreground pixels only",
+        "foreground_pixels": 146707,
+        "colour_limit": 2,
+        "output_colours": [
+          "#155133",
+          "#2e8b57"
+        ],
+        "quantization_is_lossy": true,
+        "changed_rgb_pixels": 19818,
+        "max_channel_error_rgb": 28,
+        "mean_absolute_channel_error_rgb": 0.24746603774871,
+        "source_colour_count_up_to_256": 10,
+        "source_more_than_256_colours": false,
+        "source_mask_sha256": "e4994f46451a1008edd5ecd6f4c00c548f481845cf72fb83723cc3a8bc273bf9",
+        "crop_box_px": [
+          0,
+          0,
+          1000,
+          1000
+        ],
+        "pixels_discarded_by_size_filter": 0
+      },
+      "issue_codes": [
+        "DENSITY_REVIEW_REQUIRED",
+        "GEOMETRY_REPAIR_AMBIGUOUS",
+        "VISUAL_MISMATCH"
+      ]
+    },
+    {
+      "case": "logo-escudo-01",
+      "status": "traced",
+      "checks": {
+        "deterministic": true,
+        "colors_within_limit": true,
+        "within_target": true,
+        "provisional_h3": true,
+        "no_size_filter": true
+      },
+      "input_sha256": "d5ffbcdbaafa9dce98c38a33e638bcede042187bd7b80199d7c914ee4b1ea4cf",
+      "frame": {
+        "unit": "mm",
+        "origin": "design_top_left",
+        "x_axis": "right",
+        "y_axis": "down",
+        "transform_version": "raster-contain-v1",
+        "source_px_to_mm": [
+          0.08,
+          0.0,
+          0.0,
+          0.08,
+          0.0,
+          0.0
+        ]
+      },
+      "bounds_mm": {
+        "min_x_mm": 12.0,
+        "min_y_mm": 12.0,
+        "max_x_mm": 68.0,
+        "max_y_mm": 86.4
+      },
+      "duration_ms": [
+        1355,
+        1265
+      ],
+      "document_sha256": "ea6b696a67871a711dfcfe082c859b06c386432ae32ac985c32ef2f628d8512c",
+      "svg_sha256": "a9c74ae6ce6c099b5d7d3242d4d43bd5f1d39a73df57d0bc6c30a1fc958ddf8e",
+      "svg_bytes": 73307,
+      "masks_per_color": [
+        {
+          "colour": "#444950",
+          "pixel_count": 105000,
+          "boundary_edges": 1700,
+          "subpaths": 1,
+          "holes": 0,
+          "exact_area_px2": 105000,
+          "bounds_crop_px": [
+            150,
+            300,
+            850,
+            450
+          ]
+        },
+        {
+          "colour": "#c81e28",
+          "pixel_count": 350446,
+          "boundary_edges": 5718,
+          "subpaths": 3,
+          "holes": 1,
+          "exact_area_px2": 350446,
+          "bounds_crop_px": [
+            150,
+            150,
+            850,
+            1078
+          ]
+        },
+        {
+          "colour": "#c9232a",
+          "pixel_count": 28114,
+          "boundary_edges": 4678,
+          "subpaths": 522,
+          "holes": 0,
+          "exact_area_px2": 28114,
+          "bounds_crop_px": [
+            150,
+            550,
+            850,
+            1080
+          ]
+        }
+      ],
+      "segmentation": {
+        "background_method": "white_border_consensus",
+        "alpha_threshold": 128,
+        "partial_alpha_pixels": 0,
+        "white_threshold": 250,
+        "white_border_fraction": 1.0,
+        "white_removed_globally": true,
+        "background_is_assumption": true,
+        "pillow_version": "12.3.0",
+        "quantizer": "Pillow MEDIANCUT; no dithering; foreground pixels only",
+        "foreground_pixels": 483560,
+        "colour_limit": 3,
+        "output_colours": [
+          "#444950",
+          "#c81e28",
+          "#c9232a"
+        ],
+        "quantization_is_lossy": true,
+        "changed_rgb_pixels": 133144,
+        "max_channel_error_rgb": 212,
+        "mean_absolute_channel_error_rgb": 10.708543579562686,
+        "source_colour_count_up_to_256": 255,
+        "source_more_than_256_colours": false,
+        "source_mask_sha256": "f4b6e9755082fa0c05ce9c7407cd9df2234cb67e405edd494e4707807b716c63",
+        "crop_box_px": [
+          0,
+          0,
+          1000,
+          1200
+        ],
+        "pixels_discarded_by_size_filter": 0
+      },
+      "issue_codes": [
+        "DENSITY_REVIEW_REQUIRED",
+        "GEOMETRY_REPAIR_AMBIGUOUS",
+        "VISUAL_MISMATCH"
+      ]
+    },
+    {
+      "case": "logo-ola-01",
+      "status": "traced",
+      "checks": {
+        "deterministic": true,
+        "colors_within_limit": true,
+        "within_target": true,
+        "provisional_h3": true,
+        "no_size_filter": true
+      },
+      "input_sha256": "9df608988507c7152175d911f4ca3334092bb10d777f14b39a4518f37c38ae09",
+      "frame": {
+        "unit": "mm",
+        "origin": "design_top_left",
+        "x_axis": "right",
+        "y_axis": "down",
+        "transform_version": "raster-contain-v1",
+        "source_px_to_mm": [
+          0.1,
+          0.0,
+          0.0,
+          0.1,
+          0.0,
+          0.0
+        ]
+      },
+      "bounds_mm": {
+        "min_x_mm": 10.0,
+        "min_y_mm": 19.0,
+        "max_x_mm": 110.0,
+        "max_y_mm": 70.0
+      },
+      "duration_ms": [
+        778,
+        812
+      ],
+      "document_sha256": "f1a3840c1653804ceeb04f16ad8b06c5b42f605f7ab7b30a228df5e86729ce72",
+      "svg_sha256": "b8a5d9bfbf5cfdd998a2965ea0f2ecdbdaf5b2fe9cf00437308d7b21e4f08f3a",
+      "svg_bytes": 179295,
+      "masks_per_color": [
+        {
+          "colour": "#0a3c8c",
+          "pixel_count": 85222,
+          "boundary_edges": 3380,
+          "subpaths": 1,
+          "holes": 0,
+          "exact_area_px2": 85222,
+          "bounds_crop_px": [
+            100,
+            190,
+            1100,
+            400
+          ]
+        },
+        {
+          "colour": "#2079c8",
+          "pixel_count": 87260,
+          "boundary_edges": 5130,
+          "subpaths": 432,
+          "holes": 0,
+          "exact_area_px2": 87260,
+          "bounds_crop_px": [
+            100,
+            190,
+            1100,
+            550
+          ]
+        },
+        {
+          "colour": "#7bbfeb",
+          "pixel_count": 93401,
+          "boundary_edges": 11962,
+          "subpaths": 1836,
+          "holes": 0,
+          "exact_area_px2": 93401,
+          "bounds_crop_px": [
+            100,
+            190,
+            1100,
+            700
+          ]
+        }
+      ],
+      "segmentation": {
+        "background_method": "white_border_consensus",
+        "alpha_threshold": 128,
+        "partial_alpha_pixels": 0,
+        "white_threshold": 250,
+        "white_border_fraction": 1.0,
+        "white_removed_globally": true,
+        "background_is_assumption": true,
+        "pillow_version": "12.3.0",
+        "quantizer": "Pillow MEDIANCUT; no dithering; foreground pixels only",
+        "foreground_pixels": 265883,
+        "colour_limit": 3,
+        "output_colours": [
+          "#0a3c8c",
+          "#2079c8",
+          "#7bbfeb"
+        ],
+        "quantization_is_lossy": true,
+        "changed_rgb_pixels": 181141,
+        "max_channel_error_rgb": 126,
+        "mean_absolute_channel_error_rgb": 1.4448134455130013,
+        "source_colour_count_up_to_256": null,
+        "source_more_than_256_colours": true,
+        "source_mask_sha256": "35f2a19eb8f50a846600f514c210d90d693ac8628a083938c72452a8da955de0",
+        "crop_box_px": [
+          0,
+          0,
+          1200,
+          800
+        ],
+        "pixels_discarded_by_size_filter": 0
+      },
+      "issue_codes": [
+        "DENSITY_REVIEW_REQUIRED",
+        "GEOMETRY_REPAIR_AMBIGUOUS",
+        "VISUAL_MISMATCH"
+      ]
+    },
+    {
+      "case": "anillo-doble-01",
+      "status": "traced",
+      "checks": {
+        "deterministic": true,
+        "colors_within_limit": true,
+        "within_target": true,
+        "provisional_h3": true,
+        "no_size_filter": true
+      },
+      "input_sha256": "ab8d7dbb964c737946ba5dcd46271ff5b2187a91d952bcabde1f02a937717f0f",
+      "frame": {
+        "unit": "mm",
+        "origin": "design_top_left",
+        "x_axis": "right",
+        "y_axis": "down",
+        "transform_version": "raster-contain-v1",
+        "source_px_to_mm": [
+          0.09,
+          0.0,
+          0.0,
+          0.09,
+          0.0,
+          0.0
+        ]
+      },
+      "bounds_mm": {
+        "min_x_mm": 9.9,
+        "min_y_mm": 9.9,
+        "max_x_mm": 80.1,
+        "max_y_mm": 80.1
+      },
+      "duration_ms": [
+        817,
+        794
+      ],
+      "document_sha256": "f6d7bd8c57acbe1190e07cbe5cb38de7c3dddaa7cb936f8d4aee720a3f09fe6c",
+      "svg_sha256": "9d2403a63c786edaa8f0975200fad3301122349166d1120293cfe38f25a3877e",
+      "svg_bytes": 124235,
+      "masks_per_color": [
+        {
+          "colour": "#14285a",
+          "pixel_count": 248980,
+          "boundary_edges": 5280,
+          "subpaths": 2,
+          "holes": 1,
+          "exact_area_px2": 248980,
+          "bounds_crop_px": [
+            110,
+            110,
+            890,
+            890
+          ]
+        },
+        {
+          "colour": "#f89a0d",
+          "pixel_count": 64152,
+          "boundary_edges": 8320,
+          "subpaths": 1274,
+          "holes": 1,
+          "exact_area_px2": 64152,
+          "bounds_crop_px": [
+            110,
+            110,
+            890,
+            890
+          ]
+        }
+      ],
+      "segmentation": {
+        "background_method": "white_border_consensus",
+        "alpha_threshold": 128,
+        "partial_alpha_pixels": 0,
+        "white_threshold": 250,
+        "white_border_fraction": 1.0,
+        "white_removed_globally": true,
+        "background_is_assumption": true,
+        "pillow_version": "12.3.0",
+        "quantizer": "Pillow MEDIANCUT; no dithering; foreground pixels only",
+        "foreground_pixels": 313132,
+        "colour_limit": 2,
+        "output_colours": [
+          "#14285a",
+          "#f89a0d"
+        ],
+        "quantization_is_lossy": true,
+        "changed_rgb_pixels": 66428,
+        "max_channel_error_rgb": 238,
+        "mean_absolute_channel_error_rgb": 2.608931696536924,
+        "source_colour_count_up_to_256": null,
+        "source_more_than_256_colours": true,
+        "source_mask_sha256": "8919408dce2e29750478d7a1f7aa69140aa543d552c47066b855c4c1236a7dd4",
+        "crop_box_px": [
+          0,
+          0,
+          1000,
+          1000
+        ],
+        "pixels_discarded_by_size_filter": 0
+      },
+      "issue_codes": [
+        "DENSITY_REVIEW_REQUIRED",
+        "GEOMETRY_REPAIR_AMBIGUOUS",
+        "VISUAL_MISMATCH"
+      ]
+    },
+    {
+      "case": "dificil-texto-chico-01",
+      "status": "traced",
+      "checks": {
+        "deterministic": true,
+        "colors_within_limit": true,
+        "within_target": true,
+        "provisional_h3": true,
+        "no_size_filter": true
+      },
+      "input_sha256": "28f9b40944f0dcd19b18a76fffebb2996811b34140c6983b4d14b01c37127d47",
+      "frame": {
+        "unit": "mm",
+        "origin": "design_top_left",
+        "x_axis": "right",
+        "y_axis": "down",
+        "transform_version": "raster-contain-v1",
+        "source_px_to_mm": [
+          0.08333333333333333,
+          0.0,
+          0.0,
+          0.08333333333333333,
+          0.0,
+          0.1666666666666714
+        ]
+      },
+      "bounds_mm": {
+        "min_x_mm": 21.666666666666664,
+        "min_y_mm": 5.166666666666671,
+        "max_x_mm": 78.33333333333333,
+        "max_y_mm": 61.833333333333336
+      },
+      "duration_ms": [
+        343,
+        344
+      ],
+      "document_sha256": "8c4b876d387ddbecbd2410c13c2ee16d03dead6ad4923e60d027570778b4d6a5",
+      "svg_sha256": "9dccb7c372e7893453bdca4e2d4ee930f78e90233a587f58ab8786d43e90ab5b",
+      "svg_bytes": 101425,
+      "masks_per_color": [
+        {
+          "colour": "#1d3060",
+          "pixel_count": 84739,
+          "boundary_edges": 9944,
+          "subpaths": 21,
+          "holes": 6,
+          "exact_area_px2": 84739,
+          "bounds_crop_px": [
+            260,
+            60,
+            940,
+            740
+          ]
+        }
+      ],
+      "segmentation": {
+        "background_method": "white_border_consensus",
+        "alpha_threshold": 128,
+        "partial_alpha_pixels": 0,
+        "white_threshold": 250,
+        "white_border_fraction": 1.0,
+        "white_removed_globally": true,
+        "background_is_assumption": true,
+        "pillow_version": "12.3.0",
+        "quantizer": "Pillow MEDIANCUT; no dithering; foreground pixels only",
+        "foreground_pixels": 84739,
+        "colour_limit": 1,
+        "output_colours": [
+          "#1d3060"
+        ],
+        "quantization_is_lossy": true,
+        "changed_rgb_pixels": 84723,
+        "max_channel_error_rgb": 220,
+        "mean_absolute_channel_error_rgb": 14.14700039729837,
+        "source_colour_count_up_to_256": null,
+        "source_more_than_256_colours": true,
+        "source_mask_sha256": "cfdf213be2383dcc78858882e180d0c158ee4a1e533a1a15ed047b85eb9e55cf",
+        "crop_box_px": [
+          0,
+          0,
+          1200,
+          800
+        ],
+        "pixels_discarded_by_size_filter": 0
+      },
+      "issue_codes": [
+        "DENSITY_REVIEW_REQUIRED",
+        "GEOMETRY_REPAIR_AMBIGUOUS",
+        "VISUAL_MISMATCH"
+      ]
+    },
+    {
+      "case": "dificil-degradado-01",
+      "status": "traced",
+      "checks": {
+        "deterministic": true,
+        "colors_within_limit": true,
+        "within_target": true,
+        "provisional_h3": true,
+        "no_size_filter": true
+      },
+      "input_sha256": "1ed07c8aa5b7e1218083a988dd84ce5375346ef1ae4179476b66e3c145faaeab",
+      "frame": {
+        "unit": "mm",
+        "origin": "design_top_left",
+        "x_axis": "right",
+        "y_axis": "down",
+        "transform_version": "raster-contain-v1",
+        "source_px_to_mm": [
+          0.075,
+          0.0,
+          0.0,
+          0.075,
+          0.0,
+          0.0
+        ]
+      },
+      "bounds_mm": {
+        "min_x_mm": 0.0,
+        "min_y_mm": 0.0,
+        "max_x_mm": 90.0,
+        "max_y_mm": 90.0
+      },
+      "duration_ms": [
+        2642,
+        2564
+      ],
+      "document_sha256": "4e00867cb20fd414c313c29dd8725badb178c9ec8ace85dbf9befa6be437b72f",
+      "svg_sha256": "d4518b3469a57f8156a6c27d1c64af9bab5107ebca2240516990953f35673fa3",
+      "svg_bytes": 182713,
+      "masks_per_color": [
+        {
+          "colour": "#d0784c",
+          "pixel_count": 533968,
+          "boundary_edges": 3964,
+          "subpaths": 1,
+          "holes": 0,
+          "exact_area_px2": 533968,
+          "bounds_crop_px": [
+            220,
+            180,
+            980,
+            1042
+          ]
+        },
+        {
+          "colour": "#f2f6f5",
+          "pixel_count": 15755,
+          "boundary_edges": 9788,
+          "subpaths": 550,
+          "holes": 2,
+          "exact_area_px2": 15755,
+          "bounds_crop_px": [
+            201,
+            176,
+            999,
+            1048
+          ]
+        },
+        {
+          "colour": "#f5f5f5",
+          "pixel_count": 890277,
+          "boundary_edges": 15712,
+          "subpaths": 403,
+          "holes": 375,
+          "exact_area_px2": 890277,
+          "bounds_crop_px": [
+            0,
+            0,
+            1200,
+            1200
+          ]
+        }
+      ],
+      "segmentation": {
+        "background_method": "no_background_removed",
+        "alpha_threshold": 128,
+        "partial_alpha_pixels": 0,
+        "white_threshold": 250,
+        "white_border_fraction": 0.0,
+        "white_removed_globally": false,
+        "background_is_assumption": true,
+        "pillow_version": "12.3.0",
+        "quantizer": "Pillow MEDIANCUT; no dithering; foreground pixels only",
+        "foreground_pixels": 1440000,
+        "colour_limit": 3,
+        "output_colours": [
+          "#d0784c",
+          "#f2f6f5",
+          "#f5f5f5"
+        ],
+        "quantization_is_lossy": true,
+        "changed_rgb_pixels": 566902,
+        "max_channel_error_rgb": 100,
+        "mean_absolute_channel_error_rgb": 10.538794907407407,
+        "source_colour_count_up_to_256": null,
+        "source_more_than_256_colours": true,
+        "source_mask_sha256": "680a1c22a8e114ea0c637847e8cc506794073a55f4350364c8a0421e7dbcc8f0",
+        "crop_box_px": [
+          0,
+          0,
+          1200,
+          1200
+        ],
+        "pixels_discarded_by_size_filter": 0
+      },
+      "issue_codes": [
+        "DENSITY_REVIEW_REQUIRED",
+        "GEOMETRY_REPAIR_AMBIGUOUS",
+        "VISUAL_MISMATCH"
+      ]
+    },
+    {
+      "case": "jpeg-simple-01",
+      "status": "traced",
+      "checks": {
+        "deterministic": true,
+        "colors_within_limit": true,
+        "within_target": true,
+        "provisional_h3": true,
+        "no_size_filter": true
+      },
+      "input_sha256": "6a6c17c9e0b76a97b36d6c3f4e3fff36682a91f006e3c2de00c75c07f206d886",
+      "frame": {
+        "unit": "mm",
+        "origin": "design_top_left",
+        "x_axis": "right",
+        "y_axis": "down",
+        "transform_version": "raster-contain-v1",
+        "source_px_to_mm": [
+          0.08,
+          0.0,
+          0.0,
+          0.08,
+          0.0,
+          0.0
+        ]
+      },
+      "bounds_mm": {
+        "min_x_mm": 11.52,
+        "min_y_mm": 13.040000000000001,
+        "max_x_mm": 72.96000000000001,
+        "max_y_mm": 62.72
+      },
+      "duration_ms": [
+        578,
+        608
+      ],
+      "document_sha256": "5f7b6b95413698b0ae7b8d7f9967bf196a2d959a6123cc8406d3b589cd276c8d",
+      "svg_sha256": "ca62f319e8ae989b914e41c4cb7fa21a903d81a74132c4c881757bb343ed00e2",
+      "svg_bytes": 106529,
+      "masks_per_color": [
+        {
+          "colour": "#142557",
+          "pixel_count": 183886,
+          "boundary_edges": 2744,
+          "subpaths": 4,
+          "holes": 3,
+          "exact_area_px2": 183886,
+          "bounds_crop_px": [
+            151,
+            302,
+            899,
+            780
+          ]
+        },
+        {
+          "colour": "#373c54",
+          "pixel_count": 32142,
+          "boundary_edges": 10676,
+          "subpaths": 712,
+          "holes": 7,
+          "exact_area_px2": 32142,
+          "bounds_crop_px": [
+            144,
+            163,
+            912,
+            784
+          ]
+        }
+      ],
+      "segmentation": {
+        "background_method": "white_border_consensus",
+        "alpha_threshold": 128,
+        "partial_alpha_pixels": 0,
+        "white_threshold": 250,
+        "white_border_fraction": 1.0,
+        "white_removed_globally": true,
+        "background_is_assumption": true,
+        "pillow_version": "12.3.0",
+        "quantizer": "Pillow MEDIANCUT; no dithering; foreground pixels only",
+        "foreground_pixels": 216028,
+        "colour_limit": 2,
+        "output_colours": [
+          "#142557",
+          "#373c54"
+        ],
+        "quantization_is_lossy": true,
+        "changed_rgb_pixels": 216028,
+        "max_channel_error_rgb": 200,
+        "mean_absolute_channel_error_rgb": 21.509626838496246,
+        "source_colour_count_up_to_256": null,
+        "source_more_than_256_colours": true,
+        "source_mask_sha256": "03d909b1b3a6ef099aa7c68105b922d8922a37ece2f79b529e32d59b866c62f2",
+        "crop_box_px": [
+          0,
+          0,
+          1000,
+          1000
+        ],
+        "pixels_discarded_by_size_filter": 0
+      },
+      "issue_codes": [
+        "DENSITY_REVIEW_REQUIRED",
+        "GEOMETRY_REPAIR_AMBIGUOUS",
+        "VISUAL_MISMATCH"
+      ]
+    },
+    {
+      "case": "anime-reference-150",
+      "status": "traced",
+      "checks": {
+        "deterministic": true,
+        "colors_within_limit": true,
+        "within_target": true,
+        "provisional_h3": true,
+        "no_size_filter": true
+      },
+      "input_sha256": "78c30948478de017b321403807d8be0f03b3c057a05518c1c1a5a25dd1b9ea7c",
+      "frame": {
+        "unit": "mm",
+        "origin": "design_top_left",
+        "x_axis": "right",
+        "y_axis": "down",
+        "transform_version": "raster-contain-v1",
+        "source_px_to_mm": [
+          0.10185449358059916,
+          0.0,
+          0.0,
+          0.10185449358059916,
+          17.859629101283872,
+          0.0
+        ]
+      },
+      "bounds_mm": {
+        "min_x_mm": 22.443081312410833,
+        "min_y_mm": 18.13009985734665,
+        "max_x_mm": 130.10328102710415,
+        "max_y_mm": 120.7994293865906
+      },
+      "duration_ms": [
+        3997,
+        4300
+      ],
+      "document_sha256": "24bfcedd4432063ee597fdc43c3323e2f93f0644a8f9fa07f794f03517c9e088",
+      "svg_sha256": "ccdfbb99ee6689de95129d26d72ae2344948a237dafcae81087a05c7c1d1c7dd",
+      "svg_bytes": 7053407,
+      "masks_per_color": [
+        {
+          "colour": "#dec8c8",
+          "pixel_count": 109711,
+          "boundary_edges": 25884,
+          "subpaths": 247,
+          "holes": 112,
+          "exact_area_px2": 109711,
+          "bounds_crop_px": [
+            45,
+            179,
+            1102,
+            1183
+          ]
+        },
+        {
+          "colour": "#fdf8f7",
+          "pixel_count": 287047,
+          "boundary_edges": 210796,
+          "subpaths": 13209,
+          "holes": 1415,
+          "exact_area_px2": 287047,
+          "bounds_crop_px": [
+            46,
+            178,
+            1102,
+            1184
+          ]
+        },
+        {
+          "colour": "#fdf9f8",
+          "pixel_count": 362662,
+          "boundary_edges": 188398,
+          "subpaths": 10199,
+          "holes": 4312,
+          "exact_area_px2": 362662,
+          "bounds_crop_px": [
+            45,
+            179,
+            1101,
+            1186
+          ]
+        }
+      ],
+      "segmentation": {
+        "background_method": "white_border_consensus",
+        "alpha_threshold": 128,
+        "partial_alpha_pixels": 0,
+        "white_threshold": 250,
+        "white_border_fraction": 1.0,
+        "white_removed_globally": true,
+        "background_is_assumption": true,
+        "pillow_version": "12.3.0",
+        "quantizer": "Pillow MEDIANCUT; no dithering; foreground pixels only",
+        "foreground_pixels": 759420,
+        "colour_limit": 3,
+        "output_colours": [
+          "#dec8c8",
+          "#fdf8f7",
+          "#fdf9f8"
+        ],
+        "quantization_is_lossy": true,
+        "changed_rgb_pixels": 548753,
+        "max_channel_error_rgb": 163,
+        "mean_absolute_channel_error_rgb": 7.670611782676253,
+        "source_colour_count_up_to_256": null,
+        "source_more_than_256_colours": true,
+        "source_mask_sha256": "a4401ff839bd741ef58a9914fa0c4586561e765f753a5e3ed2fd5d89478b7379",
+        "crop_box_px": [
+          0,
+          0,
+          1122,
+          1402
+        ],
+        "pixels_discarded_by_size_filter": 0
+      },
+      "issue_codes": [
+        "DENSITY_REVIEW_REQUIRED",
+        "GEOMETRY_REPAIR_AMBIGUOUS",
+        "VISUAL_MISMATCH"
+      ]
+    },
+    {
+      "case": "anime-reference-126",
+      "status": "traced",
+      "checks": {
+        "deterministic": true,
+        "colors_within_limit": true,
+        "within_target": true,
+        "provisional_h3": true,
+        "no_size_filter": true
+      },
+      "input_sha256": "78c30948478de017b321403807d8be0f03b3c057a05518c1c1a5a25dd1b9ea7c",
+      "frame": {
+        "unit": "mm",
+        "origin": "design_top_left",
+        "x_axis": "right",
+        "y_axis": "down",
+        "transform_version": "raster-contain-v1",
+        "source_px_to_mm": [
+          0.08559201141226819,
+          0.0,
+          0.0,
+          0.08559201141226819,
+          15.082881597717545,
+          0.0
+        ]
+      },
+      "bounds_mm": {
+        "min_x_mm": 18.934522111269615,
+        "min_y_mm": 15.235378031383737,
+        "max_x_mm": 109.4052781740371,
+        "max_y_mm": 101.51212553495007
+      },
+      "duration_ms": [
+        3966,
+        4133
+      ],
+      "document_sha256": "029ec96fc476da069c5e646b029752566f87ab82ab97b2caae0e9cea6f03adba",
+      "svg_sha256": "8d68e8461dec72b7a7663757d36d7a98692467c46eed754baa7c3a1ebea94ede",
+      "svg_bytes": 6968047,
+      "masks_per_color": [
+        {
+          "colour": "#dec8c8",
+          "pixel_count": 109711,
+          "boundary_edges": 25884,
+          "subpaths": 247,
+          "holes": 112,
+          "exact_area_px2": 109711,
+          "bounds_crop_px": [
+            45,
+            179,
+            1102,
+            1183
+          ]
+        },
+        {
+          "colour": "#fdf8f7",
+          "pixel_count": 287047,
+          "boundary_edges": 210796,
+          "subpaths": 13209,
+          "holes": 1415,
+          "exact_area_px2": 287047,
+          "bounds_crop_px": [
+            46,
+            178,
+            1102,
+            1184
+          ]
+        },
+        {
+          "colour": "#fdf9f8",
+          "pixel_count": 362662,
+          "boundary_edges": 188398,
+          "subpaths": 10199,
+          "holes": 4312,
+          "exact_area_px2": 362662,
+          "bounds_crop_px": [
+            45,
+            179,
+            1101,
+            1186
+          ]
+        }
+      ],
+      "segmentation": {
+        "background_method": "white_border_consensus",
+        "alpha_threshold": 128,
+        "partial_alpha_pixels": 0,
+        "white_threshold": 250,
+        "white_border_fraction": 1.0,
+        "white_removed_globally": true,
+        "background_is_assumption": true,
+        "pillow_version": "12.3.0",
+        "quantizer": "Pillow MEDIANCUT; no dithering; foreground pixels only",
+        "foreground_pixels": 759420,
+        "colour_limit": 3,
+        "output_colours": [
+          "#dec8c8",
+          "#fdf8f7",
+          "#fdf9f8"
+        ],
+        "quantization_is_lossy": true,
+        "changed_rgb_pixels": 548753,
+        "max_channel_error_rgb": 163,
+        "mean_absolute_channel_error_rgb": 7.670611782676253,
+        "source_colour_count_up_to_256": null,
+        "source_more_than_256_colours": true,
+        "source_mask_sha256": "a4401ff839bd741ef58a9914fa0c4586561e765f753a5e3ed2fd5d89478b7379",
+        "crop_box_px": [
+          0,
+          0,
+          1122,
+          1402
+        ],
+        "pixels_discarded_by_size_filter": 0
+      },
+      "issue_codes": [
+        "DENSITY_REVIEW_REQUIRED",
+        "GEOMETRY_REPAIR_AMBIGUOUS",
+        "VISUAL_MISMATCH"
+      ]
+    }
+  ]
+}

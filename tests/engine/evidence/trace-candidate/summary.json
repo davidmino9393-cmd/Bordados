@@ -1,0 +1,383 @@
+{
+  "experiment_only": true,
+  "production_baseline_commit": "4a7fd6b",
+  "cases": [
+    {
+      "case": "logo-sol-01",
+      "statuses": [
+        "traced",
+        "traced"
+      ],
+      "mask_unchanged": true,
+      "foreground_count_unchanged": true,
+      "frame_unchanged": true,
+      "bounds_unchanged": true,
+      "rgb_mae": [
+        5.175763340161936,
+        5.270278509413716
+      ],
+      "edges": [
+        18776,
+        18776
+      ],
+      "holes": [
+        1,
+        1
+      ],
+      "svg_bytes": [
+        274061,
+        274074
+      ],
+      "durations_ms": [
+        [
+          836,
+          752
+        ],
+        [
+          660,
+          623
+        ]
+      ]
+    },
+    {
+      "case": "logo-hoja-01",
+      "statuses": [
+        "traced",
+        "traced"
+      ],
+      "mask_unchanged": true,
+      "foreground_count_unchanged": true,
+      "frame_unchanged": true,
+      "bounds_unchanged": true,
+      "rgb_mae": [
+        0.24746603774871,
+        0.11873552954755624
+      ],
+      "edges": [
+        6004,
+        6004
+      ],
+      "holes": [
+        0,
+        0
+      ],
+      "svg_bytes": [
+        65945,
+        65958
+      ],
+      "durations_ms": [
+        [
+          493,
+          473
+        ],
+        [
+          432,
+          436
+        ]
+      ]
+    },
+    {
+      "case": "logo-escudo-01",
+      "statuses": [
+        "traced",
+        "traced"
+      ],
+      "mask_unchanged": true,
+      "foreground_count_unchanged": true,
+      "frame_unchanged": true,
+      "bounds_unchanged": true,
+      "rgb_mae": [
+        10.708543579562686,
+        0.2700816168969035
+      ],
+      "edges": [
+        12096,
+        11604
+      ],
+      "holes": [
+        1,
+        1
+      ],
+      "svg_bytes": [
+        73307,
+        73652
+      ],
+      "durations_ms": [
+        [
+          1355,
+          1265
+        ],
+        [
+          1045,
+          1059
+        ]
+      ]
+    },
+    {
+      "case": "logo-ola-01",
+      "statuses": [
+        "traced",
+        "traced"
+      ],
+      "mask_unchanged": true,
+      "foreground_count_unchanged": true,
+      "frame_unchanged": true,
+      "bounds_unchanged": true,
+      "rgb_mae": [
+        1.4448134455130013,
+        1.1237950527111549
+      ],
+      "edges": [
+        20472,
+        20486
+      ],
+      "holes": [
+        0,
+        0
+      ],
+      "svg_bytes": [
+        179295,
+        179324
+      ],
+      "durations_ms": [
+        [
+          778,
+          812
+        ],
+        [
+          679,
+          733
+        ]
+      ]
+    },
+    {
+      "case": "anillo-doble-01",
+      "statuses": [
+        "traced",
+        "traced"
+      ],
+      "mask_unchanged": true,
+      "foreground_count_unchanged": true,
+      "frame_unchanged": true,
+      "bounds_unchanged": true,
+      "rgb_mae": [
+        2.608931696536924,
+        2.6259043044679773
+      ],
+      "edges": [
+        13600,
+        13344
+      ],
+      "holes": [
+        2,
+        2
+      ],
+      "svg_bytes": [
+        124235,
+        122536
+      ],
+      "durations_ms": [
+        [
+          817,
+          794
+        ],
+        [
+          729,
+          774
+        ]
+      ]
+    },
+    {
+      "case": "dificil-texto-chico-01",
+      "statuses": [
+        "traced",
+        "traced"
+      ],
+      "mask_unchanged": true,
+      "foreground_count_unchanged": true,
+      "frame_unchanged": true,
+      "bounds_unchanged": true,
+      "rgb_mae": [
+        14.14700039729837,
+        14.14700039729837
+      ],
+      "edges": [
+        9944,
+        9944
+      ],
+      "holes": [
+        6,
+        6
+      ],
+      "svg_bytes": [
+        101425,
+        101438
+      ],
+      "durations_ms": [
+        [
+          343,
+          344
+        ],
+        [
+          345,
+          330
+        ]
+      ]
+    },
+    {
+      "case": "dificil-degradado-01",
+      "statuses": [
+        "traced",
+        "traced"
+      ],
+      "mask_unchanged": true,
+      "foreground_count_unchanged": true,
+      "frame_unchanged": true,
+      "bounds_unchanged": true,
+      "rgb_mae": [
+        10.538794907407407,
+        6.680622916666667
+      ],
+      "edges": [
+        29464,
+        15952
+      ],
+      "holes": [
+        377,
+        1
+      ],
+      "svg_bytes": [
+        182713,
+        90624
+      ],
+      "durations_ms": [
+        [
+          2642,
+          2564
+        ],
+        [
+          3007,
+          2935
+        ]
+      ]
+    },
+    {
+      "case": "jpeg-simple-01",
+      "statuses": [
+        "traced",
+        "traced"
+      ],
+      "mask_unchanged": true,
+      "foreground_count_unchanged": true,
+      "frame_unchanged": true,
+      "bounds_unchanged": true,
+      "rgb_mae": [
+        21.509626838496246,
+        5.630925929354837
+      ],
+      "edges": [
+        13420,
+        13304
+      ],
+      "holes": [
+        10,
+        7
+      ],
+      "svg_bytes": [
+        106529,
+        106734
+      ],
+      "durations_ms": [
+        [
+          578,
+          608
+        ],
+        [
+          739,
+          834
+        ]
+      ]
+    },
+    {
+      "case": "anime-reference-150",
+      "statuses": [
+        "traced",
+        "traced"
+      ],
+      "mask_unchanged": true,
+      "foreground_count_unchanged": true,
+      "frame_unchanged": true,
+      "bounds_unchanged": true,
+      "rgb_mae": [
+        7.670611782676253,
+        3.984598772747623
+      ],
+      "edges": [
+        425078,
+        110028
+      ],
+      "holes": [
+        5839,
+        337
+      ],
+      "svg_bytes": [
+        7053407,
+        2110866
+      ],
+      "durations_ms": [
+        [
+          3997,
+          4300
+        ],
+        [
+          3266,
+          3285
+        ]
+      ]
+    },
+    {
+      "case": "anime-reference-126",
+      "statuses": [
+        "traced",
+        "traced"
+      ],
+      "mask_unchanged": true,
+      "foreground_count_unchanged": true,
+      "frame_unchanged": true,
+      "bounds_unchanged": true,
+      "rgb_mae": [
+        7.670611782676253,
+        3.984598772747623
+      ],
+      "edges": [
+        425078,
+        110028
+      ],
+      "holes": [
+        5839,
+        337
+      ],
+      "svg_bytes": [
+        6968047,
+        2083732
+      ],
+      "durations_ms": [
+        [
+          3966,
+          4133
+        ],
+        [
+          3166,
+          3357
+        ]
+      ]
+    }
+  ],
+  "production_sources_unchanged": true,
+  "traced_input_hashes_unchanged": true,
+  "topology_by_colour_may_change": true,
+  "semantic_legibility_or_physical_quality_verified": false,
+  "jef_generated": false,
+  "process_memory_measured": false,
+  "candidate_selected_for_production": false
+}

@@ -1,6 +1,6 @@
 # Próxima tarea: paleta con contraste verificable
 
-Propósito: evaluar el refinamiento de cuantización sin romper firma, contratos ni la comparación de F por commit.
+Propósito: evaluar refinamiento sin romper firma, contratos ni F por commit.
 
 Contenido: [Base](#base), [Agents & Skills](#agents--skills), [Ejecución](#ejecución), [Aceptación](#aceptación), [Referencias](#referencias).
 
@@ -25,7 +25,7 @@ Corrección interna E ya autorizada. Aplicar la cadena al implementar, sin otra 
 
 1. Leer buzón y fijar hashes. Registrar errores de F por caso y distinguir mediciones de inferencias.
 2. Escribir controles pequeños: dos colores exactos, color escaso, bordes suavizados, texto fino como máscara/anotación, islas y huecos. Comprobar determinismo y cancelación.
-3. Ensayar MEDIANCUT `kmeans=3` en copia aislada bajo `tests/engine/.tmp`, sin alterar la base que Claude mide. Pasar por trazado real a resolución original; guardar paleta, aristas, huecos por color, hashes, duración y recursos.
+3. Trazado aislado ya medido: 10 casos, 40 ejecuciones. Revisar [resultados](../../../tests/engine/evidence/trace-candidate/README.md); máscara total idéntica no prueba conservación de huecos por color. Falta medir memoria.
 4. Comparar conjunto disponible y ambas escalas. Documentar especialmente sol/anillos, donde el error medio empeora levemente. No borrar el disco pálido automáticamente: puede ser relleno intencional.
 5. Revisar y ejecutar las pruebas pertinentes. Si hay ventaja defendible, comunicar política/método y nuevo hash antes de pedir F. No presentar el experimento como producción terminada.
 

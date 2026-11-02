@@ -1,6 +1,6 @@
 # Continuar Codex motor
 
-Propósito: entrada única para retomar el trabajo sin depender del chat. Corte: 2026-11-02, antes del commit documental de este relevo.
+Propósito: retomar sin depender del chat. Snapshot: 2026-11-02; verificar entregas más recientes en Git y buzón.
 
 Contenido: [Arranque](#arranque), [Estado](#estado), [Siguiente paso](#siguiente-paso), [Referencias](#referencias).
 
@@ -31,7 +31,7 @@ Claude reportó F estructural sobre `4a7fd6b`: 14/14 PNG/JPEG, 2 SVG omitidos, 0
 
 ## Siguiente paso
 
-Probar MEDIANCUT con `kmeans=3` en un candidato aislado y en el recorrido completo de E. La investigación mejora error RGB en 6/9 casos, empata 1 y empeora 2. No se incorporó a producción ni habilita JEF/H3.
+Ya se comparó `kmeans=3` en trazado aislado: [10 casos, 40 ejecuciones](../../../tests/engine/evidence/trace-candidate/README.md). Conserva máscara total y determinismo, pero cambia mucho los huecos por color. Siguiente: controles de topología/texto antes de promoverlo. Sigue experimental, sin JEF/H3.
 
 Claude mantiene API/web/F; Codex mantiene E. La coordinación tiene confirmaciones, pero Codex no montó watcher persistente. El relevo no autoriza merges, push ni cambios de contrato.
 
