@@ -17,6 +17,7 @@ import {
 } from '../contracts/job';
 import type { SewoutProjection } from '../contracts/sewout';
 import type { JobSettings } from '../contracts/settings';
+import { analysisIssues } from './analysis';
 import { ScenarioOutcome, activeStages, type Scenario } from './scenarios/scenarios';
 
 export const QUEUE_MS = 500;
@@ -36,6 +37,8 @@ export interface SimulatedJob {
   createdAt: number;
   /** Proporción del original; null si no se conoce (SVG sin píxeles). */
   aspectRatio: number | null;
+  /** Tamaño en píxeles del original; null si no se conoce (SVG). */
+  assetPx: { width: number; height: number } | null;
   cancelRequestedAt: number | null;
 }
 
@@ -53,7 +56,7 @@ function buildStages(job: SimulatedJob, runningIndex: number, terminal: 'none' |
     const make = (outcome: StageRecord['outcome'], ms: number | null = null): StageRecord => ({
       stage,
       outcome,
-      reason: outcome === StageOutcome.Skipped ? SKIP_REASON[stage] : null,
+      reason: outcome === StageOutcome.Skipped ? (job.scenario.skipReason ?? SKIP_REASON[stage]) : null,
       measured_duration_ms: ms,
     });
     if (position === -1) return make(StageOutcome.Skipped);
@@ -130,6 +133,28 @@ function terminalResponse(job: SimulatedJob, stageMs: number, cancelledAtIndex: 
     }
     return response;
   }
+  if (outcome === ScenarioOutcome.AnalysisReview) {
+    // Solo terminó el análisis; el resto queda pendiente hasta que el usuario decida.
+    const stages = PIPELINE_STAGES.map((stage): StageRecord => ({
+      stage,
+      outcome: stage === JobStatus.Analyzing ? StageOutcome.Completed : StageOutcome.Pending,
+      reason: null,
+      measured_duration_ms: stage === JobStatus.Analyzing ? stageMs : null,
+    }));
+    const response = withIdentity(needsReviewFixture.payload as JobResponse, job, stages);
+    const issues = analysisIssues(job);
+    response.issues = issues;
+    response.diagnostics = issues;
+    response.review = {
+      cause: issues[0].description,
+      issues,
+      object_ids: [],
+      region_ids: issues.flatMap((issue) => issue.region_ids).sort(),
+    };
+    response.validation_report = null;
+    response.artifact_manifest = null;
+    return response;
+  }
   if (outcome === ScenarioOutcome.NeedsReview) {
     return withIdentity(needsReviewFixture.payload as JobResponse, job, buildStages(job, 0, 'done', stageMs));
   }
@@ -159,7 +184,8 @@ function activeResponse(job: SimulatedJob, status: JobResponse['status'], stages
 export function simulateJob(job: SimulatedJob, now: number, stageMs: number, sewout: SewoutProjection | null = null): JobResponse {
   const active = activeStages(job.scenario);
   const failPosition = job.scenario.failAt ? active.indexOf(job.scenario.failAt) : -1;
-  const lastIndex = job.scenario.outcome === ScenarioOutcome.Failed ? failPosition : active.length - 1;
+  const analysisOnly = job.scenario.outcome === ScenarioOutcome.AnalysisReview;
+  const lastIndex = analysisOnly ? 0 : job.scenario.outcome === ScenarioOutcome.Failed ? failPosition : active.length - 1;
   const requested = job.cancelRequestedAt;
   const stopped = requested !== null && now >= requested + CANCEL_STOP_MS;
   const withSewout = (response: JobResponse): JobResponse => {

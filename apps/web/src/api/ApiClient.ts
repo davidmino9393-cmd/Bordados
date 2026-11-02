@@ -1,3 +1,4 @@
+import type { AnalysisDecision, AnalysisSpec } from '../contracts/analysis';
 import type { AuthorizedArtifactManifest } from '../contracts/artifacts';
 import type { JobCreate, JobResponse } from '../contracts/job';
 import type {
@@ -72,6 +73,16 @@ export interface ApiClient {
   getArtifacts(jobId: string): Promise<AuthorizedArtifactManifest>;
   /** 202: solo registra la solicitud; el estado `cancelled` lo publica el servidor. */
   cancelJob(jobId: string, idempotencyKey?: string): Promise<JobResponse>;
+  /**
+   * CAMBIO PROPUESTO (H2, no existe en OpenAPI v0.1): análisis visual de un trabajo de imagen.
+   * Hasta que el backend lo ofrezca, solo lo responde el cliente simulado.
+   */
+  getAnalysis(jobId: string): Promise<AnalysisSpec>;
+  /**
+   * CAMBIO PROPUESTO (H2): aprobar el análisis (con regiones marcadas) o cambiar de proveedor.
+   * Devuelve el trabajo nuevo; el que estaba en needs_review no se modifica.
+   */
+  decideAnalysis(jobId: string, decision: AnalysisDecision, idempotencyKey?: string): Promise<JobResponse>;
   /** Registra la muestra física de una revisión; nunca cambia el estado digital del trabajo. */
   recordSewout(projectId: string, request: SewoutRecordRequest, idempotencyKey?: string): Promise<SewoutResponse>;
   /** Variante de tamaño o corrección: responde con el trabajo nuevo. */

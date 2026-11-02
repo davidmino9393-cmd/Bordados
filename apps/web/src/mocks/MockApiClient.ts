@@ -4,7 +4,7 @@
 import profilesFixture from '../../mocks/profiles.json';
 import { ApiError, type ApiClient } from '../api/ApiClient';
 import { ErrorCode } from '../contracts/http';
-import { ACTIVE_STATUSES, type JobCreate, type JobResponse } from '../contracts/job';
+import { ACTIVE_STATUSES, JobStatus, type JobCreate, type JobResponse } from '../contracts/job';
 import type { ArtifactDownload, AuthorizedArtifactManifest } from '../contracts/artifacts';
 import type {
   DerivedRevisionRequest,
@@ -18,6 +18,7 @@ import { es } from '../copy/es';
 import { newIdempotencyKey } from '../shared/utils/idempotency';
 import { mockStitchPreviewImage, mockTextFile, mockVectorImage } from './fixtures/media';
 import { CANCEL_STOP_MS, simulateJob, type SimulatedJob } from './jobSimulation';
+import { buildAnalysisSpec } from './analysis';
 import { pickScenario, ScenarioOutcome, type Scenario } from './scenarios/scenarios';
 
 const DEFAULT_STAGE_MS = 1500;
@@ -149,6 +150,7 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
       parentJobId,
       createdAt: now(),
       aspectRatio: w && h ? w / h : null,
+      assetPx: w && h ? { width: w, height: h } : null,
       cancelRequestedAt: null,
     };
     jobs.set(job.id, job);
@@ -269,6 +271,49 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
           job.cancelRequestedAt = now();
         }
         return view(job);
+      });
+    },
+    // CAMBIO PROPUESTO (H2): no existe en OpenAPI v0.1.
+    async getAnalysis(jobId) {
+      const job = requireJob(jobId);
+      if (job.scenario.outcome !== ScenarioOutcome.AnalysisReview) throw problem(ErrorCode.NotFound);
+      return buildAnalysisSpec(job);
+    },
+    // CAMBIO PROPUESTO (H2): aprobar el análisis o cambiar de proveedor crea un job nuevo.
+    decideAnalysis(jobId, decision, key) {
+      return idempotent('analysis-decision', key, { jobId, decision }, async () => {
+        const parent = requireJob(jobId);
+        const stored = assets.get(parent.assetId);
+        if (!stored || parent.scenario.outcome !== ScenarioOutcome.AnalysisReview || view(parent).status !== JobStatus.NeedsReview) {
+          throw problem(ErrorCode.RevisionConflict);
+        }
+        const revisionId = nextId('rev');
+        let settings = parent.settings;
+        let scenario: Scenario = {
+          name: 'analisis-aprobado',
+          outcome: ScenarioOutcome.Ready,
+          skipped: ['analyzing'],
+          skipReason: `Analysis approved by the user in ${parent.id}`,
+        };
+        if (decision.action === 'change_provider') {
+          const available = catalog.providers.find((p) => p.provider_id === decision.ai_provider)?.available;
+          if (!available || decision.ai_provider === parent.settings.ai_provider) throw problem(ErrorCode.InvalidRequest);
+          settings = { ...parent.settings, ai_provider: decision.ai_provider };
+          scenario = { ...parent.scenario, skipped: [] };
+        }
+        revisions.set(revisionId, {
+          schema_version: '0.1',
+          revision_id: revisionId,
+          project_id: parent.projectId,
+          base_revision_id: parent.revisionId,
+          reason: decision.action,
+          created_at: iso(now()),
+          kind: 'correction',
+          parent_job_id: parent.id,
+          job_id: null,
+          settings,
+        });
+        return startJob(parent.projectId, revisionId, stored, settings, scenario, parent.id);
       });
     },
     recordSewout(projectId, request, key) {

@@ -101,6 +101,14 @@ export function createHttpApiClient(config: HttpClientConfig = {}): ApiClient {
     getArtifacts: (jobId) => request('GET', `/jobs/${id(jobId)}/artifacts`),
     cancelJob: (jobId, key) =>
       request('POST', `/jobs/${id(jobId)}/cancel`, { key, body: { schema_version: '0.1' } }),
+    // CAMBIO PROPUESTO (H2): estas operaciones no existen en OpenAPI v0.1. No se llama a la red:
+    // se informa de forma controlada hasta que el integrador las apruebe e implemente.
+    getAnalysis: async () => {
+      throw new ApiError(ClientErrorCode.NotImplemented, es.errors.notImplemented, 501);
+    },
+    decideAnalysis: async () => {
+      throw new ApiError(ClientErrorCode.NotImplemented, es.errors.notImplemented, 501);
+    },
     recordSewout: (projectId, body, key) => request('POST', `/projects/${id(projectId)}/sewouts`, { key, body }),
     createDerivedRevision: (projectId, body, key) =>
       request('POST', `/projects/${id(projectId)}/revisions`, { key, body }),

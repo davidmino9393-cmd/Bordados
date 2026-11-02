@@ -298,6 +298,82 @@ describe('MockApiClient (SIMULADO, forma de contratos-v0.1)', () => {
     expect(calls).toEqual(['getProfiles']);
   });
 
+  describe('análisis visual de una imagen (H2, SIMULADO, operaciones propuestas)', () => {
+    const reachReview = async (name: string) => {
+      const started = await start(name);
+      clock += QUEUE_MS + 2 * STAGE_MS;
+      return { ...started, review: await api.getJob(started.job.job_id) };
+    };
+
+    it('"analisis": se detiene en needs_review tras analizar, con una región incierta localizada', async () => {
+      const { review } = await reachReview('logo-analisis.png');
+      expect(review.status).toBe(JobStatus.NeedsReview);
+      expect(review.input_kind).toBe('raster_image');
+      expect(review.stages.map((s) => s.outcome)).toEqual(['completed', 'pending', 'pending', 'pending']);
+      expect(review.review?.region_ids).toEqual(['region_3']);
+      expect(review.review?.object_ids).toEqual([]);
+      expect(review.issues[0]).toMatchObject({ code: 'ANALYSIS_REGION_INCOHERENT', severity: 'review_required', stage: 'analysis' });
+      expect(review.artifact_manifest).toBeNull();
+    });
+
+    it('"ambiguo": tres regiones inciertas', async () => {
+      const { review } = await reachReview('logo-ambiguo.png');
+      expect(review.review?.region_ids).toEqual(['region_3', 'region_5', 'region_6']);
+    });
+
+    it('getAnalysis devuelve un AnalysisSpec con regiones, colores, texto e incertidumbres', async () => {
+      const { job } = await reachReview('logo-ambiguo.png');
+      const analysis = await api.getAnalysis(job.job_id);
+      expect(analysis.regions).toHaveLength(6);
+      expect(analysis.provider).toBe('openai');
+      expect(analysis.regions.find((r) => r.region_id === 'region_1')).toMatchObject({ observed_text: 'ESTRELLA', suggested_colors: ['#1F3A93'] });
+      expect(analysis.regions.every((r) => r.representation === 'estimated_bbox')).toBe(true);
+      expect(analysis.regions.filter((r) => r.uncertainties.length > 0).map((r) => r.region_id)).toEqual(['region_3', 'region_5', 'region_6']);
+    });
+
+    it('getAnalysis no existe para un trabajo sin análisis pendiente', async () => {
+      const { job } = await start('logo.png');
+      await expect(api.getAnalysis(job.job_id)).rejects.toMatchObject({ code: ErrorCode.NotFound });
+    });
+
+    it('aprobar crea un job nuevo que omite el análisis con su motivo y llega a ready', async () => {
+      const { job } = await reachReview('logo-analisis.png');
+      const next = await api.decideAnalysis(job.job_id, { action: 'approve', flagged_region_ids: ['region_3'] });
+      expect(next.job_id).not.toBe(job.job_id);
+      expect(next.parent_job_id).toBe(job.job_id);
+      const analyzing = next.stages.find((s) => s.stage === 'analyzing');
+      expect(analyzing).toMatchObject({ outcome: StageOutcome.Skipped });
+      expect(analyzing?.reason).toContain(job.job_id);
+      clock += WELL_PAST_END;
+      expect((await api.getJob(next.job_id)).status).toBe(JobStatus.ReadyForSewout);
+      expect((await api.getJob(job.job_id)).status).toBe(JobStatus.NeedsReview);
+    });
+
+    it('cambiar de proveedor crea otro job con ese proveedor; el mismo o uno no disponible se rechaza', async () => {
+      const { job } = await reachReview('logo-analisis.png');
+      const next = await api.decideAnalysis(job.job_id, { action: 'change_provider', ai_provider: 'ollama' });
+      expect(next.settings_snapshot.ai_provider).toBe('ollama');
+      expect(next.parent_job_id).toBe(job.job_id);
+      await expect(api.decideAnalysis(job.job_id, { action: 'change_provider', ai_provider: 'openai' })).rejects.toMatchObject({ code: ErrorCode.InvalidRequest });
+      clock += QUEUE_MS + 2 * STAGE_MS;
+      expect((await api.getAnalysis(next.job_id)).provider).toBe('ollama');
+    });
+
+    it('solo se decide un análisis que está en needs_review', async () => {
+      const { job } = await start('logo-analisis.png');
+      await expect(api.decideAnalysis(job.job_id, { action: 'approve', flagged_region_ids: [] })).rejects.toMatchObject({ code: ErrorCode.RevisionConflict });
+    });
+
+    it('escala las regiones al tamaño real del original', async () => {
+      const { job, asset } = await reachReview('logo-analisis.png');
+      const analysis = await api.getAnalysis(job.job_id);
+      const region = analysis.regions.find((r) => r.region_id === 'region_1')!;
+      // 800 × 600 es el tamaño de referencia y también el de reserva del mock en jsdom.
+      expect(asset.original_width_px).toBe(800);
+      expect(region.bounds_px).toMatchObject({ x_px: 120, y_px: 80, width_px: 560, height_px: 140 });
+    });
+  });
+
   it('rechaza formatos no admitidos y proveedores no disponibles', async () => {
     const project = await api.createProject('P');
     await expect(api.uploadAsset(project.project_id, file('x.gif', 'image/gif'))).rejects.toMatchObject({
