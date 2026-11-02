@@ -1,0 +1,137 @@
+{
+  "scope": "E1 smoke on selected flat raster fixtures; not evaluation F",
+  "python": "3.12.14",
+  "pillow": "12.3.0",
+  "schema_version": "0.1",
+  "digital_readiness_evaluated": false,
+  "physical_approval": "untested",
+  "jef_generated": false,
+  "cases": [
+    {
+      "case": "logo-sol-01",
+      "input_sha256": "ff012e19cdf1330c5e7a56c0203dde02150797fa28a54a7acff54142d75038de",
+      "document_sha256": "cee8509e84807160f0969952932ab3544880a8fa3a971f6a4d84e292e0de5ee9",
+      "editable_svg_sha256": "e474dcf8bc3dd5b39b25203f9230d3817bf5ddf41e8974a392f29c68bad2ec85",
+      "object_count": 2,
+      "work_color_count": 2,
+      "object_bounds_mm": {
+        "min_x_mm": 17.166666666666664,
+        "min_y_mm": 4.666666666666666,
+        "max_x_mm": 82.83333333333333,
+        "max_y_mm": 70.33333333333333
+      },
+      "duration_ms": 607,
+      "deterministic_except_duration": true,
+      "issue_codes": [
+        "DENSITY_REVIEW_REQUIRED",
+        "GEOMETRY_REPAIR_AMBIGUOUS",
+        "VISUAL_MISMATCH"
+      ]
+    },
+    {
+      "case": "logo-hoja-01",
+      "input_sha256": "0752ab9ae928804c4c3eb71c5330b34aa4b70031bea36ca68c0ca37596da8241",
+      "document_sha256": "4f01c98490cdba342d861b7ec6e95cda34c16d5e68d1acafbc07c5b4e0a413e0",
+      "editable_svg_sha256": "2f43ecb3e3e6c21c5b419b77f409e9c8dbc819c79a7cee78e2a62c8fba7842e5",
+      "object_count": 2,
+      "work_color_count": 2,
+      "object_bounds_mm": {
+        "min_x_mm": 13.95,
+        "min_y_mm": 22.5,
+        "max_x_mm": 67.5,
+        "max_y_mm": 76.05
+      },
+      "duration_ms": 405,
+      "deterministic_except_duration": true,
+      "issue_codes": [
+        "DENSITY_REVIEW_REQUIRED",
+        "GEOMETRY_REPAIR_AMBIGUOUS",
+        "VISUAL_MISMATCH"
+      ]
+    },
+    {
+      "case": "logo-escudo-01",
+      "input_sha256": "d5ffbcdbaafa9dce98c38a33e638bcede042187bd7b80199d7c914ee4b1ea4cf",
+      "document_sha256": "9fb57e4ecf0591470e4f6f567b859122ceec930937f3df3ba07493a3f0589cd2",
+      "editable_svg_sha256": "a9c74ae6ce6c099b5d7d3242d4d43bd5f1d39a73df57d0bc6c30a1fc958ddf8e",
+      "object_count": 3,
+      "work_color_count": 3,
+      "object_bounds_mm": {
+        "min_x_mm": 12.0,
+        "min_y_mm": 12.0,
+        "max_x_mm": 68.0,
+        "max_y_mm": 86.4
+      },
+      "duration_ms": 950,
+      "deterministic_except_duration": true,
+      "issue_codes": [
+        "DENSITY_REVIEW_REQUIRED",
+        "GEOMETRY_REPAIR_AMBIGUOUS",
+        "VISUAL_MISMATCH"
+      ]
+    },
+    {
+      "case": "logo-ola-01",
+      "input_sha256": "9df608988507c7152175d911f4ca3334092bb10d777f14b39a4518f37c38ae09",
+      "document_sha256": "c915e009e387f6d9fe8b9cd1ab7ca9e5f00a63cbdfd5c593077a9d3ac8b3cd29",
+      "editable_svg_sha256": "b8a5d9bfbf5cfdd998a2965ea0f2ecdbdaf5b2fe9cf00437308d7b21e4f08f3a",
+      "object_count": 3,
+      "work_color_count": 3,
+      "object_bounds_mm": {
+        "min_x_mm": 10.0,
+        "min_y_mm": 19.0,
+        "max_x_mm": 110.0,
+        "max_y_mm": 70.0
+      },
+      "duration_ms": 672,
+      "deterministic_except_duration": true,
+      "issue_codes": [
+        "DENSITY_REVIEW_REQUIRED",
+        "GEOMETRY_REPAIR_AMBIGUOUS",
+        "VISUAL_MISMATCH"
+      ]
+    },
+    {
+      "case": "anillo-doble-01",
+      "input_sha256": "ab8d7dbb964c737946ba5dcd46271ff5b2187a91d952bcabde1f02a937717f0f",
+      "document_sha256": "c17edfa6b87aacedecb497cb442d4e32095977922162a998962ffa78007128c4",
+      "editable_svg_sha256": "9d2403a63c786edaa8f0975200fad3301122349166d1120293cfe38f25a3877e",
+      "object_count": 2,
+      "work_color_count": 2,
+      "object_bounds_mm": {
+        "min_x_mm": 9.9,
+        "min_y_mm": 9.9,
+        "max_x_mm": 80.1,
+        "max_y_mm": 80.1
+      },
+      "duration_ms": 719,
+      "deterministic_except_duration": true,
+      "issue_codes": [
+        "DENSITY_REVIEW_REQUIRED",
+        "GEOMETRY_REPAIR_AMBIGUOUS",
+        "VISUAL_MISMATCH"
+      ]
+    },
+    {
+      "case": "jpeg-simple-01",
+      "input_sha256": "6a6c17c9e0b76a97b36d6c3f4e3fff36682a91f006e3c2de00c75c07f206d886",
+      "document_sha256": "1c8af77e203bfd17a82c1f78506e226f1a47213080669520c7cb5be8b9a43edc",
+      "editable_svg_sha256": "ca62f319e8ae989b914e41c4cb7fa21a903d81a74132c4c881757bb343ed00e2",
+      "object_count": 2,
+      "work_color_count": 2,
+      "object_bounds_mm": {
+        "min_x_mm": 11.52,
+        "min_y_mm": 13.040000000000001,
+        "max_x_mm": 72.96000000000001,
+        "max_y_mm": 62.72
+      },
+      "duration_ms": 565,
+      "deterministic_except_duration": true,
+      "issue_codes": [
+        "DENSITY_REVIEW_REQUIRED",
+        "GEOMETRY_REPAIR_AMBIGUOUS",
+        "VISUAL_MISMATCH"
+      ]
+    }
+  ]
+}

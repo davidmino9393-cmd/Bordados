@@ -1,0 +1,162 @@
+{
+  "input_sha256": "0752ab9ae928804c4c3eb71c5330b34aa4b70031bea36ca68c0ca37596da8241",
+  "source": "synthetic_fixture",
+  "analysis_provider_used": null,
+  "duration_ms": 405,
+  "method_evidence": {
+    "method": "e1-pixel-mask-v1",
+    "simulated": false,
+    "input_sha256": "0752ab9ae928804c4c3eb71c5330b34aa4b70031bea36ca68c0ca37596da8241",
+    "geometry_source": "decoded_pixels_after_explicit_background_and_palette_rules",
+    "geometry_kind": "verified_mask",
+    "curve_fitting": false,
+    "verified_mask_means": "closed pixel edges reproduce the explicit segmented mask; not semantic or colour-fidelity approval",
+    "fit": "contain",
+    "source_px_to_mm": [
+      0.09,
+      0.0,
+      0.0,
+      0.09,
+      0.0,
+      0.0
+    ],
+    "coordinate_rounding_decimal_places": 9,
+    "segmentation": {
+      "background_method": "alpha_threshold",
+      "alpha_threshold": 128,
+      "partial_alpha_pixels": 1747,
+      "white_threshold": 250,
+      "white_border_fraction": 0.0,
+      "white_removed_globally": false,
+      "background_is_assumption": false,
+      "pillow_version": "12.3.0",
+      "quantizer": "Pillow MEDIANCUT; no dithering; foreground pixels only",
+      "foreground_pixels": 146707,
+      "colour_limit": 2,
+      "output_colours": [
+        "#155133",
+        "#2e8b57"
+      ],
+      "quantization_is_lossy": true,
+      "changed_rgb_pixels": 19818,
+      "max_channel_error_rgb": 28,
+      "mean_absolute_channel_error_rgb": 0.24746603774871,
+      "source_colour_count_up_to_256": 10,
+      "source_more_than_256_colours": false,
+      "source_mask_sha256": "e4994f46451a1008edd5ecd6f4c00c548f481845cf72fb83723cc3a8bc273bf9",
+      "crop_box_px": [
+        0,
+        0,
+        1000,
+        1000
+      ],
+      "pixels_discarded_by_size_filter": 0
+    },
+    "masks": [
+      {
+        "colour": "#155133",
+        "pixel_count": 18919,
+        "boundary_edges": 2228,
+        "subpaths": 1,
+        "holes": 0,
+        "exact_area_px2": 18919,
+        "bounds_crop_px": [
+          155,
+          288,
+          712,
+          845
+        ]
+      },
+      {
+        "colour": "#2e8b57",
+        "pixel_count": 127788,
+        "boundary_edges": 3776,
+        "subpaths": 1,
+        "holes": 0,
+        "exact_area_px2": 127788,
+        "bounds_crop_px": [
+          250,
+          250,
+          750,
+          750
+        ]
+      }
+    ],
+    "analysis_id": null,
+    "analysis_regions_are_estimates": true,
+    "annotations": [],
+    "text_handling": "annotation_only_no_font_substitution",
+    "h3_validation_required": true,
+    "provisional_fields": [
+      "effective_technique",
+      "proposed_technique",
+      "parameters"
+    ],
+    "technique_selection": "fill_placeholder_not_a_physical_width_decision",
+    "settings_sha256": "fd470412e109b04aeae8dd3247dc33c01e650c04ee23e2602c2e6a236972d49e",
+    "no_sewout_readiness_claim": true
+  },
+  "deterministic_except_duration": true,
+  "issues": [
+    {
+      "code": "DENSITY_REVIEW_REQUIRED",
+      "severity": "review_required",
+      "stage": "routing",
+      "object_ids": [
+        "mask_3a173933068d7f663c2bbc77",
+        "mask_6637e1a27fbb5db1304faa95"
+      ],
+      "region_ids": [],
+      "description": "La técnica y los parámetros son provisionales; H3 debe validarlos antes de digitalizar.",
+      "evidence": {
+        "h3_validation_required": true,
+        "parameters_calibrated": false,
+        "provisional_stitch_length_mm": 2.5,
+        "provisional_spacing_mm": 0.4
+      },
+      "suggested_correction": "Validar técnica, densidad, compensación y base con el perfil físico en H3."
+    },
+    {
+      "code": "GEOMETRY_REPAIR_AMBIGUOUS",
+      "severity": "review_required",
+      "stage": "geometry",
+      "object_ids": [
+        "mask_3a173933068d7f663c2bbc77",
+        "mask_6637e1a27fbb5db1304faa95"
+      ],
+      "region_ids": [],
+      "description": "La transparencia parcial se binarizó y requiere comparación visual.",
+      "evidence": {
+        "partial_alpha_pixels": 1747,
+        "alpha_threshold": 128
+      },
+      "suggested_correction": "Revisar la entrada y la evidencia antes de continuar."
+    },
+    {
+      "code": "VISUAL_MISMATCH",
+      "severity": "review_required",
+      "stage": "visual",
+      "object_ids": [
+        "mask_3a173933068d7f663c2bbc77",
+        "mask_6637e1a27fbb5db1304faa95"
+      ],
+      "region_ids": [],
+      "description": "La cuantización cambió colores medidos; revisar la paleta y los bordes antes de digitalizar.",
+      "evidence": {
+        "changed_rgb_pixels": 19818,
+        "max_channel_error_rgb": 28,
+        "mean_absolute_channel_error_rgb": 0.24746603774871,
+        "output_colours": [
+          "#155133",
+          "#2e8b57"
+        ]
+      },
+      "suggested_correction": "Comparar la imagen con el SVG y confirmar la paleta y los bordes."
+    }
+  ],
+  "preview": {
+    "renderer": "Inkscape CLI",
+    "sha256": "39194187452680a17e9ece2c895cebb4b60e44f53254e7b4fbd94a8a457079d2",
+    "stderr": "\r\n** (org.inkscape.Inkscape:39448): WARNING **: 00:26:58.024: Could not create extension error log file 'C:\\Users\\david\\AppData\\Roaming\\inkscape\\extension-errors.log'\r\n\r\n(org.inkscape.Inkscape:39448): Gtk-WARNING **: 00:26:58.794: Attempting to store changes into 'C:\\Users\\david\\AppData\\Local\\Packages\\sandbox.{5b4aeab4-2288-4e2b-9c5b-d42bd1ef6f9c}\\AC\\recently-used.xbel', but failed: Failed to rename file “C:\\Users\\david\\AppData\\Local\\Packages\\sandbox.{5b4aeab4-2288-4e2b-9c5b-d42bd1ef6f9c}\\AC\\recently-used.xbel.QBOZX3” to “C:\\Users\\david\\AppData\\Local\\Packages\\sandbox.{5b4aeab4-2288-4e2b-9c5b-d42bd1ef6f9c}\\AC\\recently-used.xbel”: g_rename() failed: Permission denied\r\n\r\n(org.inkscape.Inkscape:39448): Gtk-WARNING **: 00:26:58.794: Attempting to set the permissions of 'C:\\Users\\david\\AppData\\Local\\Packages\\sandbox.{5b4aeab4-2288-4e2b-9c5b-d42bd1ef6f9c}\\AC\\recently-used.xbel', but failed: No such file or directory\r\n"
+  }
+}
