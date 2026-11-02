@@ -1,0 +1,22 @@
+CONJUNTO SINTETICO H2 - 14 imagenes generadas por codigo (derechos: propios, uso interno de prueba)
+
+Contenido
+  manifest.json              datos de las 14 imagenes (con sha256)
+  nuevos/                    8 PNG (+2 PNG difíciles), 2 JPEG, 2 SVG
+  generar_imagenes.py        regenera todo (solo Python estandar + PowerShell para los JPEG)
+  validate_manifest.py y manifest.schema.json   copias de apps/web/docs/h2 (para validar aca)
+
+Que falta (lo agrega David / Claude Code web, la imagen original esta en esa maquina)
+  Las 2 escalas de Anime Socks (design_family "anime_socks", tamaños objetivo distintos).
+  Con ellas el conjunto llega a 16 imagenes.
+
+Como usarlo
+  1) Copiar esta carpeta a C:\dev\wt-web\tests\fixtures\h2\ (o donde indique la rama claude/web).
+  2) Agregar al manifest.json las 2 entradas de Anime Socks (con file y sha256 reales).
+  3) python validate_manifest.py manifest.json --check-files
+
+Notas
+  - 14 diseños distintos (cada imagen es una familia propia; ninguna es variante de otra).
+  - Casos que deben pedir revision (3): lineas finas (~0,13 mm), texto chico (~1,8 mm) y degradado con sombra.
+  - Las letras usan una tipografia propia de lineas, no una fuente de terceros.
+  - Son mas simples que logos reales: sumar algunos reales con permiso cuando se pueda.
