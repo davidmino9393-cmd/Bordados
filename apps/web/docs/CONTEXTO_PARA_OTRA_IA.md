@@ -12,14 +12,14 @@ Aplicación web privada que convierte una imagen o un SVG de un logo en un borda
 - **David (coordinador humano):** decide merges a `main`, contratos y permisos. Ningún merge sin su autorización.
 - **Claude Code (esta sesión):** `claude/web`, worktree `C:\dev\wt-web`. Hizo la web y, con autorización expresa, también contrato, API y pruebas del motor **solo en esa rama**.
 - **OpenCode:** hizo H0-04 (API + worker real) y H0-06. **Sin límite de uso** disponible.
-- **Codex:** hizo contratos iniciales y el esqueleto de H0-04. **Bloqueado por cuota.**
+- **Codex:** hizo contratos iniciales y el esqueleto de H0-04. **Disponible de nuevo.** Ya leyó este contexto y el plan de H2, tiene `codex/motor` limpia en `af21ed3` y verificó los 14 archivos del conjunto de imágenes. Propuesta: Codex toma el módulo E (vector y geometría); Claude conserva web, conexión con la API y evaluación F. Ver `h2/E-interfaz.md`.
 - Worktrees: `C:\dev\bordados` (main), `wt-web`, `wt-opencode`, `wt-motor`. No escribir en el worktree de otro.
 - Sin canal directo entre IAs: se usan archivos en `C:\Users\david\AppData\Local\Temp\opencode\` (`CLAUDE_A_OPENCODE.md` y `OPENCODE_A_CLAUDE.md`), mediados por el usuario.
 - Idioma de la interfaz y de los mensajes al usuario: **español**.
 
 ## 3. Estado del repositorio
 - `main`: `af21ed3`. Tags: `contratos-v0.1` (`ad958db`, contratos congelados) y `h0-04-completado` (según el coordinador, en `c6b4db6`).
-- `claude/web`: `cb144f9` (último). Contiene todo lo hecho por Claude, **sin mergear a `main`**.
+- `claude/web`: `da5e1a1` (último; incluye `tests/fixtures/h2` en un commit exclusivo para poder trasladarlo con cherry-pick). Contiene todo lo hecho por Claude, **sin mergear a `main`**.
 - `opencode/h0-06`: `5857315`, revisada y **sin mergear** por orden del usuario.
 - Nada se subió con `push`.
 
@@ -39,7 +39,7 @@ Aplicación web privada que convierte una imagen o un SVG de un logo en un borda
 - **La vectorización de imágenes NO existe.** Un análisis sin dudas, o su continuación, termina en `failed` con `WORKER_EXPORT_FAILED` y motivo `vectorization_not_implemented`. Es deliberado: no se simula.
 - **El adaptador de OpenAI nunca se probó contra la red.** Faltan clave y modelo (van solo en la configuración privada del backend).
 - **El adaptador de Ollama no existe**; figura «no disponible» en el catálogo.
-- **No hay conjunto de imágenes de prueba.** Se propuso generar uno sintético con código y sumar logos reales con permiso después.
+- **Conjunto de imágenes de prueba:** hay 14 sintéticas en `tests/fixtures/h2/` (14 diseños distintos, hashes verificados, generadas por código). Faltan las dos escalas de Anime Socks para llegar a 15–20: la referencia es `Anime_Socks.png`, idéntica a `Anime_Socks_Bordado/trabajo/Referencia.png`; David debe confirmarla. Más adelante conviene sumar logos reales con permiso.
 - El backend actual ejecuta bien `prepared_svg`; el camino de imagen llega hasta el análisis.
 - Pruebas al cierre: Vitest 145, Playwright 40 (+2 contra backend real, opcionales), suite del motor 60 (`unittest`).
 
@@ -60,9 +60,9 @@ Aplicación web privada que convierte una imagen o un SVG de un logo en un borda
 - Un análisis sin dudas no pausa; la aprobación obligatoria sería un cambio aparte (H2.1).
 
 ## 8. Pendientes y bloqueos
-1. Las 15–20 imágenes con permiso de uso (o un conjunto sintético generado) + `manifest.json`.
+1. Confirmar la referencia de Anime Socks y sumar sus dos escalas al manifiesto.
 2. Clave y modelo de OpenAI, tope de costo por trabajo; modelo y hardware para Ollama.
-3. Paquete E (vector y geometría) y F (evaluación): dependen de las imágenes.
+3. Paquete E (vector y geometría, propuesto para Codex): interfaz y reparto en `h2/E-interfaz.md`, pendientes de que David autorice el traslado de los commits de fixtures a `codex/motor` y de que Codex confirme la firma. Paquete F (evaluación, Claude) depende de E.
 4. Decisión del usuario sobre mergear H0-06 y, más adelante, `claude/web` a `main`.
 5. Deudas menores: «ver más» en listas paginadas, fotos de la muestra (`photo_asset_ids`), foco al cambiar de pantalla, regresión que vuelva a exportar con Ink/Stitch.
 
