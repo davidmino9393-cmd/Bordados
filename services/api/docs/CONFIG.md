@@ -38,8 +38,16 @@ Los nombres son exactos. `requerido` no tiene default.
 | `dimension_tolerance_mm` | number | `0.2` | Finito y >= 0. |
 | `worker_python_paths` | string[] | `[]` | Se unen en `PYTHONPATH` del worker. |
 | `worker_script` | string | `workers/embroidery/worker.py` | Ruta del worker; normalmente omitir. |
+| `openai_api_key` | string/null | `null` | H2. Clave de OpenAI; solo aquí, nunca en la web ni en variables del navegador. No aparece en `repr`. Va junto con `openai_model`. |
+| `openai_model` | string/null | `null` | H2. Modelo con visión y salida estructurada; se elige con ejemplos reales, no hay valor por defecto. |
+| `openai_base_url` | string | `https://api.openai.com` | H2. Solo para pruebas o un proxy propio. |
+| `analysis_timeout_s` | number | `60` | H2. Espera máxima por respuesta del proveedor; finito y > 0. |
 
-Se requiere `service_token` o el par `basic_username`/`basic_password`. Si ambos están configurados, se aceptan Bearer y Basic.
+Se requiere `service_token` o el par `basic_username`/`basic_password`. Si ambos están configurados, se aceptan Bearer y Basic, pero el desafío `WWW-Authenticate` es `Bearer`: un navegador no pide usuario y contraseña. Para usar la web con Basic, no definir `service_token`.
+
+## Proveedores de IA (H2)
+
+`GET /api/v1/profiles` informa como disponible solo lo configurado aquí: OpenAI si hay `openai_api_key` y `openai_model`; el modelo local (`ollama`) figura no disponible hasta que exista su adaptador. Si un proveedor falla, el trabajo termina con el código del catálogo; nunca se pasa a otro proveedor en silencio.
 
 ## Ejemplo
 

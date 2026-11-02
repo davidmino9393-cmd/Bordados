@@ -18,7 +18,7 @@ from PIL import Image, UnidentifiedImageError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from embroidery_contracts import (
-    AuthorizedArtifactManifest, CancelRequest, ErrorCode, JobCreate, JobResponse, JobStatus,
+    AnalysisDecision, AnalysisSpec, AuthorizedArtifactManifest, CancelRequest, ErrorCode, JobCreate, JobResponse, JobStatus,
     ProjectCreate, ProjectDetail, ProjectList, ProjectResponse,
     RevisionCreate, RevisionList, RevisionRequest, RevisionResponse, SewoutRecord,
     SewoutResponse, SourceAsset,
@@ -26,11 +26,12 @@ from embroidery_contracts import (
 from embroidery_contracts.http import ERROR_STATUS, FieldError, ProblemResponse
 from embroidery_contracts.job_views import SewoutProjection
 
+from .analysis import configured_providers, provider_availability
 from .config import ApiConfig
 from .downloads import DownloadSigner
 from .errors import ApiProblem
 from .profiles import load_profiles, validate_settings
-from .runner import JobRunner, initial_stages
+from .runner import JobRunner, continuation_stages, initial_stages, raster_stages
 from .store import Store
 
 
@@ -157,14 +158,16 @@ def _download_error(request, code, detail):
     )
 
 
-def create_app(config: ApiConfig):
-    catalog = load_profiles(config.profiles_path)
+def create_app(config: ApiConfig, analysis_providers=None):
+    providers = dict(analysis_providers) if analysis_providers is not None else configured_providers(config)
+    # La disponibilidad de proveedores sale de lo realmente configurado, no del archivo de perfiles.
+    catalog = load_profiles(config.profiles_path).model_copy(update={"providers": provider_availability(providers)})
     data_root = Path(config.data_root)
     for name in ("assets", "jobs", "runs"):
         (data_root / name).mkdir(parents=True, exist_ok=True)
     store = Store(data_root)
     signer = DownloadSigner(config.signing_key, config.public_base_url)
-    runner = JobRunner(config, store)
+    runner = JobRunner(config, store, providers)
     owner = config.principal_id
 
     @asynccontextmanager
@@ -337,53 +340,23 @@ def create_app(config: ApiConfig):
         )
         return JSONResponse(result.model_dump(mode="json"))
 
-    @api.post("/projects/{id}/jobs")
-    def create_job(
-        id: str,
-        payload: JobCreate,
-        idempotency_key: str = Header(alias="Idempotency-Key"),
-    ):
-        owned("project", id)
-        if payload.input_kind != "prepared_svg":
-            raise ApiProblem("INVALID_REQUEST", "H0-04 solo ejecuta entradas prepared_svg.")
-        validate_settings(payload.settings, catalog)
-        asset = owned("asset", payload.asset_id, id)
-        revision = owned("revision", payload.revision_id, id)
-        if revision["body"].get("kind") != "initial":
-            raise ApiProblem("INVALID_REQUEST", "H0-04 solo admite revisiones iniciales.")
-        if revision["private"].get("settings") != payload.settings.model_dump(mode="json"):
-            raise ApiProblem("REVISION_CONFLICT", "La configuración no coincide con la revisión inmutable.")
-        if asset["body"].get("media_type") != "image/svg+xml":
-            raise ApiProblem("INVALID_REQUEST", "La entrada prepared_svg requiere un asset SVG.")
+    def enqueue_job(scope, key, logical, build):
+        """Crea un job en una transacción idempotente y lo encola. `build()` devuelve (JobResponse, private)."""
         created = {}
 
         def action():
             runner.reserve()
             try:
-                job_id = _new_id("job")
-                job_dir = data_root / "jobs" / job_id
-                run_dir = data_root / "runs" / job_id
-                body = JobResponse(
-                    job_id=job_id, project_id=id, revision_id=payload.revision_id,
-                    asset_id=payload.asset_id, input_kind=payload.input_kind,
-                    settings_snapshot=payload.settings, status=JobStatus.QUEUED,
-                    stages=initial_stages(), sewout_record=current_sewout(id, payload.revision_id),
-                )
-                private = {
-                    "job_dir": str(job_dir), "run_dir": str(run_dir),
-                    "asset_path": asset["private"]["path"], "artifact_paths": {},
-                }
-                store.create("job", job_id, owner, id, body.model_dump(mode="json"), private)
-                created["job_id"] = job_id
+                body, private = build()
+                store.create("job", body.job_id, owner, body.project_id, body.model_dump(mode="json"), private)
+                created["job_id"] = body.job_id
                 return 202, body.model_dump(mode="json")
             except BaseException:
                 runner.release()
                 raise
 
         try:
-            status, body = store.idempotent(
-                f"createJob:{owner}:{id}", idempotency_key, payload.model_dump(mode="json"), action
-            )
+            status, body = store.idempotent(scope, key, logical, action)
         except BaseException:
             if created:
                 runner.release()
@@ -391,6 +364,111 @@ def create_app(config: ApiConfig):
         if created:
             runner.start_reserved(created["job_id"])
         return JSONResponse(body, status_code=status)
+
+    def new_job(project_id, revision_id, asset, settings, input_kind, stages, parent_job_id=None, extra=None):
+        job_id = _new_id("job")
+        body = JobResponse(
+            job_id=job_id, project_id=project_id, revision_id=revision_id,
+            asset_id=asset["body"]["asset_id"], input_kind=input_kind,
+            settings_snapshot=settings, status=JobStatus.QUEUED, stages=stages,
+            parent_job_id=parent_job_id, sewout_record=current_sewout(project_id, revision_id),
+        )
+        private = {
+            "job_dir": str(data_root / "jobs" / job_id), "run_dir": str(data_root / "runs" / job_id),
+            "asset_path": asset["private"]["path"], "artifact_paths": {}, **(extra or {}),
+        }
+        return body, private
+
+    @api.post("/projects/{id}/jobs")
+    def create_job(
+        id: str,
+        payload: JobCreate,
+        idempotency_key: str = Header(alias="Idempotency-Key"),
+    ):
+        owned("project", id)
+        validate_settings(payload.settings, catalog)
+        asset = owned("asset", payload.asset_id, id)
+        revision = owned("revision", payload.revision_id, id)
+        if revision["body"].get("kind") != "initial":
+            raise ApiProblem("INVALID_REQUEST", "Un trabajo nuevo parte de una revisión inicial.")
+        if revision["private"].get("settings") != payload.settings.model_dump(mode="json"):
+            raise ApiProblem("REVISION_CONFLICT", "La configuración no coincide con la revisión inmutable.")
+        media_type = asset["body"].get("media_type")
+        if payload.input_kind == "prepared_svg":
+            if media_type != "image/svg+xml":
+                raise ApiProblem("INVALID_REQUEST", "La entrada prepared_svg requiere un asset SVG.")
+            stages = initial_stages()
+        else:
+            if media_type not in ("image/png", "image/jpeg"):
+                raise ApiProblem("INVALID_REQUEST", "La entrada raster_image requiere un asset PNG o JPEG.")
+            stages = raster_stages()
+        return enqueue_job(
+            f"createJob:{owner}:{id}", idempotency_key, payload.model_dump(mode="json"),
+            lambda: new_job(id, payload.revision_id, asset, payload.settings, payload.input_kind, stages),
+        )
+
+    @api.get("/jobs/{id}/analysis")
+    def get_job_analysis(id: str):
+        job = owned("job", id)
+        source = job if "analysis" in job["private"] else None
+        if source is None and job["private"].get("analysis_from"):
+            parent = owned("job", job["private"]["analysis_from"])
+            source = parent if "analysis" in parent["private"] else None
+        if source is None:
+            raise ApiProblem("NOT_FOUND", "Este trabajo no tiene un análisis visual asociado.")
+        return JSONResponse(AnalysisSpec.model_validate(source["private"]["analysis"]).model_dump(mode="json"))
+
+    @api.post("/jobs/{id}/analysis-decision")
+    def decide_analysis(
+        id: str,
+        payload: AnalysisDecision,
+        idempotency_key: str = Header(alias="Idempotency-Key"),
+    ):
+        job = owned("job", id)
+        original = JobResponse.model_validate(job["body"])
+        analysis = job["private"].get("analysis")
+        awaiting = original.status == JobStatus.NEEDS_REVIEW and analysis is not None and any(
+            issue.severity == "review_required" and issue.stage == "analysis" for issue in original.issues
+        )
+        if not awaiting:
+            raise ApiProblem("REVISION_CONFLICT", "Este trabajo no está esperando una decisión sobre el análisis.")
+        decision = payload.root
+        project_id = original.project_id
+        asset = owned("asset", original.asset_id, project_id)
+        base = {"parent": id, "decision": payload.model_dump(mode="json")}
+        if decision.action == "approve":
+            known = {region["region_id"] for region in analysis["regions"]}
+            if not set(decision.flagged_region_ids) <= known:
+                raise ApiProblem("INVALID_REQUEST", "flagged_region_ids debe pertenecer al análisis.")
+
+            def build():
+                return new_job(
+                    project_id, original.revision_id, asset, original.settings_snapshot, "raster_image",
+                    continuation_stages(id), id,
+                    {"analysis_from": id, "flagged_region_ids": list(decision.flagged_region_ids)},
+                )
+        else:
+            available = {item.provider_id for item in catalog.providers if item.available}
+            if decision.ai_provider not in available or decision.ai_provider == original.settings_snapshot.ai_provider:
+                raise ApiProblem("INVALID_REQUEST", "El proveedor no está disponible o es el mismo que el actual.")
+            settings = original.settings_snapshot.model_copy(update={"ai_provider": decision.ai_provider})
+
+            def build():
+                # ai_provider es parte de JobSettings y la revisión es inmutable: se crea una revisión nueva.
+                revision_id = _new_id("rev")
+                body, private = new_job(project_id, revision_id, asset, settings, "raster_image", raster_stages(), id)
+                revision = RevisionResponse(
+                    revision_id=revision_id, project_id=project_id, base_revision_id=original.revision_id,
+                    reason="analysis_retry", created_at=_now(), kind="analysis_retry",
+                    parent_job_id=id, job_id=body.job_id,
+                )
+                store.create(
+                    "revision", revision_id, owner, project_id, revision.model_dump(mode="json"),
+                    {"settings": settings.model_dump(mode="json"), "document": None},
+                )
+                return body, private
+
+        return enqueue_job(f"decideAnalysis:{owner}:{id}", idempotency_key, base, build)
 
     @api.get("/jobs/{id}")
     def get_job(id: str):

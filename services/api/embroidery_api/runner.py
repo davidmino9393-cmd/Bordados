@@ -12,6 +12,7 @@ from embroidery_contracts.jobs import StageRecord
 from api_adapter import make_issue, result_documents
 from process_runner import WorkerFailure, run_logged
 
+from .analysis import ProviderError, normalize, region_incoherent_issue
 from .errors import ApiProblem
 
 
@@ -24,7 +25,16 @@ FAILURE_DESCRIPTIONS = {
     IssueCode.WORKER_TIMEOUT: "El trabajo superó el plazo configurado.",
     IssueCode.WORKER_EXPORT_FAILED: "La exportación del trabajo falló.",
     IssueCode.JOB_CANCELLED: "El trabajo fue cancelado.",
+    IssueCode.ANALYSIS_REFUSED: "El proveedor de IA rechazó analizar la imagen.",
+    IssueCode.ANALYSIS_INCOMPLETE: "El proveedor de IA devolvió un análisis incompleto.",
+    IssueCode.ANALYSIS_SCHEMA_INVALID: "La respuesta del proveedor de IA no tiene el formato esperado.",
+    IssueCode.PROVIDER_RATE_LIMITED: "El proveedor de IA alcanzó su límite de uso.",
+    IssueCode.PROVIDER_UNAVAILABLE: "El proveedor de IA no está disponible.",
+    IssueCode.LOCAL_MODEL_UNAVAILABLE: "El modelo local no está disponible.",
 }
+VECTORIZATION_PENDING = "vectorization_not_implemented"
+VECTORIZATION_PENDING_TEXT = "La vectorización de imágenes todavía no está disponible en este servidor."
+STAGE_ORDER = ("analyzing", "vectorizing", "digitizing", "validating")
 
 
 def initial_stages():
@@ -36,10 +46,23 @@ def initial_stages():
     )
 
 
+def raster_stages():
+    return tuple(StageRecord(stage=stage, outcome="pending") for stage in STAGE_ORDER)
+
+
+def continuation_stages(parent_job_id):
+    """Job de imagen que continúa tras aprobar el análisis de `parent_job_id`: `analyzing` omitido con motivo."""
+    return (
+        StageRecord(stage="analyzing", outcome="skipped", reason=f"análisis aprobado en {parent_job_id}"),
+        *(StageRecord(stage=stage, outcome="pending") for stage in STAGE_ORDER[1:]),
+    )
+
+
 class JobRunner:
-    def __init__(self, config, store):
+    def __init__(self, config, store, providers=None):
         self.config = config
         self.store = store
+        self.providers = dict(providers or {})
         self._executor = ThreadPoolExecutor(max_workers=config.max_workers, thread_name_prefix="embroidery-worker")
         self._lock = threading.RLock()
         self._reserved = 0
@@ -113,6 +136,9 @@ class JobRunner:
         previous = JobResponse.model_validate(resource["body"])
         private = dict(resource["private"])
         if previous.status in FINAL_STATES:
+            return
+        if previous.input_kind == "raster_image":
+            self._execute_raster(previous, private, event)
             return
         if previous.cancellation_requested or event.is_set():
             self._save_transition(
@@ -196,6 +222,62 @@ class JobRunner:
             extra,
         )
 
+    def _execute_raster(self, previous, private, event):
+        """H2: análisis visual de una imagen. La vectorización todavía no existe (paquete E del plan)."""
+        continuation = any(r.stage == "analyzing" and r.outcome == "skipped" for r in previous.stages)
+        first = "vectorizing" if continuation else "analyzing"
+        if previous.cancellation_requested or event.is_set():
+            self._save_transition(
+                previous, JobStatus.CANCELLED, private, {first: ("cancelled", None, None)},
+                {"cancellation_requested": True},
+            )
+            return
+        status = JobStatus.VECTORIZING if continuation else JobStatus.ANALYZING
+        previous = self._save_transition(previous, status, private, {first: ("running", None, None)})
+        if continuation:
+            self._save_failed(previous, private, IssueCode.WORKER_EXPORT_FAILED, VECTORIZATION_PENDING, stage="vectorizing")
+            return
+        self._analyze(previous, private, event)
+
+    def _analyze(self, previous, private, event):
+        asset = self.store.get("asset", previous.asset_id)["body"]
+        provider = self.providers.get(previous.settings_snapshot.ai_provider)
+        try:
+            if provider is None:
+                raise ProviderError(IssueCode.PROVIDER_UNAVAILABLE, "provider_not_configured")
+            image = Path(private["asset_path"]).read_bytes()
+            width, height = asset["original_width_px"], asset["original_height_px"]
+            result = provider.analyze(image, asset["media_type"], width, height, event)
+            normalized = normalize(result, provider.provider_id, previous.job_id, previous.asset_id, width, height)
+        except ProviderError as exc:
+            self._save_failed(previous, private, exc.code, exc.detail, stage="analyzing")
+            return
+        raw_path = Path(private["job_dir"]) / "provider-raw.json"
+        raw_path.parent.mkdir(parents=True, exist_ok=True)
+        raw_path.write_text(json.dumps(result.raw, ensure_ascii=False), encoding="utf-8")
+        private["analysis"] = normalized.spec.model_dump(mode="json")
+        private["provider_raw_path"] = str(raw_path)
+        latest = JobResponse.model_validate(self.store.get("job", previous.job_id)["body"])
+        done = {"analyzing": ("completed", result.duration_ms, None)}
+        if latest.cancellation_requested or event.is_set():
+            self._save_transition(
+                previous, JobStatus.CANCELLED, private, {"analyzing": ("cancelled", result.duration_ms, None)},
+                {"cancellation_requested": True},
+            )
+            return
+        issues = [region_incoherent_issue(normalized.spec, rid) for rid in normalized.incoherent_region_ids]
+        if issues:
+            self._save_transition(
+                previous, JobStatus.NEEDS_REVIEW, private, done,
+                {"issues": [issue.model_dump(mode="json") for issue in issues]},
+            )
+            return
+        # Sin dudas el análisis no pausa: sigue a la vectorización, que aún no está implementada.
+        previous = self._save_transition(
+            previous, JobStatus.VECTORIZING, private, {**done, "vectorizing": ("running", None, None)},
+        )
+        self._save_failed(previous, private, IssueCode.WORKER_EXPORT_FAILED, VECTORIZATION_PENDING, stage="vectorizing")
+
     def _command(self, asset_path, job_dir):
         command = [
             str(self.config.python_executable), str(self.config.worker_script),
@@ -230,11 +312,12 @@ class JobRunner:
             return
         self._save_failed(previous, private, code, reason, duration)
 
-    def _save_failed(self, previous, private, code, reason, duration_ms=None):
+    def _save_failed(self, previous, private, code, reason, duration_ms=None, stage="digitizing"):
         issue = self._issue_for(code, reason)
+        later = STAGE_ORDER[STAGE_ORDER.index(stage) + 1:]
         self._save_transition(
             previous, JobStatus.FAILED, private,
-            {"digitizing": ("failed", duration_ms, None), "validating": ("pending", None, None)},
+            {stage: ("failed", duration_ms, None), **{name: ("pending", None, None) for name in later}},
             {"issues": [issue.model_dump(mode="json")]},
         )
 
@@ -243,10 +326,10 @@ class JobRunner:
             issue_code = IssueCode(code)
         except (TypeError, ValueError):
             issue_code = IssueCode.WORKER_EXPORT_FAILED
-        return make_issue(
-            issue_code, FAILURE_DESCRIPTIONS.get(issue_code, "El worker no pudo completar el trabajo."),
-            {"reason": reason or "worker_failure"},
-        )
+        description = FAILURE_DESCRIPTIONS.get(issue_code, "El worker no pudo completar el trabajo.")
+        if reason == VECTORIZATION_PENDING:
+            description = VECTORIZATION_PENDING_TEXT
+        return make_issue(issue_code, description, {"reason": reason or "worker_failure"})
 
     def _save_transition(self, previous, status, private, updates, extra=None):
         data = previous.model_dump(mode="json")
