@@ -60,6 +60,7 @@ Aplicación web privada que convierte una imagen o un SVG de un logo en un borda
 - Un análisis sin dudas no pausa; la aprobación obligatoria sería un cambio aparte (H2.1).
 
 ## 8. Pendientes y bloqueos
+0. **Coser y medir la muestra de calibración H3** (`tests/calibration/h3/`; David la hará más adelante). Es lo que destraba el ancho mínimo bordable, la densidad/compensación y el JEF desde imágenes.
 1. Confirmar la referencia de Anime Socks y sumar sus dos escalas al manifiesto.
 2. Clave y modelo de OpenAI, tope de costo por trabajo; modelo y hardware para Ollama.
 3. Paquete E (vector y geometría, propuesto para Codex): interfaz y reparto en `h2/E-interfaz.md`, pendientes de que David autorice el traslado de los commits de fixtures a `codex/motor` y de que Codex confirme la firma. Paquete F (evaluación, Claude) depende de E.

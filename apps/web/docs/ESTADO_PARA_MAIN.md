@@ -54,4 +54,5 @@ Corrida completa sobre el último commit:
 ## Decisiones para David
 1. ~~¿Se ratifican los seis cambios de contrato?~~ **Ratificados.**
 2. ¿Se pasa `claude/web` a `main` ahora, o después de que Codex revise `e1-pixel-mask-v4`?
-3. Para destrabar lo no probado: clave y modelo de OpenAI con tope de costo, y modelo de visión y hardware para Ollama.
+3. Coser y medir la muestra de calibración (`tests/calibration/h3`, **pendiente: David la hará más adelante**): sin ella, ancho mínimo, densidad y compensación siguen provisionales y no hay JEF desde imágenes.
+4. Para destrabar lo no probado: clave y modelo de OpenAI con tope de costo, y modelo de visión y hardware para Ollama.
