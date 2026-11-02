@@ -1,0 +1,52 @@
+{
+  "experiment_only": true,
+  "production_baseline_commit": "4a7fd6b",
+  "input_sha256": "28f9b40944f0dcd19b18a76fffebb2996811b34140c6983b4d14b01c37127d47",
+  "pillow": "12.3.0",
+  "color_limit": 1,
+  "foreground_pixels": 84739,
+  "foreground_mask_sha256": "cfdf213be2383dcc78858882e180d0c158ee4a1e533a1a15ed047b85eb9e55cf",
+  "background_evidence": {
+    "background_method": "white_border_consensus",
+    "alpha_threshold": 128,
+    "partial_alpha_pixels": 0,
+    "white_threshold": 250,
+    "white_border_fraction": 1.0,
+    "white_removed_globally": true,
+    "background_is_assumption": true
+  },
+  "contrast_threshold_luma_8bit": 192,
+  "source_contrast_pixels": 82988,
+  "methods": {
+    "baseline_mediancut": {
+      "kmeans": 0,
+      "palette": [
+        "#1d3060"
+      ],
+      "mean_absolute_rgb_error": 14.14700039729837,
+      "output_contrast_pixels": 84739,
+      "source_contrast_pixels_retained": 82988
+    },
+    "mediancut_kmeans3": {
+      "kmeans": 3,
+      "palette": [
+        "#1d3060"
+      ],
+      "mean_absolute_rgb_error": 14.14700039729837,
+      "output_contrast_pixels": 84739,
+      "source_contrast_pixels_retained": 82988
+    },
+    "maximum_coverage": {
+      "kmeans": 0,
+      "palette": [
+        "#f9fafb"
+      ],
+      "mean_absolute_rgb_error": 192.35661265769008,
+      "output_contrast_pixels": 0,
+      "source_contrast_pixels_retained": 0
+    }
+  },
+  "mask_and_source_resolution_unchanged": true,
+  "previews_resized_only_for_display": true,
+  "iou_holes_text_and_physical_quality_evaluated": false
+}

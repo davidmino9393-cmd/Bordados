@@ -27,12 +27,13 @@ No se modificaron API, contratos, worker anterior ni regresiones existentes.
 ## Pendientes
 
 - Fondo blanco opaco inferido por borde; puede eliminar blancos intencionales. Transparencia parcial binarizada. Ambos se advierten.
-- Cuantización puede cambiar colores de bordes suavizados. Evaluación visual F pendiente.
+- F sobre `4a7fd6b` confirmó pérdidas de color. La investigación `2fbb6ca` no cambia E; fidelidad semántica y legibilidad siguen pendientes.
 - Recorte fraccional, orientación EXIF no normalizada y complejidad excesiva: incidencias controladas.
 - SVG preparados siguen su recorrido existente. Ejes centrales, satén y casos difíciles quedan fuera de esta tanda.
 - Cancelación cooperativa: Pillow nativo se consulta antes/después, no se interrumpe internamente.
 
 ## Referencias
 
+- [Estado y arranque del próximo chat](CONTINUAR.md)
 - [Interfaz](README.md)
 - [Evidencia y reproducción](../../../tests/engine/evidence/h2-e1/README.md)
