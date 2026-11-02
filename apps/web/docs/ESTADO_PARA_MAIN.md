@@ -13,7 +13,7 @@ Contenido: [Qué contiene](#qué-contiene) · [Contratos que cambian](#contratos
 | `services/api` | 8 | Análisis H2 (OpenAI con transporte inyectable, sin probar contra la red), pipeline de imagen, `analysis-decision`, `original_download` firmado, `purpose` de assets |
 | `workers/embroidery` | 15 | E1 de Codex (`vectorize/`) con mis cambios: cuantización `kmeans=3`, color mediano, máscara por cobertura, ancho mínimo bordable (`e1-pixel-mask-v4`) |
 | `packages/contracts` | 7 | Ver abajo |
-| `tests` | 142 | Motor, F (`tests/h2_eval`), fixtures H2 (16 entradas), e2e |
+| `tests` | 150 | Motor, F (`tests/h2_eval`), fixtures H2 (16 entradas), e2e, muestra de calibración física H3 (`tests/calibration/h3`: JEF, planilla y protocolo para coser y medir) |
 
 Incluye H0-06 de OpenCode (regresiones sobre archivos guardados) y la investigación de Codex hasta `cf447b4`.
 
@@ -36,7 +36,7 @@ Corrida completa sobre el último commit:
 
 | Suite | Resultado |
 |---|---|
-| Motor (`unittest`) | 109 pruebas OK |
+| Motor (`unittest`) | 114 pruebas OK |
 | Evaluación F (`tests/h2_eval`) | 16 pruebas OK (1 omitida); `run_eval.py`: 14 PNG/JPEG, 0 errores, 8 comprobaciones 14/14 |
 | Web (Vitest, typecheck, build) | 156 pruebas OK |
 | e2e con mocks (Playwright) | 42 OK |
