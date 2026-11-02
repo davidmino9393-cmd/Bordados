@@ -23,17 +23,17 @@ class VectorizeFailure(Exception):
         super().__init__(issue.description)
 
 
-def issue(code, description, evidence, object_ids=(), correction=None):
+def issue(code, description, evidence, object_ids=(), correction=None, *, region_ids=()):
     rule = ISSUE_RULES[code]
     return Issue(
         code=code, severity=rule.severity, stage=rule.stage,
-        object_ids=tuple(object_ids), description=description, evidence=evidence,
+        object_ids=tuple(object_ids), region_ids=tuple(region_ids), description=description, evidence=evidence,
         suggested_correction=correction or "Revisar la entrada y la evidencia antes de continuar.",
     )
 
 
-def fail(code, description, reason, **evidence):
-    raise VectorizeFailure(issue(code, description, {"reason": reason, **evidence}))
+def fail(code, description, reason, *, region_ids=(), **evidence):
+    raise VectorizeFailure(issue(code, description, {"reason": reason, **evidence}, region_ids=region_ids))
 
 
 def check_cancel(cancel):

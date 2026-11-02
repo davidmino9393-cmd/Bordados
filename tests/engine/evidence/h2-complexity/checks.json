@@ -1,0 +1,25 @@
+{
+  "baseline_commit": "5e9897e",
+  "full_suite": {"tests": 48, "failures": 0, "errors": 0, "duration_s": 19.88},
+  "e_tests": 17,
+  "independent_review": {
+    "blocking_findings": 0,
+    "multicolour_random_masks": 300,
+    "seed": 20261102,
+    "pixel_parity_and_determinism": true
+  },
+  "baseline_documents_and_svgs_identical": 6,
+  "boundary_edge_limit": 500000,
+  "reference_edges_preserved": 425078,
+  "over_limit_checkerboard_edges": 524288,
+  "over_limit_result": "GEOMETRY_INVALID: boundary_edge_limit",
+  "adjacency_payload_bound_reference_bytes": 3275881,
+  "adjacency_bound_is_total_process_memory": false,
+  "input_resized": false,
+  "small_details_discarded": false,
+  "segmentation_or_palette_changed": false,
+  "contracts_changed": false,
+  "api_changed": false,
+  "semantic_fidelity_verified": false,
+  "jef_generated": false
+}
