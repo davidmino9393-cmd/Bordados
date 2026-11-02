@@ -1,0 +1,13 @@
+{
+  "command": [
+    "C:\\dev\\wt-motor\\workers\\embroidery\\.tools\\absent-inkstitch.exe",
+    "--extension=troubleshoot",
+    "C:\\dev\\wt-motor\\workers\\embroidery\\evidence\\missing-binary\\input.svg"
+  ],
+  "timeout_s": 180,
+  "stdin": "DEVNULL",
+  "shell": false,
+  "hidden_window": true,
+  "spawn_error": "[WinError 2] El sistema no puede encontrar el archivo especificado",
+  "duration_ms": 0
+}

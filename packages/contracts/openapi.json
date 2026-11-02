@@ -8396,7 +8396,7 @@
     },
     "/api/v1/projects/{id}/jobs": {
       "post": {
-        "description": "Requires revision_id created previously through POST project revisions; never creates an implicit revision. Enqueue using owned asset and matching immutable settings snapshot",
+        "description": "Requires revision_id created previously through POST project revisions; never creates an implicit revision. Enqueue using owned asset and matching immutable settings snapshot. One revision admits N distinct jobs: failure, retry or regeneration may create a new job on the same revision. Each job preserves its identity, input/settings snapshot and completed artifacts; previous artifacts are never overwritten. Reusing an Idempotency-Key replays that job, while a new key may create another job",
         "operationId": "createJob",
         "parameters": [
           {

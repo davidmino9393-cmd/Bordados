@@ -1,0 +1,14 @@
+{
+  "schema_version": "0.1",
+  "scope": "User-approved documentation-only clarification: revision to jobs is 1:N; no schema or API shape change; no new tag",
+  "schemas_sha256": "ec1691758a7b442bd35e96a8395c4a08825727cafb1c8e89196c00ae29663a05",
+  "openapi_except_job_description_sha256": "b5ca68e875b7fb855a9c202ec529f8a9347e7179325bcbb300f1c786a51cdf06",
+  "before": {
+    "packages/contracts/openapi.json": "0676d0befd8eea734b2bd9b16b44de48da5b752abe8333d7a663469401750676",
+    "packages/contracts/states.md": "2d92313e00500fcdf551f62dc789a476da7d1d43a7d7cc7e4e82d60eaa00fbed"
+  },
+  "after": {
+    "packages/contracts/openapi.json": "5887f10ba22055b4798dc11891b81e43641429093792b9e93ce3a877786ab219",
+    "packages/contracts/states.md": "54deb0a60d8c3a3b670ccf0fc45da9ac28e85900a175e8582a94f057a08573cd"
+  }
+}

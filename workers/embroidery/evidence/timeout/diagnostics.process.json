@@ -1,0 +1,20 @@
+{
+  "command": [
+    "C:\\Users\\david\\AppData\\Roaming\\inkscape\\extensions\\inkstitch\\inkstitch\\bin\\inkstitch.exe",
+    "--extension=troubleshoot",
+    "C:\\dev\\wt-motor\\workers\\embroidery\\evidence\\timeout\\input.svg"
+  ],
+  "timeout_s": 0.001,
+  "stdin": "DEVNULL",
+  "shell": false,
+  "hidden_window": true,
+  "pid": 40028,
+  "timed_out": true,
+  "cleanup": {
+    "method": "taskkill /T /F",
+    "returncode": 1,
+    "stdout": "",
+    "stderr": "Error: El nombre de usuario o la contrase\ufffda no son correctos.\r\r\n"
+  },
+  "duration_ms": 7204
+}

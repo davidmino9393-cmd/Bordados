@@ -172,6 +172,11 @@ def job_operations():
         cancel_path: {"post": operation(cancel_path, "post", "cancelJob", "Always 202 for accepted requests, including terminal jobs. Preserve observed status; cancelled only after processes stop. Never restart a terminal job", JobResponse, 202,
                          {"requested": example(JobResponse, job_example("digitizing", True)), "terminal": example(JobResponse, fixture("cancellation"))}, CancelRequest, {"schema_version": "0.1"}, POST_ERRORS + (ErrorCode.NOT_FOUND,))},
     }
+    jobs[create_path]["post"]["description"] += (
+        ". One revision admits N distinct jobs: failure, retry or regeneration may create a new job on the same revision. "
+        "Each job preserves its identity, input/settings snapshot and completed artifacts; previous artifacts are never overwritten. "
+        "Reusing an Idempotency-Key replays that job, while a new key may create another job"
+    )
     return jobs
 
 
