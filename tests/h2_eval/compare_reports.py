@@ -34,12 +34,12 @@ def compare(base, candidate, names=("base", "candidato")):
         verdicts[verdict] += 1
         rows.append(
             f"| {image['id']} | {a['large_error_fraction']:.4f} | {b['large_error_fraction']:.4f} | {a['p95_max_channel_error']} | "
-            f"{b['p95_max_channel_error']} | {a['mean_abs_rgb_error']:.2f} | {b['mean_abs_rgb_error']:.2f} | {image['objects']} / {other['objects']} | {verdict} |"
+            f"{b['p95_max_channel_error']} | {a['mean_abs_rgb_error']:.2f} | {b['mean_abs_rgb_error']:.2f} | {a.get('blurred_error', '—')} | {b.get('blurred_error', '—')} | {image['objects']} / {other['objects']} | {verdict} |"
         )
     first, second = names
     header = (
         f"| Imagen | Píxeles con error ≥ 64 ({first}) | ({second}) | p95 ({first}) | p95 ({second}) | Error medio ({first}) | "
-        f"({second}) | Objetos | Resultado |\n|---|---:|---:|---:|---:|---:|---:|---|---|"
+        f"({second}) | Error borroso ({first}) | ({second}) | Objetos | Resultado |\n|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|"
     )
     durations = {
         name: report["summary"].get("duration_ms", {}) for name, report in zip(names, (base, candidate))

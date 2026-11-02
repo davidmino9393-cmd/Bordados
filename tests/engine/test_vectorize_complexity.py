@@ -16,8 +16,9 @@ class ComplexityTests(unittest.TestCase):
             with self.subTest(target=(width, height)):
                 result = result_for(data, source=asset(data), configuration=settings(width, height, 3))
                 evidence = result.evidence
-                # Con la paleta sin refinar eran 425078 aristas (casi todo era ruido dentro de tres tonos casi blancos).
-                self.assertEqual(sum(m["boundary_edges"] for m in evidence["masks"]), 110028)
+                # Con la paleta sin refinar eran 425078 aristas (casi todo era ruido dentro de tres tonos casi blancos);
+                # 110028 con k-means y 110024 al descartar los 2 píxeles de borde con cobertura menor a la mitad.
+                self.assertEqual(sum(m["boundary_edges"] for m in evidence["masks"]), 110024)
                 self.assertEqual(sum(m["pixel_count"] for m in evidence["masks"]),
                                  evidence["segmentation"]["foreground_pixels"])
                 self.assertEqual(evidence["segmentation"]["pixels_discarded_by_size_filter"], 0)
@@ -48,6 +49,28 @@ class ComplexityTests(unittest.TestCase):
         result = result_for(png(image), configuration=settings(colors=1))
         self.assertEqual([o.work_color for o in result.document.objects], ["#14285a"])
         self.assertIn("median member", result.evidence["segmentation"]["quantizer"])
+
+    def test_an_anti_aliased_line_keeps_its_width_instead_of_growing_with_its_fringe(self):
+        big = Image.new("RGB", (800, 160), "white")
+        from PIL import ImageDraw
+        ImageDraw.Draw(big).rectangle((40, 73, 760, 84), fill=(20, 40, 90))  # 3 px reales: filas con cobertura 0,75 / 1 / 1 / 0,25
+        image = big.resize((200, 40), Image.Resampling.LANCZOS)
+        result = result_for(png(image), configuration=settings(colors=1))
+        segmentation = result.evidence["segmentation"]
+        line_length = 180
+        width_px = segmentation["foreground_pixels"] / line_length
+        without_coverage = (segmentation["foreground_pixels"] + segmentation["fringe_pixels_removed"]) / line_length
+        self.assertGreater(without_coverage, 3.9)  # contando todo lo que no es blanco la línea ocuparía 4 filas
+        self.assertAlmostEqual(width_px, 3.0, delta=0.1)  # con cobertura >= 0,5 queda el ancho real: 3 px
+        self.assertEqual(segmentation["coverage_threshold"], 0.5)
+
+    def test_transparent_images_are_decided_by_alpha_not_by_coverage_over_white(self):
+        image = Image.new("RGBA", (40, 40), (0, 0, 0, 0))
+        image.paste((250, 240, 235, 255), (10, 10, 30, 30))  # un color casi blanco, pero opaco: es diseño
+        segmentation = result_for(png(image), configuration=settings(colors=1)).evidence["segmentation"]
+        self.assertIsNone(segmentation["coverage_threshold"])
+        self.assertEqual(segmentation["fringe_pixels_removed"], 0)
+        self.assertEqual(segmentation["foreground_pixels"], 400)
 
     def test_excessive_complexity_still_fails_without_simplifying_input(self):
         image = Image.new("RGBA", (512, 512))

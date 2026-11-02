@@ -9,10 +9,11 @@ import io
 import math
 import re
 
-from PIL import Image, ImageChops, ImageStat
+from PIL import Image, ImageChops, ImageFilter, ImageStat
 
 ALPHA_BACKGROUND = 128
 WHITE_BACKGROUND = 250
+BLUR_RADIUS_PX = 2  # «cómo se ve desde lejos»: un trazo de 1 px suavizado y uno entero de 1 px se parecen
 LARGE_CHANNEL_ERROR = 64  # diferencia de canal a partir de la cual el color dibujado ya no se parece al original
 TOKEN = re.compile(r"([MLZmlz])|(-?\d+(?:\.\d*)?(?:[eE][-+]?\d+)?),(-?\d+(?:\.\d*)?(?:[eE][-+]?\d+)?)")
 
@@ -74,6 +75,11 @@ def original_foreground(image_bytes):
     return image.convert("RGB"), ImageChops.subtract(opaque, white)
 
 
+def over_white(image_bytes):
+    rgba = Image.open(io.BytesIO(image_bytes)).convert("RGBA")
+    return Image.alpha_composite(Image.new("RGBA", rgba.size, (255, 255, 255, 255)), rgba).convert("RGB")
+
+
 def hex_to_rgb(value):
     return tuple(int(value[i:i + 2], 16) for i in (1, 3, 5))
 
@@ -107,7 +113,9 @@ def measure(document, image_bytes):
         if both_px and cumulative >= 0.95 * both_px:
             p95 = value
             break
+    blur = ImageChops.difference(over_white(image_bytes).filter(ImageFilter.GaussianBlur(BLUR_RADIUS_PX)), colour.filter(ImageFilter.GaussianBlur(BLUR_RADIUS_PX)))
     return {
+        "blurred_error": round(sum(ImageStat.Stat(blur).mean) / 3, 4),
         "foreground_iou": round(both_px / union, 6) if union else 1.0,
         "original_foreground_px": original_px, "rendered_px": rendered_px,
         "missing_px": original_px - both_px, "extra_px": rendered_px - both_px,

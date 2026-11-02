@@ -2,6 +2,7 @@
 from array import array
 from collections import Counter
 from dataclasses import dataclass
+from itertools import compress
 from io import BytesIO
 import hashlib
 import math
@@ -17,6 +18,11 @@ from .types import check_cancel, fail
 # oscuros conservados 0 de 34 contra 29 de 34). Ver tests/h2_eval/informes/. Es una constante global, no un ajuste por logo.
 QUANTIZER_KMEANS_PASSES = 3
 WHITE_DISTANCE_MAX = 3 * 255
+# Cobertura mínima de un píxel suavizado: un píxel del borde es una mezcla del color del grupo con el blanco del fondo; si
+# tiene menos de la mitad de ese color se lo deja en el fondo (como un trazador a 50 % de cobertura). Sin esto, cada línea
+# fina sale 1-2 px más ancha que en el original. Solo con fondo blanco quitado; con transparencia manda el alfa.
+COVERAGE_MIN = 0.5
+COVERAGE_LEVEL = math.ceil(COVERAGE_MIN * 255)
 MAX_INPUT_BYTES = 32 * 1024 * 1024
 MAX_INPUT_PIXELS = 4_000_000
 ALPHA_THRESHOLD = 128
@@ -150,10 +156,20 @@ def segment(rgba, asset, color_limit, cancel):
     )
     check_cancel(cancel)
     quantized.putpalette(_median_member_palette(foreground, quantized))
+    keep = None
+    if evidence["white_removed_globally"]:
+        # Se descartan los bordes suavizados y los colores se recalculan con los píxeles que quedan (el núcleo del trazo).
+        keep = _coverage_mask(foreground, quantized)
+        quantized.putpalette(_median_member_palette(foreground, quantized, keep))
+        keep = _coverage_mask(foreground, quantized)
     check_cancel(cancel)
     palette_bytes = quantized.getpalette()
     indices = quantized.tobytes()
-    palette = {index: "#" + bytes(palette_bytes[index * 3:index * 3 + 3]).hex() for index in sorted(set(indices))}
+    keep_bytes = keep.tobytes() if keep is not None else None
+    kept_indices = indices if keep_bytes is None else bytes(compress(indices, keep_bytes))
+    if not kept_indices:
+        fail(IssueCode.GEOMETRY_INVALID, "No se encontraron píxeles de diseño.", "empty_foreground")
+    palette = {index: "#" + bytes(palette_bytes[index * 3:index * 3 + 3]).hex() for index in sorted(set(kept_indices))}
     # Merge equal RGB entries: Pillow can return duplicate palette colours.
     by_color = {}
     remap = {index: by_color.setdefault(color, index) for index, color in palette.items()}
@@ -165,15 +181,18 @@ def segment(rgba, asset, color_limit, cancel):
             check_cancel(cancel)
         for index in range(row * width, (row + 1) * width):
             if mask_bytes[index]:
-                labels[index] = remap[indices[source_index]]
+                if keep_bytes is None or keep_bytes[source_index]:
+                    labels[index] = remap[indices[source_index]]
                 source_index += 1
     evidence.update({
         "pillow_version": PILLOW_VERSION,
         "quantizer": f"Pillow MEDIANCUT kmeans={QUANTIZER_KMEANS_PASSES}; no dithering; foreground pixels only; cluster colour = median member by distance from white",
-        "foreground_pixels": len(indices), "colour_limit": color_limit,
+        "foreground_pixels": len(kept_indices), "colour_limit": color_limit,
+        "coverage_threshold": COVERAGE_MIN if keep is not None else None,
+        "fringe_pixels_removed": len(indices) - len(kept_indices),
         "output_colours": sorted(palette.values()),
         "quantization_is_lossy": True,
-        **_quantization_evidence(foreground, quantized),
+        **_quantization_evidence(foreground, quantized, keep),
         "source_mask_sha256": hashlib.sha256(mask_bytes).hexdigest(),
         "crop_box_px": [x, y, width, height],
         "pixels_discarded_by_size_filter": 0,
@@ -181,7 +200,7 @@ def segment(rgba, asset, color_limit, cancel):
     return Segmentation(labels, width, height, x, y, palette, evidence)
 
 
-def _median_member_palette(foreground, quantized):
+def _median_member_palette(foreground, quantized, keep=None):
     """Color de cada grupo = su miembro mediano por distancia al blanco, en lugar del promedio.
 
     El promedio mezcla el color del diseño con los píxeles suavizados del borde (que son una mezcla con el fondo) y deja
@@ -190,7 +209,8 @@ def _median_member_palette(foreground, quantized):
     mitad en los logos planos (tests/h2_eval/informes/). Es determinista: se ordena por (distancia, RGB).
     """
     pixels = foreground.tobytes()
-    counts = Counter(zip(quantized.tobytes(), zip(pixels[0::3], pixels[1::3], pixels[2::3])))
+    pairs = zip(quantized.tobytes(), zip(pixels[0::3], pixels[1::3], pixels[2::3]))
+    counts = Counter(pairs if keep is None else compress(pairs, keep.tobytes()))
     members = {}
     for (index, color), count in counts.items():
         members.setdefault(index, []).append((WHITE_DISTANCE_MAX - sum(color), color, count))
@@ -206,16 +226,41 @@ def _median_member_palette(foreground, quantized):
     return palette
 
 
-def _quantization_evidence(foreground, quantized):
+def _coverage_mask(foreground, quantized):
+    """Máscara 'L' (255 = se queda) de los píxeles con cobertura >= COVERAGE_MIN del color de su propio grupo.
+
+    Un píxel p mezclado con blanco es p = blanco - a * (blanco - color); la cobertura `a` se obtiene por mínimos cuadrados
+    sobre los tres canales. Se calcula con operaciones de imagen (una conversión lineal por grupo), sin recorrer píxeles.
+    """
+    palette = quantized.getpalette()
+    index_image = Image.frombytes("L", quantized.size, quantized.tobytes())
+    keep = Image.new("L", quantized.size, 0)
+    for index in sorted(set(quantized.tobytes())):
+        weights = [255 - channel for channel in palette[index * 3:index * 3 + 3]]
+        denominator = sum(weight * weight for weight in weights)
+        in_group = index_image.point(lambda value, wanted=index: 255 if value == wanted else 0)
+        if denominator == 0:  # un grupo blanco puro no puede ser una mezcla: se queda entero
+            keep = ImageChops.lighter(keep, in_group)
+            continue
+        scale = 255 / denominator
+        # 255 * a = (255 / D) * (255 * sum(w) - sum(w * p)): coeficientes -w * scale y término constante 255 * sum(w) * scale.
+        matrix = (-weights[0] * scale, -weights[1] * scale, -weights[2] * scale, 255 * sum(weights) * scale)
+        coverage = foreground.convert("L", matrix).point(lambda value: 255 if value >= COVERAGE_LEVEL else 0)
+        keep = ImageChops.lighter(keep, ImageChops.darker(coverage, in_group))
+    return keep
+
+
+def _quantization_evidence(foreground, quantized, keep=None):
     difference = ImageChops.difference(foreground, quantized.convert("RGB"))
     red, green, blue = difference.split()
     maximum = ImageChops.lighter(ImageChops.lighter(red, green), blue)
-    histogram = maximum.histogram()
+    histogram = maximum.histogram(mask=keep)
+    kept = sum(histogram)
     unique = foreground.getcolors(maxcolors=256)
     return {
-        "changed_rgb_pixels": foreground.width - histogram[0],
-        "max_channel_error_rgb": max(extreme[1] for extreme in difference.getextrema()),
-        "mean_absolute_channel_error_rgb": sum(ImageStat.Stat(difference).mean) / 3,
+        "changed_rgb_pixels": kept - histogram[0],
+        "max_channel_error_rgb": max((value for value, count in enumerate(histogram) if count), default=0),
+        "mean_absolute_channel_error_rgb": sum(ImageStat.Stat(difference, mask=keep).mean) / 3,
         "source_colour_count_up_to_256": len(unique) if unique is not None else None,
         "source_more_than_256_colours": unique is None,
     }
