@@ -51,8 +51,8 @@
       "of": 14
     },
     "duration_ms": {
-      "median": 650.5,
-      "max": 2356,
+      "median": 617.0,
+      "max": 2397,
       "runs": 28
     }
   },
@@ -79,10 +79,11 @@
       },
       "objects": 2,
       "duration_ms": [
-        619,
-        800
+        586,
+        555
       ],
       "fidelity": {
+        "blurred_error": 0.488,
         "foreground_iou": 1.0,
         "original_foreground_px": 218688,
         "rendered_px": 218688,
@@ -118,10 +119,11 @@
       },
       "objects": 2,
       "duration_ms": [
-        408,
-        401
+        381,
+        384
       ],
       "fidelity": {
+        "blurred_error": 0.0481,
         "foreground_iou": 1.0,
         "original_foreground_px": 146707,
         "rendered_px": 146707,
@@ -157,10 +159,11 @@
       },
       "objects": 3,
       "duration_ms": [
-        909,
-        906
+        905,
+        903
       ],
       "fidelity": {
+        "blurred_error": 0.0433,
         "foreground_iou": 1.0,
         "original_foreground_px": 483560,
         "rendered_px": 483560,
@@ -196,10 +199,11 @@
       },
       "objects": 3,
       "duration_ms": [
-        658,
-        657
+        627,
+        634
       ],
       "fidelity": {
+        "blurred_error": 0.1619,
         "foreground_iou": 1.0,
         "original_foreground_px": 265883,
         "rendered_px": 265883,
@@ -235,10 +239,11 @@
       },
       "objects": 1,
       "duration_ms": [
-        258,
-        266
+        269,
+        276
       ],
       "fidelity": {
+        "blurred_error": 0.2858,
         "foreground_iou": 1.0,
         "original_foreground_px": 58365,
         "rendered_px": 58365,
@@ -280,10 +285,11 @@
       },
       "objects": 2,
       "duration_ms": [
-        426,
-        431
+        437,
+        433
       ],
       "fidelity": {
+        "blurred_error": 0.4578,
         "foreground_iou": 1.0,
         "original_foreground_px": 170958,
         "rendered_px": 170958,
@@ -319,10 +325,11 @@
       },
       "objects": 2,
       "duration_ms": [
-        594,
-        598
+        596,
+        607
       ],
       "fidelity": {
+        "blurred_error": 0.4753,
         "foreground_iou": 1.0,
         "original_foreground_px": 256612,
         "rendered_px": 256612,
@@ -358,10 +365,11 @@
       },
       "objects": 2,
       "duration_ms": [
-        644,
-        691
+        655,
+        661
       ],
       "fidelity": {
+        "blurred_error": 0.3567,
         "foreground_iou": 1.0,
         "original_foreground_px": 313132,
         "rendered_px": 313132,
@@ -403,10 +411,11 @@
       },
       "objects": 1,
       "duration_ms": [
-        758,
-        728
+        754,
+        730
       ],
       "fidelity": {
+        "blurred_error": 1.9252,
         "foreground_iou": 1.0,
         "original_foreground_px": 101992,
         "rendered_px": 101992,
@@ -442,10 +451,11 @@
       },
       "objects": 1,
       "duration_ms": [
-        303,
+        298,
         306
       ],
       "fidelity": {
+        "blurred_error": 0.6743,
         "foreground_iou": 1.0,
         "original_foreground_px": 84739,
         "rendered_px": 84739,
@@ -481,10 +491,11 @@
       },
       "objects": 3,
       "duration_ms": [
-        2337,
-        2356
+        2397,
+        2354
       ],
       "fidelity": {
+        "blurred_error": 6.3433,
         "foreground_iou": 0.999917,
         "original_foreground_px": 1439881,
         "rendered_px": 1440000,
@@ -520,10 +531,11 @@
       },
       "objects": 2,
       "duration_ms": [
-        514,
-        528
+        528,
+        519
       ],
       "fidelity": {
+        "blurred_error": 0.7169,
         "foreground_iou": 1.0,
         "original_foreground_px": 216028,
         "rendered_px": 216028,
@@ -559,10 +571,11 @@
       },
       "objects": 3,
       "duration_ms": [
-        2243,
-        2214
+        2200,
+        2250
       ],
       "fidelity": {
+        "blurred_error": 1.6118,
         "foreground_iou": 1.0,
         "original_foreground_px": 759420,
         "rendered_px": 759420,
@@ -598,10 +611,11 @@
       },
       "objects": 3,
       "duration_ms": [
-        2233,
-        2201
+        2283,
+        2237
       ],
       "fidelity": {
+        "blurred_error": 1.6118,
         "foreground_iou": 1.0,
         "original_foreground_px": 759420,
         "rendered_px": 759420,
