@@ -1,6 +1,6 @@
 # Estado de `claude/web` para decidir el paso a `main`
 
-Propósito: que David decida con información. **Nada de esto está en `main` ni se subió.** Lo escribió Claude Code; Codex y OpenCode no revisaron los cambios de `claude/web` posteriores a sus entregas.
+Propósito: que David decida con información. **Nada de esto está en `main` ni se subió.** David **ratificó los seis cambios de contrato** de abajo (2026-11-02); falta su decisión sobre el paso a `main`. Lo escribió Claude Code; Codex y OpenCode no revisaron los cambios de `claude/web` posteriores a sus entregas.
 
 Contenido: [Qué contiene](#qué-contiene) · [Contratos que cambian](#contratos-que-cambian) · [Verificación](#verificación) · [Riesgos](#riesgos) · [Decisiones](#decisiones-para-david)
 
@@ -17,7 +17,7 @@ Contenido: [Qué contiene](#qué-contiene) · [Contratos que cambian](#contratos
 
 Incluye H0-06 de OpenCode (regresiones sobre archivos guardados) y la investigación de Codex hasta `cf447b4`.
 
-## Contratos que cambian
+## Contratos que cambian (ratificados por David)
 Todos aditivos o relajaciones sobre `contratos-v0.1`; ninguno cambia el significado de un campo existente.
 
 | Cambio | Por qué |
@@ -52,6 +52,6 @@ Corrida completa sobre el último commit:
 - **Rendimiento:** E1 en Anime Socks ~3,5 s; mediana de F ~1 s por imagen.
 
 ## Decisiones para David
-1. ¿Se ratifican los seis cambios de contrato de arriba antes de pasar a `main`?
+1. ~~¿Se ratifican los seis cambios de contrato?~~ **Ratificados.**
 2. ¿Se pasa `claude/web` a `main` ahora, o después de que Codex revise `e1-pixel-mask-v4`?
 3. Para destrabar lo no probado: clave y modelo de OpenAI con tope de costo, y modelo de visión y hardware para Ollama.
