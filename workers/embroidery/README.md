@@ -30,7 +30,7 @@ Parsea JSON, no bytes (CRLF/LF no afecta). Reporta conteos, índices y veredicto
 ## Regresiones
 
 ```powershell
-python -m pytest tests/engine/test_regressions.py -v
+python -m unittest tests/engine/test_regressions.py -v
 ```
 
 Ambas variantes: dimensiones ±0.2 mm, needle_stitches, thread_blocks y raw-commands contra el JEF. Nueva variante: agregar JEF/raw-commands a `evidence/<caso>/` y el caso al test.
