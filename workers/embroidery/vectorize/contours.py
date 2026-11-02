@@ -1,14 +1,18 @@
 """Exact directed pixel edges, with right-turn tracing at diagonal contacts."""
-from collections import defaultdict
+from array import array
 from dataclasses import dataclass
 
 from embroidery_contracts import IssueCode
 from .segmentation import BACKGROUND
 from .types import check_cancel, fail
 
-MAX_BOUNDARY_EDGES = 250_000
+# Adjacencies use one byte per vertex and one uint32 per edge. The cap also
+# bounds the Python tuples needed for the returned, exact polygon vertices.
+MAX_BOUNDARY_EDGES = 500_000
 EDGE_CANCEL_INTERVAL = 1024
 TURN_PRIORITY = {1: 0, 0: 1, 3: 2, 2: 3}
+# At a shared vertex, outgoing edges were inserted from NW, NE, SW, SE pixels.
+FIRST_DIRECTION_PRIORITY = {2: 0, 3: 1, 1: 2, 0: 3}
 
 
 @dataclass(frozen=True)
@@ -23,8 +27,10 @@ class MaskContours:
 
 def contours(segmented, cancel):
     labels, width, height = segmented.labels, segmented.width, segmented.height
-    edges = {label: defaultdict(list) for label in segmented.palette}
+    edges = {label: array("I") for label in segmented.palette}
+    pending = bytearray((width + 1) * (height + 1))
     counts = dict.fromkeys(edges, 0)
+    boundary_counts = dict.fromkeys(edges, 0)
     bounds = {label: [width, height, 0, 0] for label in edges}
     edge_count = 0
     for y in range(height):
@@ -48,14 +54,19 @@ def contours(segmented, cancel):
             )
             for exposed, start, end, direction in candidates:
                 if exposed:
-                    edges[label][start].append((end, direction))
+                    if not _choices(start, pending, labels, label, width, height):
+                        edges[label].append(start)
+                    pending[start] |= 1 << direction
                     edge_count += 1
+                    boundary_counts[label] += 1
             if edge_count > MAX_BOUNDARY_EDGES:
                 fail(IssueCode.GEOMETRY_INVALID, "La máscara excede el límite de complejidad de E1.", "boundary_edge_limit", limit=MAX_BOUNDARY_EDGES)
     output = []
     for label in sorted(edges, key=lambda item: segmented.palette[item]):
         check_cancel(cancel)
-        loops, count = _trace(edges[label], width + 1, cancel)
+        loops, count = _trace(edges[label], pending, labels, label, width, height, cancel)
+        if count != boundary_counts[label]:
+            fail(IssueCode.GEOMETRY_INVALID, "No se recorrieron todas las aristas de la máscara.", "untraced_pixel_boundary")
         holes = sum(signed_area(loop) < 0 for loop in loops)
         if sum(signed_area(loop) for loop in loops) != counts[label]:
             fail(IssueCode.GEOMETRY_INVALID, "Los contornos no reproducen el área de la máscara.", "mask_area_mismatch")
@@ -63,29 +74,51 @@ def contours(segmented, cancel):
     return tuple(output)
 
 
-def _trace(edges, stride, cancel):
+def _owner(vertex, direction, labels, width, height):
+    x, y = vertex % (width + 1), vertex // (width + 1)
+    if direction in (1, 2):
+        x -= 1
+    if direction in (2, 3):
+        y -= 1
+    return labels[y * width + x] if 0 <= x < width and 0 <= y < height else BACKGROUND
+
+
+def _choices(vertex, pending, labels, label, width, height):
+    return [direction for direction in range(4)
+            if pending[vertex] & (1 << direction)
+            and _owner(vertex, direction, labels, width, height) == label]
+
+
+def _trace(edges, pending, labels, label, width, height, cancel):
     loops, processed = [], 0
-    while edges:
-        # Dict insertion order follows the source raster scan, with no set iteration.
-        start = next(iter(edges))
-        current, incoming, vertices = start, None, []
-        while True:
-            if processed % EDGE_CANCEL_INTERVAL == 0:
-                check_cancel(cancel)
-            vertices.append((current % stride, current // stride))
-            choices = edges.get(current)
-            if not choices:
-                fail(IssueCode.GEOMETRY_INVALID, "Se encontró un contorno abierto.", "open_pixel_boundary")
-            chosen = 0 if incoming is None else min(range(len(choices)), key=lambda i: TURN_PRIORITY[(choices[i][1] - incoming) % 4])
-            following, incoming = choices.pop(chosen)
-            if not choices:
-                del edges[current]
-            current = following
-            processed += 1
-            if current == start:
-                break
-        loops.append(_simplify(vertices, cancel))
+    for start in edges:
+        while _choices(start, pending, labels, label, width, height):
+            loop, count = _trace_loop(start, pending, labels, label, width, height, cancel, processed)
+            loops.append(_simplify(loop, cancel))
+            processed += count
     return tuple(loops), processed
+
+
+def _trace_loop(start, pending, labels, label, width, height, cancel, processed):
+    stride = width + 1
+    steps = (1, stride, -1, -stride)
+    count = 0
+    current, incoming, vertices = start, None, []
+    while True:
+        if (processed + count) % EDGE_CANCEL_INTERVAL == 0:
+            check_cancel(cancel)
+        vertices.append((current % stride, current // stride))
+        choices = _choices(current, pending, labels, label, width, height)
+        if not choices:
+            fail(IssueCode.GEOMETRY_INVALID, "Se encontró un contorno abierto.", "open_pixel_boundary")
+        direction = min(choices, key=FIRST_DIRECTION_PRIORITY.__getitem__) if incoming is None else min(choices, key=lambda item: TURN_PRIORITY[(item - incoming) % 4])
+        pending[current] &= ~(1 << direction)
+        current += steps[direction]
+        incoming = direction
+        count += 1
+        if current == start:
+            break
+    return vertices, count
 
 
 def _simplify(vertices, cancel):

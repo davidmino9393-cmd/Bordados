@@ -1,0 +1,29 @@
+{
+  "baseline_commit": "5e9897e",
+  "six_flat_outputs": [
+    {
+      "case": "logo-sol-01",
+      "document_and_svg_unchanged": true
+    },
+    {
+      "case": "logo-hoja-01",
+      "document_and_svg_unchanged": true
+    },
+    {
+      "case": "logo-escudo-01",
+      "document_and_svg_unchanged": true
+    },
+    {
+      "case": "logo-ola-01",
+      "document_and_svg_unchanged": true
+    },
+    {
+      "case": "anillo-doble-01",
+      "document_and_svg_unchanged": true
+    },
+    {
+      "case": "jpeg-simple-01",
+      "document_and_svg_unchanged": true
+    }
+  ]
+}
