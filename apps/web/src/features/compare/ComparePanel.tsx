@@ -13,10 +13,12 @@ export function ComparePanel({ asset, artifacts }: ComparePanelProps) {
   const vector = artifacts.find((a) => a.kind === ArtifactKind.EditableSvg);
   // Solo vale como «relectura» la vista previa derivada del JEF releído.
   const preview = artifacts.find((a) => a.kind === ArtifactKind.PreviewPng && a.derived_from === 'jef_reread');
+  // Sin JEF releído no hay vista previa de puntadas: no se reserva un hueco vacío para ella.
+  const hasJef = artifacts.some((a) => a.kind === ArtifactKind.Jef);
   const items = [
     { label: es.result.original, src: asset?.original_download?.url },
     { label: es.result.vector, src: vector?.download?.url },
-    { label: es.result.jefPreview, src: preview?.download?.url },
+    ...(hasJef ? [{ label: es.result.jefPreview, src: preview?.download?.url }] : []),
   ];
   return (
     <Card>

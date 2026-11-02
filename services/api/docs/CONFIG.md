@@ -43,6 +43,8 @@ Los nombres son exactos. `requerido` no tiene default.
 | `openai_base_url` | string | `https://api.openai.com` | H2. Solo para pruebas o un proxy propio. |
 | `analysis_timeout_s` | number | `60` | H2. Espera máxima por respuesta del proveedor; finito y > 0. |
 
+`public_base_url` es el origen de las URLs de descarga. En Windows, con `localhost` y el servidor escuchando solo en `127.0.0.1`, un cliente que no sea el navegador (Python, curl) espera ~2 s por cada descarga (intenta primero IPv6); en desarrollo conviene `http://127.0.0.1:8000`. Medido con el SVG de Anime Socks: 2,1 s con `localhost`, 6 ms con `127.0.0.1`.
+
 Se requiere `service_token` o el par `basic_username`/`basic_password`. Si ambos están configurados, se aceptan Bearer y Basic, pero el desafío `WWW-Authenticate` es `Bearer`: un navegador no pide usuario y contraseña. Para usar la web con Basic, no definir `service_token`.
 
 ## Proveedores de IA (H2)

@@ -73,3 +73,37 @@ test('imagen: E1 real termina en needs_review con parámetros provisionales y SV
   }, null, 2));
   await page.screenshot({ path: `${OUT_DIR}/needs-review.png`, fullPage: true });
 });
+
+// La referencia real del proyecto (1122 × 1402 px, 3 objetos, ~7 MB de SVG): mide tiempos y comprueba que carga en la comparación.
+const ANIME_SOCKS = new URL('../fixtures/h2/Anime_Socks.png', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
+
+test('Anime Socks: SVG editable grande se dibuja en la comparación y se descarga completo', async ({ page }) => {
+  const started = Date.now();
+  await page.goto('/');
+  await page.getByLabel('Nombre del proyecto').fill('Anime Socks E1 real');
+  await page.getByRole('button', { name: 'Crear proyecto' }).click();
+  await page.getByLabel('Elegir archivo').setInputFiles(ANIME_SOCKS);
+  await expect(page.getByText('Imagen para analizar', { exact: true })).toBeVisible();
+  await page.getByLabel('Ancho máximo (mm)').fill('150');
+  await page.getByLabel('Alto máximo (mm)').fill('142.8');
+  await page.getByRole('button', { name: 'Generar bordado' }).click();
+  await expect(page.getByText('Hay un elemento que necesita revisión')).toBeVisible({ timeout: REVIEW_TIMEOUT_MS });
+  const reviewMs = Date.now() - started;
+
+  const vector = page.getByRole('img', { name: 'Vector', exact: true });
+  const vectorStart = Date.now();
+  await expect(vector).toBeVisible();
+  await expect.poll(() => vector.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0), { timeout: 60_000 }).toBe(true);
+  const vectorMs = Date.now() - vectorStart;
+
+  const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('link', { name: /Descargar/ }).first().click()]);
+  const downloadStart = Date.now();
+  const path = await download.path();
+  const { statSync } = await import('node:fs');
+  const bytes = statSync(path!).size;
+  expect(bytes).toBeGreaterThan(1_000_000);
+
+  mkdirSync(OUT_DIR, { recursive: true });
+  writeFileSync(`${OUT_DIR}/anime-socks.json`, JSON.stringify({ reviewMs, vectorMs, downloadMs: Date.now() - downloadStart, bytes, rows: await page.locator('.list__item').allInnerTexts() }, null, 2));
+  await page.screenshot({ path: `${OUT_DIR}/anime-socks.png`, fullPage: false });
+});
