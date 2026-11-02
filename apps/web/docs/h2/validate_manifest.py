@@ -54,7 +54,8 @@ def set_errors(images):
     if not MIN_IMAGES <= len(images) <= MAX_IMAGES:
         errors.append(f"el conjunto debe tener entre {MIN_IMAGES} y {MAX_IMAGES} imágenes (tiene {len(images)})")
     for field in ("id", "file"):
-        values = [i.get(field) for i in images]
+        # las dos escalas de la referencia son el mismo archivo con tamaños objetivo distintos
+        values = [i.get(field) for i in images if not (field == "file" and i.get("design_family") == REFERENCE_FAMILY)]
         duplicated = sorted({v for v in values if values.count(v) > 1})
         if duplicated:
             errors.append(f"{field} repetido: {', '.join(map(str, duplicated))}")
