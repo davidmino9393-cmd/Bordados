@@ -84,3 +84,7 @@ class Store:
             status, body = action()
             self.db.execute("INSERT INTO idempotency VALUES(?,?,?,?,?)", (scope, key, fingerprint, status, canonical(body)))
             return status, body
+
+    def close(self):
+        with self.lock:
+            self.db.close()
