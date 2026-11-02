@@ -270,12 +270,13 @@ describe('MockApiClient (SIMULADO, forma de contratos-v0.1)', () => {
     expect(done.issues).toHaveLength(14);
     expect(done.review?.object_ids).toHaveLength(14);
     expect(done.validation_report?.digital_checks_passed).toBe(false);
-    expect(done.artifact_manifest?.reread_metrics.stitch_bounds_mm).toMatchObject({ max_x_mm: 150, max_y_mm: 142.8 });
+    expect(done.artifact_manifest?.reread_metrics.stitch_bounds_mm).toMatchObject({ min_x_mm: -75, max_x_mm: 75, min_y_mm: -71.4, max_y_mm: 71.4 });
+    expect(done.review?.object_ids).toContain('satin_A_descenso_0');
     expect(done.artifact_manifest?.reread_metrics).toMatchObject({ needle_stitches: 6789, thread_blocks: 3 });
 
     const manifest = await api.getArtifacts(job.job_id);
     const names = manifest.artifacts.map((a) => a.filename.replace(`${job.job_id}-`, '')).sort();
-    expect(names).toEqual(['editable.svg', 'output.jef', 'preview.png', 'raw-commands.json']);
+    expect(names).toEqual(['editable.svg', 'inkstitch.svg', 'output.jef', 'preview.png', 'raw-commands.json', 'validation.json']);
     expect(manifest.artifacts.every((a) => a.job_id === job.job_id && a.download)).toBe(true);
     expect(manifest.artifacts.find((a) => a.kind === 'jef')?.byte_size).toBe(14816);
   });
@@ -289,7 +290,7 @@ describe('MockApiClient (SIMULADO, forma de contratos-v0.1)', () => {
   it('el TTL de las descargas es configurable solo para pruebas (300 s por defecto)', async () => {
     const short = createMockApiClient({ now: () => clock, stageMs: STAGE_MS, downloadTtlMs: 1000 });
     const project = await short.createProject('P');
-    const asset = await short.uploadAsset(project.project_id, file('a.svg', 'image/svg+xml'));
+    const asset = await short.uploadAsset(project.project_id, file('a.png'));
     expect(asset.original_download && Date.parse(asset.original_download.expires_at) - Date.parse(asset.original_download.issued_at)).toBe(1000);
     const calls: string[] = [];
     const traced = createMockApiClient({ onCall: (m) => calls.push(m) });

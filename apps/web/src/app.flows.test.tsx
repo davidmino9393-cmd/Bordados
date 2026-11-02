@@ -456,7 +456,12 @@ describe('muestra física (POST /sewouts)', () => {
 
 describe('job completo con archivos pero en needs_review (SIMULADO, fixture job-completed-real)', () => {
   const FORM = 'Registrar muestra física';
-  const ID = (n: number) => `object_mock_satin_${String(n).padStart(2, '0')}`;
+  // Los 14 object_ids reales del backend (H0-04): cada uno de los 14 avisos los lista todos.
+  const REAL_IDS = [
+    'satin_A_descenso_0', 'satin_A_lazo_ascenso_0', 'satin_A_lazo_ascenso_2', 'satin_A_lazo_ascenso_4',
+    'satin_SOCKS_C_0', 'satin_SOCKS_K_diagonales_0', 'satin_SOCKS_K_vertical_0', 'satin_SOCKS_O_0',
+    'satin_SOCKS_S_1_0', 'satin_SOCKS_S_2_0', 'satin_e_0', 'satin_i_0', 'satin_m_0', 'satin_n_0',
+  ];
 
   it('muestra las 14 incidencias con sus object_ids, el aviso de no apto, la muestra física y las descargas', async () => {
     const user = setupUser();
@@ -468,9 +473,13 @@ describe('job completo con archivos pero en needs_review (SIMULADO, fixture job-
     // 14 filas de incidencia (el aviso superior repite el título de la primera).
     const rows = screen.getAllByText(/Faltan guías en una columna de satén/).filter((el) => el.closest('.issue'));
     expect(rows).toHaveLength(14);
-    for (let n = 1; n <= 14; n++) {
-      expect(screen.getByLabelText(new RegExp(`Qué querés hacer \\(${ID(n)}\\)`))).toBeInTheDocument();
-      expect(screen.getAllByText(new RegExp(`Elementos: ${ID(n)}`)).length).toBeGreaterThan(0);
+    for (const id of REAL_IDS) {
+      expect(screen.getByLabelText(new RegExp(`Qué querés hacer \\(${id}\\)`))).toBeInTheDocument();
+    }
+    // Cada aviso lista las 14 columnas candidatas (el backend no las asigna una a una).
+    for (const row of rows) {
+      const text = row.closest('.issue')?.textContent ?? '';
+      expect(REAL_IDS.every((id) => text.includes(id))).toBe(true);
     }
 
     // Estado digital: nunca "listo para prueba"; los archivos se avisan como no aptos.
@@ -485,6 +494,8 @@ describe('job completo con archivos pero en needs_review (SIMULADO, fixture job-
     // Medidas y archivos del fixture.
     expect(screen.getByText('150,0 × 142,8 mm')).toBeInTheDocument();
     expect(screen.getByText('6.789')).toBeInTheDocument();
+    // El backend real no entrega original_download para un SVG: no hay vista previa ficticia.
+    expect(screen.getByText('Original').closest('figure')?.querySelector('img')).toBeNull();
     const jef = screen.getByRole('link', { name: /Descargar Archivo de bordado/ });
     expect(jef.getAttribute('download')).toMatch(/-output\.jef$/);
     expect(jef.getAttribute('href')).toMatch(/^data:/);

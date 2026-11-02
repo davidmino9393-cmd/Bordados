@@ -26,7 +26,7 @@ async function openProject(page: Page, file?: { name: string; mimeType: string; 
   await expect(page.getByLabel('Elegir archivo')).toBeVisible();
   if (!file) return;
   await page.getByLabel('Elegir archivo').setInputFiles(file);
-  await expect(page.getByAltText(`Imagen original: ${file.name}`)).toBeVisible();
+  await expect(page.getByText(new RegExp(`${file.name.replace('.', '\\.')} · `))).toBeVisible();
 }
 
 const generate = async (page: Page) => {

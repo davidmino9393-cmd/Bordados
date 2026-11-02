@@ -106,6 +106,8 @@ Se corrió la UI completa contra `uvicorn` (commit `c6b4db6`) con el SVG `Anime_
 - **Solo SVG preparado:** PNG/JPG, variantes de tamaño y correcciones todavía no se ejecutan en H0-04; esas partes de la UI no se pudieron probar contra el backend real.
 - **Enlaces:** son absolutos (`public_base_url`) y firmados; se abren sin credenciales, con `Content-Disposition: attachment`.
 
+**Mock alineado con el backend real:** el fixture `job-completed-real.json` ahora tiene la forma exacta de la respuesta real (6 artefactos, 14 avisos idénticos con los 14 `object_ids` reales, controles `file`/`dimensions`/`hoop` en `passed` y `geometry`/`satin`/`routing`/`visual` en `not_run`, límites releídos de −75 a 75 y de −71,4 a 71,4). Los ids y hashes son ficticios evidentes (`000…001`, `000…002`), `provenance.simulated` es `true`, y el cliente simulado devuelve `original_download: null` para un SVG, como el backend. Los `object_ids` coinciden con `services/api/evidence/h0-04/job.json`.
+
 ## Accesibilidad
 
 Se corre **axe-core** (`@axe-core/playwright`, solo en `tests/e2e`) sobre la UI real en Chrome, en escritorio y en móvil (Pixel 7), con las etiquetas WCAG 2.0/2.1/2.2 A y AA más las buenas prácticas de axe, contraste incluido. Pantallas escaneadas: proyectos (vacío y con uno), proyecto sin imagen, con imagen y error de validación y con aviso de bastidor, trabajo en curso, fallido y cancelado, resultado listo (con y sin errores del formulario de muestra), revisión con archivos (14 incidencias) y la pantalla de error 501 con el cliente real.

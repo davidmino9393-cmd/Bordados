@@ -51,7 +51,7 @@ export async function generateFrom(user: ReturnType<typeof setupUser>, file: Fil
   await user.click(screen.getByRole('button', { name: 'Crear proyecto' }));
   const input = await screen.findByLabelText('Elegir archivo');
   await user.upload(input, file);
-  await screen.findByAltText(`Imagen original: ${file.name}`);
+  await screen.findByText(new RegExp(`${file.name.replace('.', '\\.')} · `));
   await user.click(screen.getByRole('button', { name: 'Generar bordado' }));
   await screen.findByRole('heading', { name: 'Generación del bordado' });
 }

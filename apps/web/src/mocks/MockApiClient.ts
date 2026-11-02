@@ -125,7 +125,8 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
   });
   const assetView = (stored: StoredAsset): SourceAsset => ({
     ...stored.asset,
-    original_download: freshDownload(stored.objectUrl),
+    // El backend real devuelve null para un SVG (el contrato lo permite): no se simula con una URL ficticia.
+    original_download: stored.asset.media_type === MediaType.Svg ? null : freshDownload(stored.objectUrl),
   });
 
   function startJob(

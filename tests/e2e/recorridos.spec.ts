@@ -84,14 +84,17 @@ test('job completo en needs_review: incidencias, muestra física, descarga del J
   await page.getByLabel('Nombre del proyecto').fill('Prueba completo');
   await page.getByRole('button', { name: 'Crear proyecto' }).click();
   await page.getByLabel('Elegir archivo').setInputFiles({ name: 'logo-completo.svg', mimeType: 'image/svg+xml', buffer: SVG_VALIDO });
-  await expect(page.getByAltText('Imagen original: logo-completo.svg')).toBeVisible();
+  // Un SVG no trae vista previa del original (original_download llega null): se espera el nombre del archivo.
+  await expect(page.getByText(/logo-completo\.svg · /)).toBeVisible();
   await page.getByRole('button', { name: 'Generar bordado' }).click();
 
   // needs_review: nunca "listo para prueba", pero con archivos y muestra física.
   await expect(page.getByText('Hay un elemento que necesita revisión')).toBeVisible({ timeout: RUN_TIMEOUT_MS });
   await expect(page.locator('.issue')).toHaveCount(SATIN_ISSUES);
-  await expect(page.getByText('object_mock_satin_01').first()).toBeVisible();
-  await expect(page.getByText('object_mock_satin_14').first()).toBeVisible();
+  // object_ids reales del backend (H0-04): los 14 avisos los listan todos.
+  await expect(page.getByLabel(/Qué querés hacer \(satin_A_descenso_0\)/)).toBeVisible();
+  await expect(page.getByLabel(/Qué querés hacer \(satin_n_0\)/)).toBeVisible();
+  await expect(page.locator('.issue').first()).toContainText('satin_SOCKS_S_1_0');
   await expect(page.getByText('Archivos para revisar: no están listos para prueba')).toBeVisible();
   await expect(page.getByText('Listo para prueba (digital)')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Registrar muestra física' })).toBeVisible();
