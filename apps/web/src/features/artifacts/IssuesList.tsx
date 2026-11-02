@@ -11,8 +11,8 @@ export function IssuesList({ issues }: { issues: Issue[] }) {
         {issues.length === 0 ? (
           <p>{es.result.noIssues}</p>
         ) : (
-          issues.map((issue) => (
-            <div key={`${issue.code}-${issue.object_ids.join()}-${issue.region_ids.join()}`} className="issue">
+          issues.map((issue, index) => (
+            <div key={`${issue.code}-${index}`} className="issue">
               <strong>{severityLabel[issue.severity]}: {issueTitle(issue.code, issue.description)}</strong>
               <span className="field__hint">
                 {es.review.objects}: {[...issue.object_ids, ...issue.region_ids].join(', ') || '—'}

@@ -74,8 +74,8 @@ export function ReviewPanel({ job, asset }: ReviewPanelProps) {
       <Card.Header>{es.review.title}</Card.Header>
       <Card.Body>
         <Notice tone={NoticeTone.Warning} title={issueTitle(review.issues[0]?.code ?? '', review.cause)} />
-        {review.issues.map((issue) => (
-          <div key={`${issue.code}-${issue.object_ids.join()}-${issue.region_ids.join()}`} className="issue">
+        {review.issues.map((issue, index) => (
+          <div key={`${issue.code}-${index}`} className="issue">
             <strong>{severityLabel[issue.severity]}: {issueTitle(issue.code, issue.description)}</strong>
             <span>
               {issue.object_ids.length > 0 && `${es.review.objects}: ${issue.object_ids.join(', ')}`}

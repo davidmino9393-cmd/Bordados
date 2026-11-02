@@ -491,6 +491,30 @@ describe('job completo con archivos pero en needs_review (SIMULADO, fixture job-
     expect(screen.getByRole('link', { name: /Descargar SVG editable/ }).getAttribute('download')).toMatch(/-editable\.svg$/);
   });
 
+  it('con los 14 avisos idénticos del backend real (todos con los mismos object_ids) los muestra todos sin claves repetidas', async () => {
+    const user = setupUser();
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const base = createMockApiClient();
+    const client: ApiClient = {
+      ...base,
+      async getJob(jobId) {
+        const job = await base.getJob(jobId);
+        if (!job.review) return job;
+        // Como el backend real: cada aviso lista todas las columnas candidatas y se repite el mismo texto.
+        const all = job.review.object_ids;
+        const same = job.issues.map((issue) => ({ ...issue, object_ids: all, description: 'Satin has no rungs' }));
+        return { ...job, issues: same, diagnostics: same, review: { ...job.review, issues: same } };
+      },
+    };
+    renderApp(client);
+    await generateFrom(user, svgFile('logo-completo.svg'));
+    await advance(FULL_RUN_MS);
+    await screen.findByText('Hay un elemento que necesita revisión');
+    const rows = screen.getAllByText(/Faltan guías en una columna de satén/).filter((el) => el.closest('.issue'));
+    expect(rows).toHaveLength(14);
+    expect(errors.mock.calls.filter((c) => String(c[0]).includes('same key'))).toEqual([]);
+  });
+
   it('registrar una muestra aquí no cambia el estado digital', async () => {
     const user = setupUser();
     renderApp();
