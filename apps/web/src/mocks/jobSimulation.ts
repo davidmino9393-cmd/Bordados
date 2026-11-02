@@ -96,7 +96,7 @@ function readyManifest(job: SimulatedJob, template: ArtifactManifest, keepBounds
   const manifest = clone(template);
   manifest.job_id = job.id;
   manifest.revision_id = job.revisionId;
-  if (!keepBounds) manifest.reread_metrics.stitch_bounds_mm = stitchedBounds(job);
+  if (manifest.reread_metrics && !keepBounds) manifest.reread_metrics.stitch_bounds_mm = stitchedBounds(job);
   manifest.artifacts = manifest.artifacts.map((a): Artifact => ({
     ...a,
     job_id: job.id,
@@ -106,7 +106,7 @@ function readyManifest(job: SimulatedJob, template: ArtifactManifest, keepBounds
     download_url: null,
     expires_at: null,
   }));
-  manifest.reread_metrics.raw_commands_artifact_id = `${job.id}_raw_commands_json`;
+  if (manifest.reread_metrics) manifest.reread_metrics.raw_commands_artifact_id = `${job.id}_raw_commands_json`;
   return manifest;
 }
 

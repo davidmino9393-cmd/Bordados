@@ -10,7 +10,7 @@ from pydantic import ValidationError
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "packages" / "contracts"))
 
-from embroidery_contracts import JobCreate, JobResponse, JobStatus, RevisionCreate, SewoutRecord, validate_transition
+from embroidery_contracts import ArtifactManifest, JobCreate, JobResponse, JobStatus, RevisionCreate, SewoutRecord, validate_transition
 
 FIXTURES = ROOT / "packages" / "contracts" / "fixtures"
 MODELS = {model.__name__: model for model in (JobCreate, JobResponse, SewoutRecord)}
@@ -69,6 +69,21 @@ class ContractTests(unittest.TestCase):
         for issues in ([], [info]):
             with self.subTest(failure_issues=issues), self.assertRaises(ValidationError):
                 JobResponse.model_validate(dict(failure, issues=issues))
+
+    def test_a_manifest_without_a_jef_reread_is_valid_but_never_enough_for_readiness(self):
+        payload = fixture("valid-result")["payload"]
+        manifest = copy.deepcopy(payload["artifact_manifest"])
+        manifest["artifacts"] = [a for a in manifest["artifacts"] if a["kind"] == "editable_svg"]
+        manifest["reread_metrics"] = None
+        self.assertIsNone(ArtifactManifest.model_validate(manifest).reread_metrics)
+        for change in ("manifest_only", "report_only"):
+            invalid = copy.deepcopy(payload)
+            if change == "manifest_only":
+                invalid["artifact_manifest"] = manifest
+            else:
+                invalid["artifact_manifest"]["reread_metrics"] = None
+            with self.subTest(change=change), self.assertRaises(ValidationError):
+                JobResponse.model_validate(invalid)
 
     def test_transitions_reject_skip_and_terminal_restart(self):
         ready = JobResponse.model_validate(fixture("valid-result")["payload"])

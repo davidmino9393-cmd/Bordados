@@ -166,7 +166,7 @@ describe('MockApiClient (SIMULADO, forma de contratos-v0.1)', () => {
     expect(second.artifacts[0].download!.issued_at).not.toBe(download.issued_at);
     const snapshot = (await api.getJob(a.job.job_id)).artifact_manifest!;
     expect(snapshot.artifacts.every((x) => x.download === null)).toBe(true);
-    expect(snapshot.reread_metrics.physical_trim_execution_verified).toBe(false);
+    expect(snapshot.reread_metrics?.physical_trim_execution_verified).toBe(false);
     expect((await api.getJob(a.job.job_id)).sewout_status).toBe('untested');
   });
 
@@ -270,7 +270,7 @@ describe('MockApiClient (SIMULADO, forma de contratos-v0.1)', () => {
     expect(done.issues).toHaveLength(14);
     expect(done.review?.object_ids).toHaveLength(14);
     expect(done.validation_report?.digital_checks_passed).toBe(false);
-    expect(done.artifact_manifest?.reread_metrics.stitch_bounds_mm).toMatchObject({ min_x_mm: -75, max_x_mm: 75, min_y_mm: -71.4, max_y_mm: 71.4 });
+    expect(done.artifact_manifest?.reread_metrics?.stitch_bounds_mm).toMatchObject({ min_x_mm: -75, max_x_mm: 75, min_y_mm: -71.4, max_y_mm: 71.4 });
     expect(done.review?.object_ids).toContain('satin_A_descenso_0');
     expect(done.artifact_manifest?.reread_metrics).toMatchObject({ needle_stitches: 6789, thread_blocks: 3 });
 

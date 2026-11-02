@@ -4,6 +4,7 @@ No hay red ni IA real: se comprueba el comportamiento del backend. La vectorizac
 todo job de imagen que sigue adelante termina en un fallo controlado y honesto.
 """
 import copy
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -13,6 +14,7 @@ import threading
 import time
 import unittest
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 
@@ -200,9 +202,18 @@ class AnalysisFlowTests(AnalysisApiTests):
         issue = next(i for i in done["issues"] if i["code"] == "DENSITY_REVIEW_REQUIRED")
         self.assertEqual((issue["severity"], issue["stage"]), ("review_required", "routing"))
         self.assertTrue(issue["object_ids"])
-        self.assertIsNone(done.get("artifact_manifest"))
         self.assertNotEqual(done["status"], "ready_for_sewout")
-        self.assertEqual(self.call("GET", f"/api/v1/jobs/{job['job_id']}/artifacts")[1]["code"], "ARTIFACTS_UNAVAILABLE")
+        status, manifest = self.call("GET", f"/api/v1/jobs/{job['job_id']}/artifacts")
+        self.assertEqual(status, 200, manifest)
+        self.assertIsNone(manifest["reread_metrics"])  # sin JEF no hay relectura
+        self.assertEqual([a["kind"] for a in manifest["artifacts"]], ["editable_svg"])
+        self.assertEqual((manifest["provenance"]["simulated"], manifest["provenance"]["method"]), (False, "e1_raster_mask_vectorization"))
+        artifact = manifest["artifacts"][0]
+        request = urllib.request.Request(self.base + urllib.parse.urlsplit(artifact["download"]["url"]).path, method="GET")
+        with urllib.request.urlopen(request, timeout=15) as response:
+            payload = response.read()
+        self.assertEqual((len(payload), hashlib.sha256(payload).hexdigest()), (artifact["byte_size"], artifact["sha256"]))
+        self.assertIn(b"<svg", payload[:400])
 
     def test_an_empty_image_fails_with_the_original_vectorization_diagnostic_kept(self):
         self.start({"openai": FakeProvider("openai", [INSIDE])})

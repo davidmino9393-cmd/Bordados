@@ -461,7 +461,15 @@
             "$ref": "#/components/schemas/Provenance"
           },
           "reread_metrics": {
-            "$ref": "#/components/schemas/RereadMetrics"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RereadMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           },
           "revision_id": {
             "maxLength": 128,
@@ -490,8 +498,7 @@
           "input_sha256",
           "settings_sha256",
           "geometry_sha256",
-          "artifacts",
-          "reread_metrics"
+          "artifacts"
         ],
         "title": "ArtifactManifest",
         "type": "object"
@@ -550,7 +557,15 @@
             "$ref": "#/components/schemas/Provenance"
           },
           "reread_metrics": {
-            "$ref": "#/components/schemas/RereadMetrics"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RereadMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           },
           "revision_id": {
             "maxLength": 128,
@@ -579,8 +594,7 @@
           "input_sha256",
           "settings_sha256",
           "geometry_sha256",
-          "artifacts",
-          "reread_metrics"
+          "artifacts"
         ],
         "title": "AuthorizedArtifactManifest",
         "type": "object"

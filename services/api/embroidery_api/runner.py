@@ -1,13 +1,16 @@
 """Bounded background execution of the standalone worker for one API process."""
 from concurrent.futures import ThreadPoolExecutor
+import hashlib
 import json
 import logging
 import os
 from pathlib import Path
 import threading
 
-from embroidery_contracts import AnalysisSpec, IssueCode, JobResponse, JobStatus, SourceAsset, validate_transition
+from embroidery_contracts import AnalysisSpec, ArtifactManifest, IssueCode, JobResponse, JobStatus, SourceAsset, validate_transition
 from embroidery_contracts.issues import Severity
+from embroidery_contracts.base import Provenance
+from embroidery_contracts.results import Artifact
 from embroidery_contracts.jobs import StageRecord
 from api_adapter import make_issue, result_documents
 from process_runner import WorkerFailure, run_logged
@@ -35,6 +38,7 @@ FAILURE_DESCRIPTIONS = {
 }
 VECTORIZATION_REVIEW_UNLOCALIZED = "vectorization_review_unlocalized"
 DIGITIZING_BLOCKED = "Bloqueado hasta que H3 valide técnica y parámetros físicos"
+VECTORIZATION_METHOD = "e1_raster_mask_vectorization"
 VECTORIZATION_FILES = {"document": "vectorized-document.json", "svg": "vectorized-editable.svg", "evidence": "vectorized-evidence.json"}
 STAGE_ORDER = ("analyzing", "vectorizing", "digitizing", "validating")
 
@@ -317,6 +321,8 @@ class JobRunner:
         files["svg"].write_bytes(result.editable_svg)
         files["evidence"].write_text(json.dumps(result.evidence, ensure_ascii=False, sort_keys=True, indent=2), encoding="utf-8")
         private["vectorization"] = {name: str(path) for name, path in files.items()}
+        manifest = self._vectorization_manifest(previous, asset, files)
+        private["artifact_paths"] = {artifact.artifact_id: str(files["svg"]) for artifact in manifest.artifacts}
         issues = tuple(result.issues)
         done = {"vectorizing": ("completed", result.duration_ms, None)}
         if any(issue.severity == Severity.BLOCKING_ERROR for issue in issues):
@@ -329,7 +335,24 @@ class JobRunner:
         self._save_transition(
             previous, JobStatus.NEEDS_REVIEW, private,
             {**done, "digitizing": ("skipped", None, DIGITIZING_BLOCKED), "validating": ("skipped", None, DIGITIZING_BLOCKED)},
-            {"issues": [issue.model_dump(mode="json") for issue in issues]},
+            {"issues": [issue.model_dump(mode="json") for issue in issues],
+             "artifact_manifest": manifest.model_dump(mode="json")},
+        )
+
+    def _vectorization_manifest(self, previous, asset, files):
+        """Manifiesto sin JEF: solo el SVG editable generado por E1. Sin relectura no hay `reread_metrics`."""
+        svg = files["svg"].read_bytes()
+        settings = json.dumps(previous.settings_snapshot.model_dump(mode="json"), sort_keys=True, separators=(",", ":"))
+        artifact = Artifact(
+            artifact_id=f"{previous.job_id}_editable_svg", job_id=previous.job_id, kind="editable_svg", filename="editable.svg",
+            media_type="image/svg+xml", sha256=hashlib.sha256(svg).hexdigest(), byte_size=len(svg), derived_from="document",
+        )
+        return ArtifactManifest(
+            manifest_id=f"{previous.job_id}_manifest", job_id=previous.job_id, revision_id=previous.revision_id,
+            provenance=Provenance(simulated=False, method=VECTORIZATION_METHOD, engine_version=self.config.engine_version),
+            input_sha256=asset.sha256, settings_sha256=hashlib.sha256(settings.encode()).hexdigest(),
+            geometry_sha256=hashlib.sha256(files["document"].read_bytes()).hexdigest(),
+            artifacts=(artifact,), reread_metrics=None,
         )
 
     def _vectorize_failure(self, previous, private, issue):

@@ -77,7 +77,8 @@ export interface ArtifactManifest {
   settings_sha256: string;
   geometry_sha256: string;
   artifacts: Artifact[];
-  reread_metrics: RereadMetrics;
+  /** null mientras no exista un JEF releído (H2: solo geometría vectorizada). */
+  reread_metrics: RereadMetrics | null;
 }
 
 /** Respuesta de GET /jobs/{id}/artifacts: todos los artefactos traen `download`. */

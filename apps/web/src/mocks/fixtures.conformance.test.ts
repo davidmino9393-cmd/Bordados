@@ -57,7 +57,7 @@ describe.each(Object.entries(fixtures))('fixture %s', (_name, fixture) => {
     const ids = manifest.artifacts.map((a) => a.artifact_id);
     expect(new Set(ids).size).toBe(ids.length);
     expect(manifest.artifacts.every((a) => a.job_id === manifest.job_id)).toBe(true);
-    const raw = manifest.artifacts.find((a) => a.artifact_id === manifest.reread_metrics.raw_commands_artifact_id);
+    const raw = manifest.artifacts.find((a) => a.artifact_id === manifest.reread_metrics?.raw_commands_artifact_id);
     expect(raw?.kind).toBe('raw_commands_json');
     for (const a of manifest.artifacts) {
       expect(a.sha256).toMatch(/^[a-f0-9]{64}$/);
@@ -93,7 +93,7 @@ describe('fixture job-completed-real (SIMULADO)', () => {
   });
 
   it('declara las medidas y conteos pedidos', () => {
-    const m = manifest.reread_metrics;
+    const m = manifest.reread_metrics!;
     // Origen centrado, como en el JEF real: el ancho y el alto salen de la diferencia, no del máximo.
     expect(m.stitch_bounds_mm).toEqual({ min_x_mm: -75, min_y_mm: -71.4, max_x_mm: 75, max_y_mm: 71.4 });
     expect(m.needle_stitches).toBe(6789);
