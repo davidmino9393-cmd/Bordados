@@ -1,6 +1,17 @@
 # H2 — imagen → geometría: plan, material preparado y pedidos
 
-Estado: **preparado, esperando autorizaciones**. Lo que depende de mí y de la web ya está hecho; lo que sigue exige tocar backend, worker o contratos (fuera de `apps/web` y `tests/e2e`) o recibir insumos tuyos.
+Estado: **autorizado (parche y backend en `claude/web`, sin merge a `main`)**. Hechos: paquete A (contrato) y paquete D (pipeline de imagen) con proveedores falsos en las pruebas y el adaptador de OpenAI sin probar contra la red. Faltan los insumos #3, #4 y #5 para B real, C, E y F.
+
+| Paquete | Estado |
+|---|---|
+| A. Contrato | **Hecho** (commit `00e6fd2`), 37 pruebas del motor |
+| B. Adaptador OpenAI | **Código y pruebas con transporte falso** (9). Sin clave ni modelo no se probó con OpenAI real |
+| C. Adaptador Ollama | Pendiente; figura «no disponible» en el catálogo |
+| D. Pipeline de imagen | **Hecho**: `analyzing`, `analysis`, `analysis-decision`, `analysis_retry`, continuación (14 pruebas HTTP). La vectorización no existe: el job termina en `failed` / `vectorization_not_implemented` |
+| E. Vector y geometría | Pendiente; necesita el conjunto de imágenes |
+| F. Evaluación | Pendiente |
+| G. Web | Pendiente del backend real con una clave |
+
 
 ## Contenido
 - [Qué está listo](#qué-está-listo) · [Pedidos](#pedidos-de-autorización-y-de-insumos) · [Paquetes de trabajo](#paquetes-de-trabajo-de-h2) · [Riesgos](#riesgos-y-límites) · [Orden](#orden-propuesto)
