@@ -27,6 +27,7 @@ BOUNDS_TOLERANCE_MM = 0.01
 ALLOWED_GEOMETRY_KINDS = {"verified_curve", "verified_mask"}
 PROVISIONAL_FLAG = "h3_validation_required"
 PROVISIONAL_ISSUE_CODE = "DENSITY_REVIEW_REQUIRED"
+MINIMUM_FEATURE_POLICY = "measure_and_report_never_remove_or_thicken"
 TIMINGS_KEY = "timings"
 NOT_MEASURED = ("holes_preserved_as_count", "text_as_annotation", "background_assumption")
 MEDIA_TYPES = {"png": "image/png", "jpeg": "image/jpeg", "svg": "image/svg+xml"}
@@ -92,6 +93,12 @@ def check_result(result, asset, settings, entry):
     ids = {o.object_id for o in document.objects}
     checks["provisional_values_marked"] = bool(ids) and ids <= flagged and ids <= covered and result.evidence.get(PROVISIONAL_FLAG) is True
     checks["has_objects"] = bool(document.objects)
+    feature = result.evidence.get("minimum_feature", {})
+    # Política de ancho mínimo: se mide y se avisa, y E no descarta nada por tamaño.
+    checks["minimum_feature_reported_never_removed"] = (
+        feature.get("policy") == MINIMUM_FEATURE_POLICY and feature.get("min_width_mm_is_calibrated") is False
+        and result.evidence.get("segmentation", {}).get("pixels_discarded_by_size_filter") == 0
+    )
     issues = [issue.severity.value for issue in result.issues]
     expected = entry["expected_outcome"]
     return checks, {"expected_outcome": expected, "issue_severities": sorted(set(issues)),
@@ -119,6 +126,11 @@ def evaluate_image(vectorize_fn, entry, base_dir):
     )
     record.update(status="ok", checks=checks, outcome=outcome, objects=len(first.document.objects),
                   duration_ms=[first.duration_ms, second.duration_ms])
+    feature = first.evidence.get("minimum_feature", {})
+    record["thin_features"] = {
+        "min_width_mm": feature.get("min_width_mm"), "measurable": feature.get("measurable"),
+        "thin_fraction_by_object": sorted((v["thin_fraction"] for v in feature.get("objects", {}).values()), reverse=True),
+    }
     try:
         record["fidelity"] = fidelity.measure(first.document, data)
     except Exception as error:  # no se oculta: queda en el informe como no medido

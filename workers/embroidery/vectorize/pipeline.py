@@ -13,6 +13,7 @@ from embroidery_contracts.design import CoordinateFrame, DesignDecision, Embroid
 
 from .contours import contours
 from .segmentation import decode, segment
+from .thin_features import measure as measure_thin_features
 from .types import VectorizeResult, check_cancel, fail, issue
 
 METHOD_VERSION = "e1-pixel-mask-v4"
@@ -41,7 +42,8 @@ def vectorize(image: bytes, media_type: str, asset: SourceAsset, analysis: Analy
     objects = tuple(_object(mask, affine, segmented, revision_id, cancel) for mask in traced)
     document = _document(objects, affine, asset, settings, job_id, revision_id)
     evidence = _evidence(segmented, traced, asset, analysis, settings, affine)
-    issues = _issues(objects, segmented.evidence)
+    evidence["minimum_feature"] = measure_thin_features(segmented, traced, objects, abs(affine[0]), cancel)
+    issues = _issues(objects, segmented.evidence, evidence["minimum_feature"])
     check_cancel(cancel)
     svg = _editable_svg(document, evidence)
     check_cancel(cancel)
@@ -162,15 +164,17 @@ def _evidence(segmented, traced, asset, analysis, settings, affine):
     }
 
 
-def _issues(objects, segmentation_evidence):
+def _issues(objects, segmentation_evidence, minimum_feature):
     ids = tuple(item.object_id for item in objects)
     output = [issue(
         IssueCode.DENSITY_REVIEW_REQUIRED,
         "La técnica y los parámetros son provisionales; H3 debe validarlos antes de digitalizar.",
         {"h3_validation_required": True, "parameters_calibrated": False,
          "provisional_stitch_length_mm": PROVISIONAL_STITCH_LENGTH_MM,
-         "provisional_spacing_mm": PROVISIONAL_FILL_SPACING_MM}, ids,
-        "Validar técnica, densidad, compensación y base con el perfil físico en H3.",
+         "provisional_spacing_mm": PROVISIONAL_FILL_SPACING_MM,
+         "minimum_feature_mm": minimum_feature["min_width_mm"], "minimum_feature_is_calibrated": False,
+         "thin_feature_fraction_by_object": {key: value["thin_fraction"] for key, value in minimum_feature["objects"].items()}}, ids,
+        "Validar técnica, densidad, compensación, base y el ancho mínimo bordable con el perfil físico en H3 (los trazos más finos no se borran ni se engrosan).",
     )]
     if segmentation_evidence["partial_alpha_pixels"]:
         output.append(issue(

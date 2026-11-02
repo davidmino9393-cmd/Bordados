@@ -41,6 +41,8 @@ def make_result(asset, settings, *, width=None, colors=("#112233",), kind="verif
         coordinates={"transform_version": "t1"}, page_bounds_mm=bounds, object_bounds_mm=bounds, objects=tuple(objects), decisions=tuple(decisions),
     )
     evidence = {run_eval.PROVISIONAL_FLAG: mark, run_eval.TIMINGS_KEY: {"total_ms": 1}}
+    evidence.update({"minimum_feature": {"policy": run_eval.MINIMUM_FEATURE_POLICY, "min_width_mm_is_calibrated": False, "objects": {}},
+                     "segmentation": {"pixels_discarded_by_size_filter": 0}})
     evidence.update(extra or {})
     rule = ISSUE_RULES[IssueCode.DENSITY_REVIEW_REQUIRED]
     issues = (Issue(code=IssueCode.DENSITY_REVIEW_REQUIRED, severity=rule.severity, stage=rule.stage, object_ids=tuple(o.object_id for o in objects),
