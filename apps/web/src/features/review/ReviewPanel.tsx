@@ -19,6 +19,8 @@ type TargetKind = 'object' | 'region';
 interface ReviewPanelProps {
   job: JobResponse;
   asset: SourceAsset | undefined;
+  /** Falso cuando no hay puntadas que corregir (solo geometría): se muestran las incidencias sin el formulario. */
+  correctable?: boolean;
 }
 
 function toCorrection(kind: TargetKind, id: string, choice: Choice): Correction | null {
@@ -31,7 +33,7 @@ function toCorrection(kind: TargetKind, id: string, choice: Choice): Correction 
 }
 
 /** Revisión localizada: causa, objetos/zonas concretos y correcciones que crean un trabajo nuevo. */
-export function ReviewPanel({ job, asset }: ReviewPanelProps) {
+export function ReviewPanel({ job, asset, correctable = true }: ReviewPanelProps) {
   const api = useApi();
   const navigate = useNavigate();
   const keyFor = useIdempotencyKey();
@@ -91,7 +93,7 @@ export function ReviewPanel({ job, asset }: ReviewPanelProps) {
             <figcaption className="field__hint">{es.review.originalRef}</figcaption>
           </figure>
         )}
-        {targets.map(({ kind, id }) => (
+        {correctable && targets.map(({ kind, id }) => (
           <Field key={`${kind}:${id}`} label={`${es.review.action} (${id})`}>
             <select
               value={choices[`${kind}:${id}`] ?? KEEP}
@@ -107,9 +109,11 @@ export function ReviewPanel({ job, asset }: ReviewPanelProps) {
           </Field>
         ))}
         {error && <Notice tone={NoticeTone.Error}>{error}</Notice>}
-        <div className="row">
-          <button type="button" onClick={apply} disabled={busy}>{es.review.apply}</button>
-        </div>
+        {correctable && (
+          <div className="row">
+            <button type="button" onClick={apply} disabled={busy}>{es.review.apply}</button>
+          </div>
+        )}
       </Card.Body>
     </Card>
   );

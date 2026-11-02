@@ -28,7 +28,7 @@ from embroidery_contracts.job_views import SewoutProjection
 
 from .analysis import configured_providers, provider_availability
 from .config import ApiConfig
-from .downloads import DownloadSigner
+from .downloads import ASSET_SCOPE, DownloadSigner
 from .errors import ApiProblem
 from .profiles import load_profiles, validate_settings
 from .runner import JobRunner, continuation_stages, initial_stages, raster_stages
@@ -158,6 +158,28 @@ def _download_error(request, code, detail):
     )
 
 
+def _original_response(request, store, data_root, grant):
+    """Sirve el original subido; el nombre de archivo fuerza `attachment`, así un SVG no se abre como documento."""
+    try:
+        asset = store.get("asset", grant["artifact_id"], grant["owner"])
+    except ApiProblem:
+        return _download_error(request, "NOT_FOUND", "El original no está disponible.")
+    private = asset["private"]
+    if private.get("sha256") != grant["sha256"]:
+        return _download_error(request, "NOT_FOUND", "El original no está disponible.")
+    assets_dir = (data_root / "assets").resolve()
+    try:
+        path = Path(private["path"]).resolve(strict=True)
+    except OSError:
+        return _download_error(request, "NOT_FOUND", "El original no está disponible.")
+    if not path.is_relative_to(assets_dir):
+        return _download_error(request, "FORBIDDEN", "La autorización de descarga no es válida.")
+    if hashlib.sha256(path.read_bytes()).hexdigest() != grant["sha256"]:
+        return _download_error(request, "FORBIDDEN", "El original no coincide con su autorización.")
+    return FileResponse(path, media_type=private["media_type"], filename=asset["body"]["original_filename"],
+                        headers={"X-Content-Type-Options": "nosniff"})
+
+
 def create_app(config: ApiConfig, analysis_providers=None):
     providers = dict(analysis_providers) if analysis_providers is not None else configured_providers(config)
     # La disponibilidad de proveedores sale de lo realmente configurado, no del archivo de perfiles.
@@ -234,6 +256,11 @@ def create_app(config: ApiConfig, analysis_providers=None):
         )
         return JSONResponse(body, status_code=status)
 
+    def with_original_download(body):
+        """El original se descarga con un enlace firmado de 300 s; nunca se guarda en la fila (vencería)."""
+        asset = SourceAsset.model_validate({**body, "original_download": None})
+        return asset.model_copy(update={"original_download": signer.issue_asset(owner, asset)})
+
     @api.get("/projects")
     def list_projects(
         cursor: str | None = Query(default=None),
@@ -258,7 +285,7 @@ def create_app(config: ApiConfig, analysis_providers=None):
         job_rows, jobs_next = _page(store.rows("job", owner, id), jobs_cursor, limit)
         result = ProjectDetail(
             project=ProjectResponse.model_validate(project["body"]),
-            assets=tuple(SourceAsset.model_validate(row["body"]) for row in asset_rows),
+            assets=tuple(with_original_download(row["body"]) for row in asset_rows),
             jobs=tuple(JobResponse.model_validate(row["body"]) for row in job_rows),
             assets_next_cursor=assets_next, jobs_next_cursor=jobs_next,
         )
@@ -292,7 +319,7 @@ def create_app(config: ApiConfig, analysis_providers=None):
             return 201, body.model_dump(mode="json")
 
         status, body = store.idempotent(f"uploadAsset:{owner}:{id}", idempotency_key, logical, action)
-        return JSONResponse(body, status_code=status)
+        return JSONResponse(with_original_download(body).model_dump(mode="json"), status_code=status)
 
     @api.post("/projects/{id}/revisions")
     def create_revision(
@@ -573,6 +600,8 @@ def create_app(config: ApiConfig, analysis_providers=None):
             grant = signer.verify(token)
         except ApiProblem as exc:
             return _download_error(request, exc.code, exc.detail)
+        if grant.get("scope") == ASSET_SCOPE:
+            return _original_response(request, store, data_root, grant)
         try:
             job = store.get("job", grant["job_id"], grant["owner"])
         except ApiProblem:

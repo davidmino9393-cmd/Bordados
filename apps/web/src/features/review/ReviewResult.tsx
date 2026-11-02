@@ -4,6 +4,7 @@ import { es } from '../../copy/es';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { JobFiles } from '../job-progress/JobFiles';
 import { PhysicalSewout } from '../sewout/PhysicalSewout';
+import { isGeometryOnly } from './geometryOnly';
 import { ReviewPanel } from './ReviewPanel';
 
 interface ReviewResultProps {
@@ -15,21 +16,26 @@ interface ReviewResultProps {
 /**
  * needs_review: incidencias por corregir y, si el servidor ya generó archivos, esos archivos
  * con un aviso claro de que NO están listos para prueba. La muestra física se puede
- * registrar igual (decisión del integrador); no cambia el estado digital.
+ * registrar igual (decisión del integrador); no cambia el estado digital. Si solo hay geometría (sin JEF)
+ * no hay nada que coser ni puntadas que corregir: solo se informa y se ofrece el SVG.
  */
 export function ReviewResult({ job, asset, onJobChanged }: ReviewResultProps) {
+  const geometryOnly = isGeometryOnly(job);
   return (
     <>
-      <ReviewPanel job={job} asset={asset} />
+      <ReviewPanel job={job} asset={asset} correctable={!geometryOnly} />
       {job.artifact_manifest && (
         <>
-          <Notice tone={NoticeTone.Warning} title={es.review.filesNotReadyTitle}>
-            <p>{es.review.filesNotReadyText}</p>
+          <Notice
+            tone={NoticeTone.Warning}
+            title={geometryOnly ? es.review.geometryOnlyTitle : es.review.filesNotReadyTitle}
+          >
+            <p>{geometryOnly ? es.review.geometryOnlyText : es.review.filesNotReadyText}</p>
           </Notice>
           <JobFiles job={job} asset={asset} onJobChanged={onJobChanged} showIssues={false} />
         </>
       )}
-      <PhysicalSewout job={job} onJobChanged={onJobChanged} />
+      {!geometryOnly && <PhysicalSewout job={job} onJobChanged={onJobChanged} />}
     </>
   );
 }

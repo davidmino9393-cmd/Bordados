@@ -67,6 +67,7 @@ Aplicación web privada que convierte una imagen o un SVG de un logo en un borda
 5. Deudas menores: «ver más» en listas paginadas, fotos de la muestra (`photo_asset_ids`), foco al cambiar de pantalla, regresión que vuelva a exportar con Ink/Stitch.
 
 ## 9. Dónde está cada cosa y cómo verificar
+- Verificación en navegador del camino de imagen con E1 real: `tests/e2e/real-backend/serve_with_simulated_analysis.py` levanta el backend con **solo el análisis de IA simulado** (sin clave de OpenAI) y `real-raster.spec.ts` corre el recorrido (`npx playwright test -c playwright.real.config.ts real-raster`). Resultado: `needs_review`, original y vector visibles, SVG editable descargado; sin formulario de muestra ni correcciones (solo geometría).
 - `apps/web/` (web), `apps/web/mocks/` (fixtures simulados), `apps/web/docs/` (**`H0-05-recorrido-web.md`** es el documento principal; `H2-plan-y-pedidos.md`; `h2/`).
 - `tests/e2e/` (Playwright; `playwright.real.config.ts` es opcional y requiere el backend en `localhost:8000`).
 - `packages/contracts/`, `services/api/`, `workers/embroidery/`, `tests/engine/`.
@@ -77,4 +78,4 @@ Aplicación web privada que convierte una imagen o un SVG de un logo en un borda
 ## 10. Trampas conocidas
 - Los archivos del repo mezclan fines de línea (LF/CRLF por `autocrlf`): las ediciones multilínea deben tolerarlo; el parche de contrato se guarda sin conversión (`*.patch -text`).
 - No ejecutar `npx` en la raíz del repo (crea una carpeta `node_modules` de caché ahí); usar `npm run` dentro de `apps/web`.
-- Existen hallazgos reales del backend ya documentados: 14 avisos idénticos con los mismos `object_ids` (`source_object_mapping_verified: false`), `original_download` nulo para SVG, catálogo de `providers` vacío antes de H2.
+- Hallazgos reales del backend ya documentados: 14 avisos idénticos con los mismos `object_ids` (`source_object_mapping_verified: false`) y catálogo de `providers` vacío antes de H2. `original_download` era nulo; ahora el backend lo emite (enlace firmado de 300 s).

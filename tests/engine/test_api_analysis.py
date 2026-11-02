@@ -226,6 +226,28 @@ class AnalysisFlowTests(AnalysisApiTests):
         self.assertEqual((evidence["reason"], evidence["original_code"]), ("vectorization_review_unlocalized", "GEOMETRY_INVALID"))
         self.assertEqual(evidence["original_evidence"]["reason"], "empty_foreground")
 
+    def test_the_uploaded_original_has_a_signed_download_that_serves_the_same_bytes(self):
+        self.start({"openai": FakeProvider("openai")})
+        _, project = self.call("POST", "/api/v1/projects", {"name": "Original"})
+        pid = project["project_id"]
+        image = png(shape=True)
+        status, asset = self.upload(pid, image)
+        self.assertEqual(status, 201)
+        _, detail = self.call("GET", f"/api/v1/projects/{pid}")
+        for source in (asset, detail["assets"][0]):
+            download = source["original_download"]
+            self.assertIsNotNone(download)
+            request = urllib.request.Request(self.base + urllib.parse.urlsplit(download["url"]).path, method="GET")
+            with urllib.request.urlopen(request, timeout=15) as response:
+                self.assertEqual((response.read(), response.headers["Content-Type"]), (image, "image/png"))
+                self.assertEqual(response.headers["X-Content-Type-Options"], "nosniff")
+        # Un enlace de otro tipo de archivo no sirve para pedir un original ajeno.
+        tampered = self.base + urllib.parse.urlsplit(asset["original_download"]["url"]).path[:-3] + "xyz"
+        with self.assertRaises(urllib.error.HTTPError) as caught:
+            urllib.request.urlopen(urllib.request.Request(tampered), timeout=15)
+        self.assertEqual(caught.exception.code, 403)
+        caught.exception.close()
+
     def test_provider_failures_end_the_job_with_the_catalogue_code(self):
         for code in (IssueCode.ANALYSIS_REFUSED, IssueCode.PROVIDER_RATE_LIMITED, IssueCode.ANALYSIS_SCHEMA_INVALID):
             with self.subTest(code=code):

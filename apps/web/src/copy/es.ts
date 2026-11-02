@@ -84,7 +84,7 @@ const issueTitles: Record<string, string> = {
   SATIN_PAIRED_NODES_VERIFIED: 'Satén verificado por nodos correspondientes',
   ROUTING_PRECEDENCE_VIOLATION: 'Se violó un orden obligatorio de bordado',
   ROUTING_VISIBLE_TRAVEL: 'Hay desplazamientos visibles entre elementos',
-  DENSITY_REVIEW_REQUIRED: 'Una zona densa necesita revisión',
+  DENSITY_REVIEW_REQUIRED: 'La densidad o los parámetros de puntada necesitan validación',
   DIMENSIONS_EXCEEDED: 'La medida real supera el tamaño pedido',
   HOOP_INCOMPATIBLE: 'El diseño no es compatible con el bastidor elegido',
   JEF_INVALID: 'El archivo JEF generado no es válido',
@@ -236,6 +236,9 @@ export const es = {
     filesNotReadyTitle: 'Archivos para revisar: no están listos para prueba',
     filesNotReadyText:
       'Los controles digitales no pasaron. Podés inspeccionarlos o registrar una muestra, pero resolvé las incidencias antes de usarlos como versión final.',
+    geometryOnlyTitle: 'Solo geometría: todavía no hay archivo de bordado',
+    geometryOnlyText:
+      'Se vectorizó la imagen y podés descargar el SVG editable. Las puntadas y el JEF no se generan hasta que se validen los parámetros físicos; por eso no hay muestra para registrar ni correcciones para aplicar.',
   },
   sewout: {
     title: 'Registrar muestra física',

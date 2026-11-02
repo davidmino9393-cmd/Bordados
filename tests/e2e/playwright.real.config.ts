@@ -9,7 +9,7 @@ const channel = process.env.E2E_BROWSER_CHANNEL ?? 'chrome';
 
 export default defineConfig({
   testDir: '.',
-  testMatch: 'real-backend.spec.ts',
+  testMatch: /real-(backend|raster).spec.ts/,
   timeout: 180_000,
   workers: 1,
   reporter: 'list',

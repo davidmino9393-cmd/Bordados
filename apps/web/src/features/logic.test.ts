@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import catalogFixture from '../../mocks/profiles.json';
 import { ArtifactKind, type Artifact, type ArtifactManifest } from '../contracts/artifacts';
-import { StageOutcome, type StageRecord } from '../contracts/job';
+import { StageOutcome, type JobResponse, type StageRecord } from '../contracts/job';
 import { AiProvider, type ProfileCatalog } from '../contracts/settings';
 import { earliestExpiry, isExpired } from '../shared/utils/expiry';
 import { estimateContain } from '../shared/utils/fit';
 import { guardArtifacts } from './artifacts/artifactGuard';
 import { summarizeProgress } from './job-progress/progress';
+import { isGeometryOnly } from './review/geometryOnly';
 import { toJobSettings, validateSettings, type SettingsFormValues } from './settings/validateSettings';
 
 const catalog = catalogFixture.payload as ProfileCatalog;
@@ -110,5 +111,16 @@ describe('vencimiento de enlaces', () => {
   it('elige el vencimiento más próximo', () => {
     expect(earliestExpiry(['2026-11-01T12:05:00Z', null, '2026-11-01T12:01:00Z'])).toBe('2026-11-01T12:01:00Z');
     expect(earliestExpiry([null])).toBeUndefined();
+  });
+});
+
+describe('isGeometryOnly', () => {
+  const job = (kinds: string[] | null) =>
+    ({ artifact_manifest: kinds && { artifacts: kinds.map((kind) => ({ kind })) } }) as unknown as JobResponse;
+
+  it('es verdadero solo si hay manifiesto y ninguno de sus archivos es un JEF', () => {
+    expect(isGeometryOnly(job(['editable_svg']))).toBe(true);
+    expect(isGeometryOnly(job(['editable_svg', 'jef', 'preview_png']))).toBe(false);
+    expect(isGeometryOnly(job(null))).toBe(false);
   });
 });
