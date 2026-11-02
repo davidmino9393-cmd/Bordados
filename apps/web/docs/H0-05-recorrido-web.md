@@ -132,6 +132,8 @@ Respuestas a las dudas:
 - **Regiones marcadas:** ver arriba; no alteran geometría ni bloquean.
 - **Catálogo y original:** `GET /profiles` debe listar `openai` y `ollama` con su disponibilidad real, y para una imagen `original_download` debe ser una URL firmada no nula (la web la usa para la vista previa y las cajas).
 
+**Plan completo de H2, parche de contrato listo y manifiesto de imágenes:** ver `H2-plan-y-pedidos.md` y la carpeta `h2/`.
+
 **Estado de la web:** el mock ya sigue este comportamiento y `HttpApiClient` llama a las dos rutas nuevas. La UI solo llega a `AnalysisReview` con un job de imagen en `needs_review` por análisis, algo que el backend de H0-04 todavía no produce (rechaza imágenes con `INVALID_REQUEST`). Sin probar contra backend real.
 
 ## Accesibilidad
