@@ -48,6 +48,9 @@ export function SettingsForm({ catalog, asset, busy, onSubmit }: SettingsFormPro
   const hoops = catalog.hoops.filter((h) => machine.hoop_profile_ids.includes(h.profile_id));
   const hoop = hoops.find((h) => h.profile_id === values.hoop_profile);
   const preparedSvg = asset?.media_type === MediaType.Svg;
+  const isImage = !!asset && !preparedSvg;
+  const noProviderAvailable = !catalog.providers.some((p) => p.available);
+  const blockedByProvider = isImage && noProviderAvailable;
   const set = <K extends keyof SettingsFormValues>(key: K, value: SettingsFormValues[K]) =>
     setValues((v) => ({ ...v, [key]: value }));
 
@@ -128,9 +131,15 @@ export function SettingsForm({ catalog, asset, busy, onSubmit }: SettingsFormPro
             preparedSvg={preparedSvg}
             onChange={(p) => set('ai_provider', p)}
           />
+          {isImage && (
+            <Notice tone={NoticeTone.Warning} title={text.experimentalTitle}>
+              <p>{text.experimentalText}</p>
+            </Notice>
+          )}
+          {blockedByProvider && <Notice tone={NoticeTone.Error}>{text.noProviders}</Notice>}
           {!asset && <p className="field__hint">{text.needAsset}</p>}
           <div className="row">
-            <button type="submit" disabled={busy || !asset}>{busy ? text.submitting : text.submit}</button>
+            <button type="submit" disabled={busy || !asset || blockedByProvider}>{busy ? text.submitting : text.submit}</button>
           </div>
         </form>
       </Card.Body>

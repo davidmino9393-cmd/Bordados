@@ -8,6 +8,7 @@ import { Field } from '../../shared/components/Field';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { errorMessage } from '../../shared/hooks/useAsync';
 import { formatMegabytes } from '../../shared/utils/format';
+import { AssetKindNotice } from './AssetKindNotice';
 import { newIdempotencyKey } from '../../shared/utils/idempotency';
 
 interface UploadPanelProps {
@@ -64,6 +65,7 @@ export function UploadPanel({ projectId, limits, assets, selected, onSelect, onU
             </select>
           </Field>
         )}
+        {selected && <AssetKindNotice asset={selected} />}
         {selected ? (
           <figure className="region-view">
             {originalUrl ? (

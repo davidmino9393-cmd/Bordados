@@ -19,6 +19,7 @@ export function ProviderPicker({ providers, value, preparedSvg, onChange }: Prov
   if (preparedSvg) {
     return <p className="field__hint">{es.settings.noAiForSvg}</p>;
   }
+  if (providers.length === 0) return null;
   return (
     <fieldset>
       <legend>{es.settings.provider}</legend>

@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { useApi } from '../../api/ApiProvider';
-import { JobStatus } from '../../contracts/job';
+import { JobStatus, type JobResponse } from '../../contracts/job';
 import { es } from '../../copy/es';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { RetryCountdown } from '../../shared/components/RetryCountdown';
@@ -8,10 +8,15 @@ import { useAsync } from '../../shared/hooks/useAsync';
 import { useDocumentTitle } from '../../shared/hooks/useDocumentTitle';
 import { useJobPolling } from '../../shared/hooks/useJobPolling';
 import { useRenewBeforeExpiry } from '../../shared/hooks/useRenewBeforeExpiry';
+import { AnalysisReview } from '../analysis/AnalysisReview';
 import { ReviewResult } from '../review/ReviewResult';
 import { CancelledNotice, FailedNotice } from './FailureAndCancelled';
 import { JobProgress } from './JobProgress';
 import { ReadyResult } from './ReadyResult';
+
+/** Imagen cuyo análisis visual quedó con dudas (H2); un SVG preparado nunca pasa por acá. */
+const isAnalysisReview = (job: JobResponse) =>
+  job.input_kind === 'raster_image' && !!job.review?.issues.some((issue) => issue.stage === 'analysis');
 
 export function JobPage() {
   const { jobId = '' } = useParams();
@@ -51,7 +56,10 @@ export function JobPage() {
       <JobProgress job={job} onJobChanged={replace} />
       {job.status === JobStatus.Failed && <FailedNotice job={job} />}
       {job.status === JobStatus.Cancelled && <CancelledNotice job={job} />}
-      {job.status === JobStatus.NeedsReview && <ReviewResult job={job} asset={asset} onJobChanged={replace} />}
+      {job.status === JobStatus.NeedsReview && isAnalysisReview(job) && <AnalysisReview job={job} asset={asset} />}
+      {job.status === JobStatus.NeedsReview && !isAnalysisReview(job) && (
+        <ReviewResult job={job} asset={asset} onJobChanged={replace} />
+      )}
       {job.status === JobStatus.ReadyForSewout && <ReadyResult job={job} asset={asset} onJobChanged={replace} />}
     </>
   );

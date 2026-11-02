@@ -126,6 +126,10 @@ export const es = {
     uploading: 'Subiendo…',
     pixels: (w: number, h: number) => `${w} × ${h} píxeles (de la imagen, no del bordado)`,
     pixelsUnknown: 'Sin medida en píxeles (SVG)',
+    preparedBadge: 'SVG preparado',
+    preparedText: 'Va directo a la generación del bordado.',
+    imageBadge: 'Imagen para analizar',
+    imageText: 'Primero la analiza una IA; vas a poder revisar ese análisis antes de generar el bordado.',
     pickAsset: 'Imagen del proyecto',
     none: 'Subí una imagen para continuar.',
     unavailable: 'La vista previa del original no está disponible.',
@@ -142,6 +146,10 @@ export const es = {
     colors: 'Cantidad de colores',
     provider: 'Análisis con',
     noFallback: 'No se usará otro proveedor en su lugar.',
+    experimentalTitle: 'Función experimental',
+    experimentalText:
+      'El análisis de imágenes con IA es experimental y puede equivocarse. Antes de generar el bordado vas a poder revisar lo que detectó.',
+    noProviders: 'El servidor no tiene proveedores de IA disponibles para analizar imágenes.',
     noAiForSvg: 'Un SVG ya preparado no se analiza con IA.',
     positive: 'Ingresá un número mayor que cero.',
     colorsRange: (max: number) => `Elegí entre 1 y ${max} colores.`,
@@ -252,6 +260,27 @@ export const es = {
       future: 'La fecha no puede ser futura.',
       tooLong: 'El texto es demasiado largo.',
     },
+  },
+  analysis: {
+    title: 'Revisá el análisis de la imagen',
+    attentionTitle: (n: number) =>
+      n === 1 ? 'La IA no está segura de 1 zona' : `La IA no está segura de ${n} zonas`,
+    estimated:
+      'Las cajas y los textos los estimó la IA y no están verificados: sirven de guía, no son el trazado final.',
+    analyzedWith: (provider: string, model: string, seconds: string) =>
+      `Analizado con ${provider} (${model}) en ${seconds} s.`,
+    originalAlt: 'Imagen original con las zonas detectadas',
+    uncertain: 'Incierta',
+    detectedText: 'Texto detectado',
+    noText: 'ninguno',
+    colors: 'Colores sugeridos',
+    flag: (role: string) => `Marcar «${role}» para revisión manual`,
+    flaggedCount: (n: number) =>
+      n === 1 ? '1 zona marcada para revisión manual.' : `${n} zonas marcadas para revisión manual.`,
+    approve: 'Aprobar el análisis y continuar',
+    otherProvider: 'Probar con otro proveedor',
+    noOtherProvider: 'No hay otro proveedor de IA disponible.',
+    regenerate: 'Regenerar con otro proveedor',
   },
   variants: {
     title: 'Variante de tamaño',
