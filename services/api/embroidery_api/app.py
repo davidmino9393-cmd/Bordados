@@ -21,7 +21,7 @@ from embroidery_contracts import (
     AnalysisDecision, AnalysisSpec, AuthorizedArtifactManifest, CancelRequest, ErrorCode, JobCreate, JobResponse, JobStatus,
     ProjectCreate, ProjectDetail, ProjectList, ProjectResponse,
     RevisionCreate, RevisionList, RevisionRequest, RevisionResponse, SewoutRecord,
-    SewoutResponse, SourceAsset,
+    SewoutResponse, SizeVariantRevision, SourceAsset,
 )
 from embroidery_contracts.http import ERROR_STATUS, FieldError, ProblemResponse
 from embroidery_contracts.job_views import SewoutProjection
@@ -335,8 +335,10 @@ def create_app(config: ApiConfig, analysis_providers=None):
     ):
         owned("project", id)
         request = payload.root
+        if isinstance(request, SizeVariantRevision):
+            return create_size_variant(id, request, idempotency_key, payload)
         if not isinstance(request, RevisionCreate):
-            raise ApiProblem("INVALID_REQUEST", "H0-04 solo admite revisiones iniciales.")
+            raise ApiProblem("INVALID_REQUEST", "Las correcciones todavía no se admiten: por ahora hay revisiones iniciales y variantes de tamaño.")
         validate_settings(request.settings, catalog)
 
         def action():
@@ -358,6 +360,40 @@ def create_app(config: ApiConfig, analysis_providers=None):
             f"createRevision:{owner}:{id}", idempotency_key, payload.model_dump(mode="json"), action
         )
         return JSONResponse(body, status_code=status)
+
+    def create_size_variant(project_id, request, key, payload):
+        """Variante de tamaño: una revisión nueva e inmutable y un job hijo que vuelve a generar desde la entrada original.
+
+        Nunca se escala un archivo ya generado ni se toca el job de origen. Los ajustes son los del origen salvo el destino.
+        Una imagen con proveedor de IA vuelve a analizarse (la variante es un trabajo nuevo, no una continuación aprobada).
+        """
+        parent = owned("job", request.parent_job_id, project_id)
+        original = JobResponse.model_validate(parent["body"])
+        if original.status not in TERMINAL_STATES:
+            raise ApiProblem("REVISION_CONFLICT", "El trabajo de origen todavía está en curso: esperá a que termine para pedir una variante.")
+        asset = owned("asset", original.asset_id, project_id)
+        settings = original.settings_snapshot.model_copy(update={"target": request.target})
+        validate_settings(settings, catalog)
+        if original.input_kind == "prepared_svg":
+            stages = initial_stages()
+        else:
+            stages = unanalyzed_raster_stages() if settings.ai_provider == "none" else raster_stages()
+
+        def build():
+            revision_id = _new_id("rev")
+            body, private = new_job(project_id, revision_id, asset, settings, original.input_kind, stages, original.job_id)
+            revision = RevisionResponse(
+                revision_id=revision_id, project_id=project_id, base_revision_id=original.revision_id,
+                reason="size_variant", created_at=_now(), kind="size_variant",
+                parent_job_id=original.job_id, job_id=body.job_id,
+            )
+            store.create(
+                "revision", revision_id, owner, project_id, revision.model_dump(mode="json"),
+                {"settings": settings.model_dump(mode="json"), "document": None},
+            )
+            return body, private
+
+        return enqueue_job(f"createRevision:{owner}:{project_id}", key, payload.model_dump(mode="json"), build)
 
     @api.get("/projects/{id}/revisions")
     def list_revisions(

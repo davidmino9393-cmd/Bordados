@@ -69,6 +69,7 @@ David pidió una página donde cargar una imagen y recibir el JEF terminado. Gu�
 | Bastidor | El worker escribe en la cabecera del JEF el código del perfil (SQ20b = 4), porque el exportador lo deduce por tamaño (un logo chico sale como 126 × 110 y fallaba `HOOP_INCOMPATIBLE`). La salida cruda queda en `exporter-output.jef` y el cambio, en `jef_header_patch` |
 | Web | «Sin análisis de IA» en el selector; tarjeta «Tu archivo de bordado» arriba de todo; una imagen no ofrece correcciones (el servidor solo admite revisiones iniciales) |
 | Archivo | El JEF se llama como la imagen subida |
+| Variantes de tamaño | `POST /projects/{id}/revisions` con `kind: size_variant` (ya declarado en el contrato) crea una revisión nueva con enlaces al origen y un job hijo que vuelve a generar desde la entrada original; el origen no cambia. Solo si el origen terminó (si no, 409) y es del mismo proyecto. Las correcciones siguen sin admitirse. La web ofrece el formulario también en la pantalla de revisión, con aviso si el tamaño no entra en el bastidor |
 | Configuración | `raster_digitizing` (`true`), `digitizing_timeout_s` (`600`) |
 
 Contratos que cambian (**pendientes de ratificar por David**):

@@ -161,6 +161,29 @@ describe('recorrido principal (cliente SIMULADO)', () => {
     expect(screen.getAllByRole('link', { name: 'Abrir' })).toHaveLength(2);
   });
 
+  it('un trabajo en revisión con archivos también ofrece la variante de tamaño y avisa si no entra en el bastidor', async () => {
+    const user = setupUser();
+    const { client, calls } = instrument();
+    renderApp(client);
+    await generateFrom(user, svgFile('logo-completo.svg'));
+    await advance(FULL_RUN_MS);
+    await screen.findByText('Hay un elemento que necesita revisión');
+    await screen.findByText('Variante de tamaño'); // el servidor real nunca llega a «listo para prueba»: la variante se pide desde acá
+
+    const width = screen.getByLabelText('Ancho máximo (mm)');
+    await user.clear(width);
+    await user.type(width, '250');
+    expect(screen.getByText(/mayor que el bastidor \(200 × 200 mm\)/)).toBeInTheDocument();
+    await user.clear(width);
+    await user.type(width, '90');
+    expect(screen.queryByText(/mayor que el bastidor/)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Generar variante' }));
+    await screen.findByRole('heading', { name: 'Generación del bordado' });
+    const request = calls.find((c) => c.method === 'createDerivedRevision')!.args[1];
+    expect(request).toMatchObject({ kind: 'size_variant', target: { width_mm: 90 } });
+  });
+
   it('renueva los enlaces antes de que venzan (TTL de 300 s) sin conservarlos más allá de expires_at', async () => {
     const user = setupUser();
     const { client, count } = instrument();
