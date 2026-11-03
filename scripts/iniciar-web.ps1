@@ -59,6 +59,15 @@ $env:PYTHONPATH = (@('services\api', 'packages\contracts', 'workers\embroidery')
 $env:PYTHONIOENCODING = 'utf-8'
 $env:VITE_USE_MOCKS = 'false'
 $env:API_PROXY_TARGET = "http://127.0.0.1:$ApiPort"
+# La web reenvía /api con estas credenciales: el navegador no pide usuario ni clave.
+if ($settings.basic_username -and $settings.basic_password) {
+    $pair = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("$($settings.basic_username):$($settings.basic_password)"))
+    $env:API_PROXY_AUTHORIZATION = "Basic $pair"
+} elseif ($settings.service_token) {
+    $env:API_PROXY_AUTHORIZATION = "Bearer $($settings.service_token)"
+} else {
+    Stop-WithMessage 'la configuración no tiene basic_username/basic_password ni service_token.'
+}
 
 $api = $null
 $web = $null
@@ -74,9 +83,6 @@ try {
 
     Write-Host ''
     Write-Host "Listo: http://localhost:$WebPort" -ForegroundColor Green
-    if ($settings.basic_username) {
-        Write-Host "El navegador pide usuario y clave: usuario '$($settings.basic_username)'; la clave está en $($env:EMBROIDERY_API_CONFIG) (basic_password)."
-    }
     Write-Host 'Subí una imagen, elegí el tamaño y «Generar bordado». Para detener todo, cerrá esta ventana o presioná Ctrl+C.'
     if (-not $NoBrowser) { Start-Process "http://localhost:$WebPort" }
     while (-not $api.HasExited -and -not $web.HasExited) { Start-Sleep -Seconds 2 }

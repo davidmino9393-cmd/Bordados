@@ -10,7 +10,7 @@ Documentos relacionados: [services/api/docs/CONFIG.md](services/api/docs/CONFIG.
 | Paso | Qué hacer |
 |---|---|
 | 1 | Doble clic en `scripts\iniciar-web.cmd` (una sola vez por sesión). Se abre el navegador en `http://localhost:5173` |
-| 2 | El navegador pide usuario y clave: están en `services\api\.runtime\api-config.json` (`basic_username`, `basic_password`) |
+| 2 | No hay que escribir usuario ni clave: la web los toma de `services\api\.runtime\api-config.json` y los agrega sola |
 | 3 | Para detener todo, cerrá la ventana negra |
 
 La primera vez hace falta `cd apps\web` y `npm install`, y que existan Inkscape, Ink/Stitch y el archivo de configuración privada de la API.
@@ -38,6 +38,7 @@ La primera vez hace falta `cd apps\web` y `npm install`, y que existan Inkscape,
 ## Si algo falla
 | Síntoma | Causa probable |
 |---|---|
+| La página muestra un error de acceso (401) | Cerrar la ventana negra y volver a abrir `iniciar-web.cmd`: la web debe iniciarse con ese script, que le pasa las credenciales de la configuración |
 | El script dice que falta la configuración | Falta `services\api\.runtime\api-config.json` (ver CONFIG.md) |
 | «No se pudo generar el bordado» | La incidencia dice la causa; los registros están en `services\api\.runtime\logs` |
 | La máquina no acepta el diseño o pide otro bastidor | Anotarlo: es justo lo que falta probar (ver §10 de REFERENCIAS_JANOME_MC550E.md) |
