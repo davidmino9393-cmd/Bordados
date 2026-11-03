@@ -1,6 +1,6 @@
 # Estado de `claude/web` para decidir el paso a `main`
 
-Propósito: registrar qué pasó a `main` y qué falta. Los 83 commits de abajo pasaron a `main` por merge local (`ffd63b8`, 2026-11-02; sin push). David **ratificó los seis cambios de contrato** de la tabla. Lo posterior —imagen → JEF— está en la última sección, **sin ratificar ni commitear**. Lo escribió Claude Code; Codex y OpenCode no revisaron los cambios de `claude/web` posteriores a sus entregas.
+Propósito: registrar qué pasó a `main` y qué falta. Los 83 commits de abajo pasaron a `main` por merge local (`ffd63b8`, 2026-11-02; sin push). David **ratificó los seis cambios de contrato** de la tabla. Lo posterior —imagen → JEF— está en la última sección y pasó a `main` por el merge `33a9f33` (2026-11-03; sin push): Codex le dio GO para pruebas manuales y David ratificó sus dos cambios de contrato. Lo escribió Claude Code; salvo imagen → JEF, Codex y OpenCode no revisaron los cambios de `claude/web` posteriores a sus entregas.
 
 Contenido: [Qué contiene](#qué-contiene) · [Contratos que cambian](#contratos-que-cambian) · [Verificación](#verificación) · [Riesgos](#riesgos) · [Decisiones](#decisiones-para-david)
 
@@ -57,7 +57,7 @@ Corrida completa sobre el último commit:
 3. Coser y medir la muestra de calibración (`tests/calibration/h3`, **pendiente: David la hará más adelante**): sin ella, ancho mínimo, densidad y compensación siguen provisionales y no hay JEF desde imágenes.
 4. Para destrabar lo no probado: clave y modelo de OpenAI con tope de costo, y modelo de visión y hardware para Ollama.
 
-## Imagen → JEF (2026-11-02, sin commitear)
+## Imagen → JEF (2026-11-02; en `main` desde 2026-11-03)
 David pidió una página donde cargar una imagen y recibir el JEF terminado. Guía de uso: [COMO_USAR.md](../../../COMO_USAR.md).
 
 | Qué | Detalle |
@@ -71,7 +71,7 @@ David pidió una página donde cargar una imagen y recibir el JEF terminado. Gu�
 | Archivo | El JEF se llama como la imagen subida |
 | Configuración | `raster_digitizing` (`true`), `digitizing_timeout_s` (`600`) |
 
-Contratos que cambian (**pendientes de ratificar por David**):
+Contratos que cambian (**ratificados por David el 2026-11-03**):
 
 | Cambio | Por qué |
 |---|---|
@@ -79,3 +79,5 @@ Contratos que cambian (**pendientes de ratificar por David**):
 | Transición `queued → vectorizing` también para una imagen con `ai_provider: none` y `analyzing` omitido con motivo | Idem: no hay padre que aprobara un análisis |
 
 Verificación: motor 136 pruebas OK; web 161 Vitest y typecheck; real end-to-end (navegador, API y Ink/Stitch reales): anillo en 9 s y Anime Socks en 2,2 min, ambos con JEF releído (código de bastidor 4). Límites conocidos: todo se borda como relleno (sin satin ni corrida), una capa casi blanca real se pierde, el tiempo con diseños complejos es de minutos, y `ready_for_sewout` sigue sin alcanzarse (faltan las comprobaciones geométricas). La calidad física del JEF de una imagen no se probó en tela.
+
+Revisión independiente: Codex dio GO para pruebas manuales a `014e368` (informe en `codex/motor`, `tests/engine/evidence/independent-review/014e368/README.md`): R1 a R5 de la revisión de `c49573d` cerrados; motor 145 y evaluación 16 sin fallos. El GO no declara calibración ni `ready_for_sewout`. Las variantes de tamaño no están en `main`: están en `claude/web-variantes` (`da6efbf`) y esperan su revisión.
