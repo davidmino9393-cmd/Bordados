@@ -4,7 +4,8 @@ import { es } from '../../copy/es';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { JobFiles } from '../job-progress/JobFiles';
 import { PhysicalSewout } from '../sewout/PhysicalSewout';
-import { isGeometryOnly } from './geometryOnly';
+import { canCorrect, isGeometryOnly, isRasterWithJef } from './geometryOnly';
+import { JefHero } from './JefHero';
 import { ReviewPanel } from './ReviewPanel';
 
 interface ReviewResultProps {
@@ -23,7 +24,8 @@ export function ReviewResult({ job, asset, onJobChanged }: ReviewResultProps) {
   const geometryOnly = isGeometryOnly(job);
   return (
     <>
-      <ReviewPanel job={job} asset={asset} correctable={!geometryOnly} />
+      {isRasterWithJef(job) && <JefHero job={job} />}
+      <ReviewPanel job={job} asset={asset} correctable={canCorrect(job)} />
       {job.artifact_manifest && (
         <>
           <Notice

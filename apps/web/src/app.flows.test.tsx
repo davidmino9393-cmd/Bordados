@@ -115,11 +115,11 @@ describe('recorrido principal (cliente SIMULADO)', () => {
     expect(screen.queryByRole('link', { name: /Descargar/ })).not.toBeInTheDocument();
   });
 
-  it('pide revisión localizada y regenera con una corrección', async () => {
+  it('pide revisión localizada y regenera con una corrección (SVG preparado: una imagen no admite correcciones)', async () => {
     const user = setupUser();
     const { client, calls } = instrument();
     renderApp(client);
-    await generateFrom(user, pngFile('logo-revision.png'));
+    await generateFrom(user, svgFile('logo-revision.svg'));
     await advance(FULL_RUN_MS);
 
     expect(await screen.findByText('Hay un elemento que necesita revisión')).toBeInTheDocument();
@@ -755,7 +755,7 @@ describe('H2: imágenes y análisis visual (SIMULADO, operaciones propuestas)', 
     expect(screen.queryByRole('radio', { name: /OpenAI/ })).not.toBeInTheDocument();
   });
 
-  it('sin proveedores de IA disponibles no deja generar una imagen, pero sí un SVG preparado', async () => {
+  it('sin proveedores de IA una imagen se genera igual, sin análisis, y el SVG preparado también', async () => {
     const user = setupUser();
     const base = createMockApiClient();
     renderApp({ ...base, async getProfiles() { return { ...(await base.getProfiles()), providers: [] }; } });
@@ -764,11 +764,33 @@ describe('H2: imágenes y análisis visual (SIMULADO, operaciones propuestas)', 
     await user.upload(input, pngFile('logo.png'));
     await screen.findByText(/logo\.png · /);
     expect(screen.getByText(/no tiene proveedores de IA disponibles/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Generar bordado' })).toBeDisabled();
+    expect(screen.getByRole('radio', { name: 'Sin análisis de IA' })).toBeChecked();
+    expect(screen.queryByRole('radio', { name: /OpenAI/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Generar bordado' })).toBeEnabled();
 
     await user.upload(input, svgFile('preparado.svg'));
     await screen.findByText(/preparado\.svg · /);
     expect(screen.getByRole('button', { name: 'Generar bordado' })).toBeEnabled();
+  });
+
+  it('una imagen sin análisis de IA omite la etapa con motivo, no pausa por análisis y llega a "listo para prueba"', async () => {
+    const { client, calls } = instrument();
+    const user = setupUser();
+    renderApp(client);
+    const input = await openProject(user);
+
+    await user.upload(input, pngFile('logo-analisis.png'));
+    await screen.findByText(/logo-analisis\.png · /);
+    await user.click(screen.getByRole('radio', { name: 'Sin análisis de IA' }));
+    await user.click(screen.getByRole('button', { name: 'Generar bordado' }));
+    await advance(FULL_RUN_MS);
+
+    const created = calls.find((c) => c.method === 'createJob')!;
+    expect((created.args[1] as { settings: { ai_provider: string } }).settings.ai_provider).toBe('none');
+    expect(screen.queryByText(ANALYSIS_TITLE)).not.toBeInTheDocument(); // el nombre pediría análisis; sin IA no hay pausa
+    expect(calls.some((c) => c.method === 'decideAnalysis')).toBe(false);
+    expect(screen.getByText('Omitida')).toBeInTheDocument();
+    expect((await screen.findAllByText(READY)).length).toBeGreaterThan(0);
   });
 
   it('muestra regiones, texto, colores y dudas del análisis, con la zona incierta señalada', async () => {

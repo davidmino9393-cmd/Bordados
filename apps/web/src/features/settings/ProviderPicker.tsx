@@ -19,10 +19,22 @@ export function ProviderPicker({ providers, value, preparedSvg, onChange }: Prov
   if (preparedSvg) {
     return <p className="field__hint">{es.settings.noAiForSvg}</p>;
   }
-  if (providers.length === 0) return null;
   return (
     <fieldset>
       <legend>{es.settings.provider}</legend>
+      <div>
+        <label className="radio">
+          <input
+            type="radio"
+            name="ai_provider"
+            value={AiProvider.None}
+            checked={value === AiProvider.None}
+            onChange={() => onChange(AiProvider.None)}
+          />
+          {es.settings.noAi}
+        </label>
+        <p className="field__hint">{es.settings.noAiHint}</p>
+      </div>
       {providers.map((p) => (
         <div key={p.provider_id}>
           <label className="radio">

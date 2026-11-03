@@ -1,10 +1,9 @@
-import { useState, type MouseEvent } from 'react';
 import { ArtifactKind, type Artifact, type AuthorizedArtifactManifest } from '../../contracts/artifacts';
 import { artifactKindLabel, es } from '../../copy/es';
 import { Card } from '../../shared/components/Card';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
-import { isExpired, renewMargin } from '../../shared/utils/expiry';
 import { formatBytes, shortHash } from '../../shared/utils/format';
+import { useArtifactDownload } from './useArtifactDownload';
 
 const TECHNICAL_KINDS: ArtifactKind[] = [
   ArtifactKind.StitchPlanJson,
@@ -19,29 +18,8 @@ interface ArtifactsPanelProps {
   refresh: () => Promise<AuthorizedArtifactManifest | null>;
 }
 
-function startDownload(url: string, filename: string) {
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-}
-
 export function ArtifactsPanel({ artifacts, hadMismatch, refresh }: ArtifactsPanelProps) {
-  const [renewing, setRenewing] = useState(false);
-
-  // Un enlace vencido (o por vencer) no se usa: se reconsulta y se descarga el nuevo.
-  const onDownload = async (event: MouseEvent, artifact: Artifact) => {
-    const download = artifact.download;
-    if (download && !isExpired(download.expires_at, Date.now(), renewMargin(download))) return;
-    event.preventDefault();
-    setRenewing(true);
-    const fresh = await refresh();
-    setRenewing(false);
-    const next = fresh?.artifacts.find((a) => a.artifact_id === artifact.artifact_id);
-    if (next?.download) startDownload(next.download.url, next.filename);
-  };
+  const { renewing, onDownload } = useArtifactDownload(refresh);
 
   const row = (a: Artifact) => (
     <li key={a.artifact_id} className="list__item">

@@ -63,8 +63,14 @@ test('cancelación: queda cancelado y sin archivos', async ({ page }) => {
   await expect(page.getByRole('link', { name: /Descargar/ })).toHaveCount(0);
 });
 
+// Una imagen no admite correcciones (el servidor solo las admite para un SVG preparado): se usa un SVG.
 test('revisión localizada: corrige y regenera', async ({ page }) => {
-  await generate(page, 'logo-revision.png');
+  await page.goto('/');
+  await page.getByLabel('Nombre del proyecto').fill('Prueba e2e');
+  await page.getByRole('button', { name: 'Crear proyecto' }).click();
+  await page.getByLabel('Elegir archivo').setInputFiles({ name: 'logo-revision.svg', mimeType: 'image/svg+xml', buffer: SVG_VALIDO });
+  await expect(page.getByText(/logo-revision\.svg · /)).toBeVisible();
+  await page.getByRole('button', { name: 'Generar bordado' }).click();
   await expect(page.getByText('Hay un elemento que necesita revisión')).toBeVisible({ timeout: RUN_TIMEOUT_MS });
   await expect(page.getByText(/object_mock_satin/).first()).toBeVisible();
   await expectNoHorizontalScroll(page);
