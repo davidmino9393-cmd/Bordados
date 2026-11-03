@@ -87,8 +87,12 @@ def measured_checks(job, result, tolerance):
     return checks, issues
 
 
-def result_documents(job, result, directory, duration_ms, tolerance, display_names=None):
-    """`display_names`: nombre que ve la persona al descargar, por tipo de archivo; en disco el archivo no cambia."""
+def result_documents(job, result, directory, duration_ms, tolerance, display_names=None, input_sha256=None):
+    """`display_names`: nombre que ve la persona al descargar, por tipo de archivo; en disco el archivo no cambia.
+
+    `input_sha256`: huella de lo que subió la persona. Sin ella (un SVG preparado) la entrada es el SVG que recibió el
+    worker; con ella (una imagen) el SVG intermedio es la geometría y no se confunde con la entrada.
+    """
     display_names = display_names or {}
     job_id = job["job_id"]
     raw_id = f"{job_id}_raw_commands_json"
@@ -115,5 +119,6 @@ def result_documents(job, result, directory, duration_ms, tolerance, display_nam
     on_disk = {f"{job_id}_{kind}": str(directory / filename) for kind, filename, _, _ in files}
     settings_hash = hashlib.sha256(json.dumps(job["settings_snapshot"], sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     manifest = ArtifactManifest(manifest_id=f"{job_id}_manifest", job_id=job_id, revision_id=job["revision_id"], provenance=provenance,
-                                input_sha256=result["input_sha256"], settings_sha256=settings_hash, geometry_sha256=result["input_sha256"], artifacts=artifacts, reread_metrics=metrics)
+                                input_sha256=input_sha256 or result["input_sha256"], settings_sha256=settings_hash,
+                                geometry_sha256=result["input_sha256"], artifacts=artifacts, reread_metrics=metrics)
     return report, manifest, on_disk

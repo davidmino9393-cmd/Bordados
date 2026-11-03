@@ -37,13 +37,19 @@ class StitchableObject:
     removed_loops: int
     total_area_mm2: float
     removed_area_mm2: float
-    points: int
-    kept_points: int
+    points: int  # todos los puntos de E1 en este objeto
+    kept_points_before: int  # los de los contornos que se quedan, antes de simplificar
+    kept_points: int  # y después
     tolerance_mm: float
 
     @property
+    def simplified(self):
+        return self.kept_points < self.kept_points_before
+
+    @property
     def changed(self):
-        return self.omitted is not None or self.removed_loops > 0
+        """Algo del objeto no llegó tal cual al bordado: se omitió, se quitaron manchas o se simplificó el contorno."""
+        return self.omitted is not None or self.removed_loops > 0 or self.simplified
 
 
 def _points(subpath):
@@ -58,13 +64,15 @@ def ring_area_mm2(points):
 
 
 def _distance_squared(point, start, end):
+    """Distancia al SEGMENTO (no a la recta infinita): un punto más allá de un extremo mide hasta ese extremo.
+
+    Con la recta, un contorno que se aleja por la misma dirección de la cuerda y vuelve se daba por «cerca» y se perdía.
+    """
     (x, y), (x1, y1), (x2, y2) = point, start, end
     dx, dy = x2 - x1, y2 - y1
     length_squared = dx * dx + dy * dy
-    if length_squared == 0:
-        return (x - x1) ** 2 + (y - y1) ** 2
-    cross = (x - x1) * dy - (y - y1) * dx
-    return cross * cross / length_squared
+    along = 0.0 if length_squared == 0 else max(0.0, min(1.0, ((x - x1) * dx + (y - y1) * dy) / length_squared))
+    return (x - (x1 + along * dx)) ** 2 + (y - (y1 + along * dy)) ** 2
 
 
 def _simplify_chain(chain, tolerance_squared):
@@ -125,16 +133,19 @@ def plan_object(obj, tolerance=SIMPLIFY_TOLERANCE_MM):
     rings = [_points(subpath) for subpath in _SUBPATH.findall(obj.path_data_mm)]
     areas = [ring_area_mm2(ring) for ring in rings]
     total, points = sum(areas), sum(len(ring) for ring in rings)
+    whole = dict(object_id=obj.object_id, path_data_mm=None, loops=len(rings), removed_loops=len(rings), total_area_mm2=total,
+                 removed_area_mm2=total, points=points, kept_points_before=0, kept_points=0, tolerance_mm=tolerance)
     if is_near_white(obj.work_color):
-        return StitchableObject(obj.object_id, None, OMITTED_NEAR_WHITE, len(rings), len(rings), total, total, points, 0, tolerance)
-    kept = [simplify_ring(ring, tolerance) for ring, area in zip(rings, areas) if area >= MIN_STITCHABLE_AREA_MM2]
-    kept = [ring for ring in kept if len(ring) >= 3]
-    removed_area = sum(area for area in areas if area < MIN_STITCHABLE_AREA_MM2)
+        return StitchableObject(**whole, omitted=OMITTED_NEAR_WHITE)
+    large = [ring for ring, area in zip(rings, areas) if area >= MIN_STITCHABLE_AREA_MM2]
+    kept = [ring for ring in (simplify_ring(ring, tolerance) for ring in large) if len(ring) >= 3]
     if not kept:
-        return StitchableObject(obj.object_id, None, OMITTED_TOO_SMALL, len(rings), len(rings), total, total, points, 0, tolerance)
-    path = " ".join(_format_ring(ring) for ring in kept)
-    return StitchableObject(obj.object_id, path, None, len(rings), len(rings) - len(kept), total, removed_area,
-                            points, sum(len(ring) for ring in kept), tolerance)
+        return StitchableObject(**whole, omitted=OMITTED_TOO_SMALL)
+    return StitchableObject(
+        object_id=obj.object_id, path_data_mm=" ".join(_format_ring(ring) for ring in kept), omitted=None, loops=len(rings),
+        removed_loops=len(rings) - len(kept), total_area_mm2=total,
+        removed_area_mm2=sum(area for area in areas if area < MIN_STITCHABLE_AREA_MM2), points=points,
+        kept_points_before=sum(len(ring) for ring in large), kept_points=sum(len(ring) for ring in kept), tolerance_mm=tolerance)
 
 
 def plan(document):
@@ -150,7 +161,8 @@ def evidence(planned):
             item.object_id: {
                 "loops": item.loops, "removed_loops": item.removed_loops, "omitted": item.omitted,
                 "total_area_mm2": round(item.total_area_mm2, 2), "removed_area_mm2": round(item.removed_area_mm2, 2),
-                "points": item.points, "kept_points": item.kept_points,
+                "points": item.points, "kept_points_before_simplification": item.kept_points_before,
+                "kept_points": item.kept_points, "simplified": item.simplified, "simplify_tolerance_mm": round(item.tolerance_mm, 4),
             } for item in planned
         },
     }

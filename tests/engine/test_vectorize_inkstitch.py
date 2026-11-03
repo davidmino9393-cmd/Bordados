@@ -258,6 +258,36 @@ class StitchablePlanTests(unittest.TestCase):
         json.dumps(stitchable.evidence((item,)))
         self.assertAlmostEqual(stitchable.ring_area_mm2(stitchable._points(item.path_data_mm)), item.total_area_mm2, delta=0.02 * item.total_area_mm2)
 
+    def test_a_simplification_alone_is_a_change_reported_with_points_before_after_and_the_tolerance(self):
+        """R3: aunque no se quite nada, que el contorno cambie dentro de una tolerancia se avisa y se mide."""
+        image = Image.new("RGB", (200, 200), "white")
+        ImageDraw.Draw(image).ellipse((20, 20, 179, 179), fill=(20, 40, 90))
+        value = result_for(png(image), configuration=settings(40, 40, 1))
+        (item,) = stitchable.plan(value.document)
+        self.assertEqual((item.removed_loops, item.omitted), (0, None))
+        self.assertTrue(item.simplified and item.changed)
+        self.assertLess(item.kept_points, item.kept_points_before)
+        issue = next(i for i in reference_issues(value) if i.code == IssueCode.VISUAL_MISMATCH)
+        self.assertEqual(issue.object_ids, (item.object_id,))
+        counts = issue.evidence["stitchable"]["objects"][item.object_id]
+        self.assertEqual((counts["kept_points_before_simplification"], counts["kept_points"]), (item.kept_points_before, item.kept_points))
+        self.assertTrue(counts["simplified"])
+        self.assertEqual(counts["simplify_tolerance_mm"], round(item.tolerance_mm, 4))
+        self.assertEqual(issue.evidence["stitchable"]["simplify_tolerance_mm"], round(item.tolerance_mm, 4))
+
+    def test_a_design_with_nothing_to_remove_or_simplify_is_not_a_change(self):
+        (item,) = stitchable.plan(sample_result().document)[:1]
+        self.assertFalse(item.changed or item.simplified)
+
+    def test_the_distance_is_to_the_segment_not_to_the_infinite_line(self):
+        """R4: el punto (10, 0) está sobre la recta de la cuerda (0,0)-(5,0) pero a 5 mm del segmento: no se puede perder."""
+        chain = [(0.0, 0.0), (10.0, 0.0), (5.0, 0.0)]
+        self.assertEqual(stitchable._simplify_chain(chain, 0.1 ** 2), chain)
+        self.assertAlmostEqual(stitchable._distance_squared((10, 0), (0, 0), (5, 0)), 25.0)
+        self.assertAlmostEqual(stitchable._distance_squared((-3, 4), (0, 0), (5, 0)), 25.0)  # más allá del otro extremo
+        self.assertAlmostEqual(stitchable._distance_squared((2, 3), (0, 0), (5, 0)), 9.0)  # dentro del segmento: perpendicular
+        self.assertAlmostEqual(stitchable._distance_squared((3, 4), (0, 0), (0, 0)), 25.0)  # segmento sin largo
+
     def test_nothing_stitchable_is_a_localized_review_failure_not_an_empty_embroidery(self):
         value = near_white_result(with_blue=False)
         with self.assertRaises(VectorizeFailure) as caught:

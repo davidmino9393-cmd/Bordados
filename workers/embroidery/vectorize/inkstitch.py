@@ -123,11 +123,12 @@ REFERENCE_NOTICE = (
     "Los parámetros de puntada son los de referencia de Anime Socks (gabardina, estabilizador grueso, 400 ppm), "
     "no una calibración para esta tela."
 )
-REMOVED_NOTICE = (
-    f"Se quitó del bordado lo que ninguna aguja puede formar: capas casi blancas, que se toman como fondo, y manchas de "
-    f"menos de {stitchable.MIN_STITCHABLE_AREA_MM2:g} mm²."
+ADJUSTED_NOTICE = (
+    f"Se ajustó la geometría para poder bordarla: se quitó lo que ninguna aguja puede formar (capas casi blancas, que se "
+    f"toman como fondo, y manchas de menos de {stitchable.MIN_STITCHABLE_AREA_MM2:g} mm²) y se simplificaron los contornos "
+    f"dentro de la tolerancia indicada."
 )
-REMOVED_CORRECTION = (
+ADJUSTED_CORRECTION = (
     "Comparar el bordado con la imagen original. Si una capa casi blanca es parte del diseño, o hace falta un detalle "
     "más chico, usar otra imagen o un tamaño mayor."
 )
@@ -188,8 +189,8 @@ def to_reference_inkstitch_svg(result: VectorizeResult) -> bytes:
 def reference_issues(result: VectorizeResult):
     """Incidencias de E1 para el bordado de referencia.
 
-    El aviso de parámetros se reescribe (ya no son valores provisionales, son de referencia) y, si se quitó geometría que
-    no se puede bordar, se agrega un aviso localizado en los objetos afectados.
+    El aviso de parámetros se reescribe (ya no son valores provisionales, son de referencia) y, si se quitó o simplificó geometría,
+    se agrega un aviso localizado en los objetos afectados (con los números de lo que cambió).
     """
     planned = stitchable.plan(result.document)
     rewritten = []
@@ -206,7 +207,7 @@ def reference_issues(result: VectorizeResult):
         rule = ISSUE_RULES[IssueCode.VISUAL_MISMATCH]
         rewritten.append(Issue(
             code=IssueCode.VISUAL_MISMATCH, severity=rule.severity, stage=rule.stage, object_ids=changed,
-            description=REMOVED_NOTICE, evidence={"stitchable": stitchable.evidence(planned)},
-            suggested_correction=REMOVED_CORRECTION,
+            description=ADJUSTED_NOTICE, evidence={"stitchable": stitchable.evidence(planned)},
+            suggested_correction=ADJUSTED_CORRECTION,
         ))
     return tuple(rewritten)

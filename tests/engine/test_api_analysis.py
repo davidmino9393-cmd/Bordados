@@ -395,6 +395,16 @@ class JefFromImageTests(AnalysisApiTests):
         xs = [float(x) for x in re.findall(r"[ML](-?[\d.]+),-?[\d.]+", svg)]
         return max(xs) - min(xs)
 
+    def test_the_manifest_keeps_the_uploaded_image_apart_from_the_intermediate_svg(self):
+        """R2: input_sha256 es el PNG que subió la persona; geometry_sha256, el SVG intermedio que recibió el worker."""
+        image = png(shape=True)
+        job, _ = self.run_without_ai(image)
+        _, manifest = self.call("GET", f"/api/v1/jobs/{job['job_id']}/artifacts")
+        svg = self.artifact(job, "inkstitch_svg")
+        self.assertEqual(manifest["input_sha256"], hashlib.sha256(image).hexdigest())
+        self.assertEqual(manifest["geometry_sha256"], hashlib.sha256(svg).hexdigest())
+        self.assertNotEqual(manifest["input_sha256"], manifest["geometry_sha256"])
+
     def test_an_image_without_ai_analysis_goes_straight_to_vectorizing_and_the_jef(self):
         job, done = self.run_without_ai(png(shape=True))
         analyzing = next(r for r in done["stages"] if r["stage"] == "analyzing")

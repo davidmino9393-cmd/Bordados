@@ -186,7 +186,8 @@ class JobRunner:
         """El subproceso ya terminó y falta mapear y guardar su resultado. No hace nada: es el punto donde las pruebas
         de cancelación concurrente detienen al runner para cancelar justo en esa ventana."""
 
-    def _run_worker(self, previous, private, event, svg_path, job_dir, extra_issues=(), timeout_s=None, display_names=None):
+    def _run_worker(self, previous, private, event, svg_path, job_dir, extra_issues=(), timeout_s=None, display_names=None,
+                    input_sha256=None):
         """Corre el worker real sobre un SVG de Ink/Stitch y guarda el resultado (needs_review, ready o failed)."""
         job_id = previous.job_id
         timeout_s = timeout_s or self.config.timeout_s
@@ -217,7 +218,7 @@ class JobRunner:
         try:
             report, manifest, artifact_paths = result_documents(
                 previous.model_dump(mode="json"), result, job_dir, duration_ms,
-                self.config.dimension_tolerance_mm, display_names,
+                self.config.dimension_tolerance_mm, display_names, input_sha256,
             )
         except Exception:
             LOGGER.exception("Could not map worker result for job %s", job_id)
@@ -474,7 +475,7 @@ class JobRunner:
         svg_path.write_bytes(svg)
         stem = Path(asset.original_filename).stem or DEFAULT_JEF_STEM
         self._run_worker(previous, private, event, svg_path, job_dir / DIGITIZING_DIRECTORY, reference_issues(result),
-                         self.config.digitizing_timeout_s, {"jef": f"{stem}.jef"})
+                         self.config.digitizing_timeout_s, {"jef": f"{stem}.jef"}, asset.sha256)
 
     def _command(self, asset_path, job_dir, timeout_s, hoop_code):
         command = [
