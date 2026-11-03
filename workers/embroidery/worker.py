@@ -14,6 +14,10 @@ from process_runner import WorkerFailure, run_logged
 SVG = "http://www.w3.org/2000/svg"
 IS = "http://inkstitch.org/namespace"
 INK = "http://www.inkscape.org/namespaces/inkscape"
+# Cabecera JEF: offset de puntadas (4), 0x14 (4), fecha (14), 2 bytes, colores (4), registros (4) y luego el bastidor (4).
+JEF_HOOP_CODE_OFFSET = 32
+JEF_FIELD_BYTES = 4
+EXPORTER_OUTPUT = "exporter-output.jef"
 
 
 def prepared_input(source, directory):
@@ -38,6 +42,22 @@ def prepared_input(source, directory):
     destination = directory / "input.svg"
     destination.write_bytes(data)
     return destination, hashlib.sha256(data).hexdigest()
+
+
+def with_hoop_code(payload, code):
+    """Escribe en la cabecera el código del bastidor del perfil (SQ20b = 4) y devuelve el cambio hecho.
+
+    El exportador elige el código por el tamaño del diseño (un logo chico sale como 126 × 110) y no sabe qué bastidor
+    se eligió: el perfil manda. Solo cambia esos cuatro bytes; el resto del archivo es la salida del exportador.
+    """
+    if len(payload) < JEF_HOOP_CODE_OFFSET + JEF_FIELD_BYTES:
+        raise WorkerFailure("JEF_INVALID", "jef_header_too_short", {"bytes": len(payload)})
+    start, end = JEF_HOOP_CODE_OFFSET, JEF_HOOP_CODE_OFFSET + JEF_FIELD_BYTES
+    original = int.from_bytes(payload[start:end], "little")
+    patched = payload[:start] + code.to_bytes(JEF_FIELD_BYTES, "little") + payload[end:]
+    return patched, {"field": "hoop_code", "offset": start, "from": original, "to": code,
+                     "reason": "El código de bastidor de la cabecera es el del perfil elegido, no el que deduce el exportador por tamaño.",
+                     "exporter_output": EXPORTER_OUTPUT}
 
 
 def diagnostics(payload):
@@ -70,8 +90,11 @@ def execute(args, directory):
     result["diagnostics"] = diagnostics(payload)
     result["processes"].append(record)
     payload, record = run_logged(command + ["--extension=output", "--format=jef", "--trims=true", str(source)], directory, "export", args.timeout)
-    (directory / "output.jef").write_bytes(payload)
     result["processes"].append(record)
+    if args.jef_hoop_code is not None:
+        (directory / EXPORTER_OUTPUT).write_bytes(payload)  # lo que devolvió el exportador, sin tocar
+        payload, result["jef_header_patch"] = with_hoop_code(payload, args.jef_hoop_code)
+    (directory / "output.jef").write_bytes(payload)
     from jef_audit import audit
     result["metrics"] = audit(directory)
     result["reader_version"] = importlib.metadata.version("pyembroidery")
@@ -86,9 +109,12 @@ def main():
     parser.add_argument("--inkscape", type=Path)
     parser.add_argument("--engine-version", required=True)
     parser.add_argument("--timeout", type=float, default=180)
+    parser.add_argument("--jef-hoop-code", type=int, help="código de bastidor del perfil para la cabecera del JEF")
     args = parser.parse_args()
     if not math.isfinite(args.timeout) or args.timeout <= 0:
         parser.error("timeout must be finite and positive")
+    if args.jef_hoop_code is not None and args.jef_hoop_code < 0:
+        parser.error("jef-hoop-code must not be negative")
     directory = args.job_dir.resolve()
     try:
         directory.mkdir(parents=True, exist_ok=False)

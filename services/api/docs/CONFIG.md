@@ -38,6 +38,8 @@ Los nombres son exactos. `requerido` no tiene default.
 | `dimension_tolerance_mm` | number | `0.2` | Finito y >= 0. |
 | `worker_python_paths` | string[] | `[]` | Se unen en `PYTHONPATH` del worker. |
 | `worker_script` | string | `workers/embroidery/worker.py` | Ruta del worker; normalmente omitir. |
+| `raster_digitizing` | boolean | `true` | Una imagen termina en un JEF generado con los parámetros de referencia de Anime Socks (no calibrados) y queda en `needs_review`. `false`: el trabajo se queda en la geometría de E1, sin JEF. |
+| `digitizing_timeout_s` | number | `600` | Plazo del worker para generar el JEF de una imagen; finito y > 0. Ink/Stitch calcula el plan dos veces (diagnóstico y exportación): Anime Socks tarda unos 2 min. |
 | `openai_api_key` | string/null | `null` | H2. Clave de OpenAI; solo aquí, nunca en la web ni en variables del navegador. No aparece en `repr`. Va junto con `openai_model`. |
 | `openai_model` | string/null | `null` | H2. Modelo con visión y salida estructurada; se elige con ejemplos reales, no hay valor por defecto. |
 | `openai_base_url` | string | `https://api.openai.com` | H2. Solo para pruebas o un proxy propio. |

@@ -14,7 +14,8 @@ from embroidery_contracts.results import Artifact
 from embroidery_contracts.jobs import StageRecord
 from api_adapter import make_issue, result_documents
 from process_runner import WorkerFailure, run_logged
-from vectorize import VectorizeFailure, vectorize
+from vectorize import VectorizeFailure, stitchable, vectorize
+from vectorize.inkstitch import REFERENCE_PULL_COMPENSATION_MM, reference_issues, to_reference_inkstitch_svg
 
 from .analysis import ProviderError, normalize, region_incoherent_issue
 from .errors import ApiProblem
@@ -23,6 +24,7 @@ from .errors import ApiProblem
 LOGGER = logging.getLogger(__name__)
 SKIPPED_ANALYSIS = "Prepared SVG: analysis omitted"
 SKIPPED_VECTORIZATION = "Prepared SVG: vectorization omitted"
+SKIPPED_ANALYSIS_BY_CHOICE = "Sin análisis de IA: la persona eligió continuar sin él"
 FINAL_STATES = frozenset({JobStatus.NEEDS_REVIEW, JobStatus.READY_FOR_SEWOUT, JobStatus.FAILED, JobStatus.CANCELLED})
 FAILURE_DESCRIPTIONS = {
     IssueCode.INPUT_UNREADABLE: "La entrada no pudo decodificarse.",
@@ -38,6 +40,11 @@ FAILURE_DESCRIPTIONS = {
 }
 VECTORIZATION_REVIEW_UNLOCALIZED = "vectorization_review_unlocalized"
 DIGITIZING_BLOCKED = "Bloqueado hasta que H3 valide técnica y parámetros físicos"
+MAX_COLOR_LIMIT = 256  # el tope de `JobSettings.color_limit` en el contrato
+DEFAULT_JEF_STEM = "bordado"  # si el original no tiene nombre; el JEF descargado se llama como la imagen de origen
+NOTHING_STITCHABLE = "No queda geometría que se pueda bordar"
+REFERENCE_SVG_FILENAME = "reference-inkstitch.svg"
+DIGITIZING_DIRECTORY = "digitizing"  # el worker exige una carpeta de trabajo nueva: la de E1 ya tiene archivos
 VECTORIZATION_METHOD = "e1_raster_mask_vectorization"
 VECTORIZATION_FILES = {"document": "vectorized-document.json", "svg": "vectorized-editable.svg", "evidence": "vectorized-evidence.json"}
 STAGE_ORDER = ("analyzing", "vectorizing", "digitizing", "validating")
@@ -54,6 +61,14 @@ def initial_stages():
 
 def raster_stages():
     return tuple(StageRecord(stage=stage, outcome="pending") for stage in STAGE_ORDER)
+
+
+def unanalyzed_raster_stages():
+    """Imagen enviada con `ai_provider: none`: la persona eligió no analizar; la vectorización parte de los píxeles."""
+    return (
+        StageRecord(stage="analyzing", outcome="skipped", reason=SKIPPED_ANALYSIS_BY_CHOICE),
+        *(StageRecord(stage=stage, outcome="pending") for stage in STAGE_ORDER[1:]),
+    )
 
 
 def continuation_stages(parent_job_id):
@@ -157,16 +172,21 @@ class JobRunner:
             previous, JobStatus.DIGITIZING, private,
             {"digitizing": ("running", None, None)},
         )
-        job_dir = Path(private["job_dir"])
+        self._run_worker(previous, private, event, Path(private["asset_path"]), Path(private["job_dir"]))
+
+    def _run_worker(self, previous, private, event, svg_path, job_dir, extra_issues=(), timeout_s=None, display_names=None):
+        """Corre el worker real sobre un SVG de Ink/Stitch y guarda el resultado (needs_review, ready o failed)."""
+        job_id = previous.job_id
+        timeout_s = timeout_s or self.config.timeout_s
         run_dir = Path(private["run_dir"])
         run_dir.mkdir(parents=True, exist_ok=True)
-        command = self._command(Path(private["asset_path"]), job_dir)
+        command = self._command(svg_path, job_dir, timeout_s, previous.settings_snapshot.hoop.jef_hoop_code)
         environment = {}
         if self.config.worker_python_paths:
             environment["PYTHONPATH"] = os.pathsep.join(str(path) for path in self.config.worker_python_paths)
         try:
             _, record = run_logged(
-                command, run_dir, "worker", self.config.timeout_s + 30, event, environment
+                command, run_dir, "worker", timeout_s + 30, event, environment
             )
         except WorkerFailure as exc:
             self._handle_worker_failure(job_id, previous, private, exc, job_dir)
@@ -184,14 +204,14 @@ class JobRunner:
         try:
             report, manifest, artifact_paths = result_documents(
                 previous.model_dump(mode="json"), result, job_dir, duration_ms,
-                self.config.dimension_tolerance_mm,
+                self.config.dimension_tolerance_mm, display_names,
             )
         except Exception:
             LOGGER.exception("Could not map worker result for job %s", job_id)
             self._save_failed(previous, private, "WORKER_EXPORT_FAILED", "result_mapping_failed")
             return
         private["artifact_paths"] = artifact_paths
-        issues = tuple(report.issues)
+        issues = tuple(extra_issues) + tuple(report.issues)
         blocking = any(issue.severity == Severity.BLOCKING_ERROR for issue in issues)
         review = any(
             issue.severity == Severity.REVIEW_REQUIRED and (issue.object_ids or issue.region_ids)
@@ -305,12 +325,17 @@ class JobRunner:
 
     def _vectorize(self, previous, private, event):
         """H2-E1: geometría desde los píxeles. Sin H3 no hay puntadas validadas: el job termina en needs_review."""
+        stitching = None
         try:
             asset = SourceAsset.model_validate(self.store.get("asset", previous.asset_id)["body"])
-            result = vectorize(
-                Path(private["asset_path"]).read_bytes(), asset.media_type, asset, self._analysis_for(private, asset),
-                previous.settings_snapshot, job_id=previous.job_id, revision_id=previous.revision_id, cancel=event,
-            )
+            image, analysis = Path(private["asset_path"]).read_bytes(), self._analysis_for(private, asset)
+            if self.config.raster_digitizing:
+                result, stitching = self._vectorize_for_stitching(image, asset, analysis, previous, event)
+            else:
+                result = vectorize(
+                    image, asset.media_type, asset, analysis, previous.settings_snapshot,
+                    job_id=previous.job_id, revision_id=previous.revision_id, cancel=event,
+                )
         except VectorizeFailure as failure:
             self._vectorize_failure(previous, private, failure.issue)
             return
@@ -319,7 +344,8 @@ class JobRunner:
         files = {name: job_dir / filename for name, filename in VECTORIZATION_FILES.items()}
         files["document"].write_text(result.document.model_dump_json(indent=2), encoding="utf-8")
         files["svg"].write_bytes(result.editable_svg)
-        files["evidence"].write_text(json.dumps(result.evidence, ensure_ascii=False, sort_keys=True, indent=2), encoding="utf-8")
+        evidence = {**result.evidence, **({"stitching": stitching} if stitching else {})}
+        files["evidence"].write_text(json.dumps(evidence, ensure_ascii=False, sort_keys=True, indent=2), encoding="utf-8")
         private["vectorization"] = {name: str(path) for name, path in files.items()}
         manifest = self._vectorization_manifest(previous, asset, files)
         private["artifact_paths"] = {artifact.artifact_id: str(files["svg"]) for artifact in manifest.artifacts}
@@ -328,6 +354,9 @@ class JobRunner:
         if any(issue.severity == Severity.BLOCKING_ERROR for issue in issues):
             self._save_transition(previous, JobStatus.FAILED, private, {"vectorizing": ("failed", result.duration_ms, None)},
                                   {"issues": [issue.model_dump(mode="json") for issue in issues]})
+            return
+        if self.config.raster_digitizing:
+            self._digitize_vectorized(previous, private, event, result, done, asset)
             return
         if not any(issue.severity == Severity.REVIEW_REQUIRED and (issue.object_ids or issue.region_ids) for issue in issues):
             self._save_failed(previous, private, IssueCode.WORKER_EXPORT_FAILED, VECTORIZATION_REVIEW_UNLOCALIZED, stage="vectorizing")
@@ -338,6 +367,35 @@ class JobRunner:
             {"issues": [issue.model_dump(mode="json") for issue in issues],
              "artifact_manifest": manifest.model_dump(mode="json")},
         )
+
+    def _vectorize_for_stitching(self, image, asset, analysis, previous, event):
+        """E1 para un bordado: el destino es el tamaño del bordado y el límite de colores es de hilos.
+
+        La compensación de tracción engorda cada relleno `REFERENCE_PULL_COMPENSATION_MM` por lado, así que se vectoriza
+        dentro de un destino más chico para que lo bordado entre en el pedido. Una capa casi blanca (el resplandor del
+        fondo) no gasta un hilo: si E1 la produjo, se repite con una capa más.
+        """
+        settings = previous.settings_snapshot
+        inset = 2 * REFERENCE_PULL_COMPENSATION_MM
+        target = settings.target
+        if min(target.width_mm, target.height_mm) > 2 * inset:
+            target = target.model_copy(update={"width_mm": target.width_mm - inset, "height_mm": target.height_mm - inset})
+
+        def run(limit):
+            adjusted = settings.model_copy(update={"target": target, "color_limit": limit})
+            return vectorize(image, asset.media_type, asset, analysis, adjusted,
+                             job_id=previous.job_id, revision_id=previous.revision_id, cancel=event)
+
+        result, limit = run(settings.color_limit), settings.color_limit
+        background = sum(1 for item in stitchable.plan(result.document) if item.omitted == stitchable.OMITTED_NEAR_WHITE)
+        if background and settings.color_limit + background <= MAX_COLOR_LIMIT:
+            limit = settings.color_limit + background
+            result = run(limit)
+        return result, {
+            "target_requested_mm": [settings.target.width_mm, settings.target.height_mm],
+            "target_vectorized_mm": [target.width_mm, target.height_mm], "pull_compensation_inset_mm": inset,
+            "colour_limit_requested": settings.color_limit, "colour_limit_used": limit,
+        }
 
     def _vectorization_manifest(self, previous, asset, files):
         """Manifiesto sin JEF: solo el SVG editable generado por E1. Sin relectura no hay `reread_metrics`."""
@@ -382,13 +440,36 @@ class JobRunner:
                 {"issues": [unlocalized.model_dump(mode="json")]},
             )
 
-    def _command(self, asset_path, job_dir):
+    def _digitize_vectorized(self, previous, private, event, result, done, asset):
+        """JEF desde la geometría de E1 con los parámetros de referencia, que no están calibrados.
+
+        El trabajo termina en needs_review con el JEF, el SVG de Ink/Stitch y los avisos: `ready_for_sewout` exige
+        comprobaciones geométricas que todavía no existen y la aprobación física es de la persona que cose.
+        """
+        previous = self._save_transition(previous, JobStatus.DIGITIZING, private, {**done, "digitizing": ("running", None, None)})
+        try:
+            svg = to_reference_inkstitch_svg(result)
+        except VectorizeFailure as failure:
+            self._save_transition(
+                previous, JobStatus.NEEDS_REVIEW, private,
+                {"digitizing": ("skipped", None, NOTHING_STITCHABLE), "validating": ("skipped", None, NOTHING_STITCHABLE)},
+                {"issues": [failure.issue.model_dump(mode="json")]},
+            )
+            return
+        job_dir = Path(private["job_dir"])
+        svg_path = job_dir / REFERENCE_SVG_FILENAME
+        svg_path.write_bytes(svg)
+        stem = Path(asset.original_filename).stem or DEFAULT_JEF_STEM
+        self._run_worker(previous, private, event, svg_path, job_dir / DIGITIZING_DIRECTORY, reference_issues(result),
+                         self.config.digitizing_timeout_s, {"jef": f"{stem}.jef"})
+
+    def _command(self, asset_path, job_dir, timeout_s, hoop_code):
         command = [
             str(self.config.python_executable), str(self.config.worker_script),
             "--svg", str(asset_path), "--job-dir", str(job_dir),
             "--inkstitch", str(self.config.inkstitch_executable),
             "--engine-version", self.config.engine_version,
-            "--timeout", str(self.config.timeout_s),
+            "--timeout", str(timeout_s), "--jef-hoop-code", str(hoop_code),
         ]
         if self.config.inkscape_executable is not None:
             command += ["--inkscape", str(self.config.inkscape_executable)]

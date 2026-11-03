@@ -31,7 +31,7 @@ from .config import ApiConfig
 from .downloads import ASSET_SCOPE, DownloadSigner
 from .errors import ApiProblem
 from .profiles import load_profiles, validate_settings
-from .runner import JobRunner, continuation_stages, initial_stages, raster_stages
+from .runner import JobRunner, continuation_stages, initial_stages, raster_stages, unanalyzed_raster_stages
 from .store import Store
 
 
@@ -436,7 +436,7 @@ def create_app(config: ApiConfig, analysis_providers=None):
         else:
             if media_type not in ("image/png", "image/jpeg"):
                 raise ApiProblem("INVALID_REQUEST", "La entrada raster_image requiere un asset PNG o JPEG.")
-            stages = raster_stages()
+            stages = unanalyzed_raster_stages() if payload.settings.ai_provider == "none" else raster_stages()
         return enqueue_job(
             f"createJob:{owner}:{id}", idempotency_key, payload.model_dump(mode="json"),
             lambda: new_job(id, payload.revision_id, asset, payload.settings, payload.input_kind, stages),
