@@ -83,7 +83,31 @@ Valen para cualquier máquina; ninguna es un límite de la 550E.
 | Relleno | Sin rangos firmes de separación; solo la densidad base de 0,4 mm | C | Resumen |
 
 ## 6. Anime Socks: referencia empírica
-David confirmó que el bordado de Anime Socks «salió muy bien». **Falta anotar**: qué archivo se cosió (`Optimizado`, `Con_Circulo` o los de 13×12), tela, estabilizador, hilo, aguja y velocidad. El informe original describe un plan de prueba (gabardina, estabilizador recortable medio, aguja 75/11, unas 500 ppm), no lo realmente usado.
+Condiciones de la costura, declaradas por David el 2026-11-02. No hay fotos ni medidas registradas: es un dato cualitativo.
+
+| Dato | Declarado | Falta anotar |
+|---|---|---|
+| Resultado | «Salió muy bien» | Fotos y medidas |
+| Archivo | El JEF que le dio Codex, de nombre parecido a «animesocks.jef» | Cuál era (ver abajo): no hay ningún archivo con ese nombre en el repo |
+| Tela | Gabardina | |
+| Estabilizador | Grueso | Tipo (recortable o rasgable) y gramaje |
+| Hilo | Hilo de bordar | Marca y grosor |
+| Aguja | La que Janome trae de fábrica | Número |
+| Velocidad | **400 ppm**, el mínimo del rango de la máquina (400–860) | |
+| Bastidor | Sin anotar | Depende del archivo |
+
+El plan del informe original era distinto (estabilizador recortable medio, aguja 75/11, unas 500 ppm); lo que vale es lo declarado. **El resultado vale para esas condiciones**: una tela, un estabilizador y 400 ppm. No se extrapola a otra velocidad.
+
+Candidatos (todos con 3 bloques de hilo). Se distinguen por el tamaño del diseño que muestra la máquina al cargarlo:
+
+| Archivo | Tamaño en pantalla | Bytes | Puntadas | SHA-256 (12 primeros) |
+|---|---|---|---|---|
+| `Anime_Socks_Optimizado.jef` | 150,0 × 142,8 mm | 14 816 | 6789 | `60a185b27c54` |
+| `Anime_Socks_Con_Circulo.jef` | 150,0 × 142,8 mm | 15 182 | 6966 | `c67718bd3a26` |
+| `Anime_Socks_13x12.jef` | 126,2 × 120,0 mm | 12 386 | 5600 | `d0f45dc5bf6d` |
+| `Anime_Socks_13x12_Con_Circulo.jef` | 126,2 × 120,0 mm | 12 702 | 5750 | `149ccca849d8` |
+
+`Anime_Socks_Inicial.jef` (36 bloques de hilo) queda descartado por improbable. Los 150,0 mm de ancho no caben en RE20b ni SQ14b: esa versión se borda con SQ20b. Para la 13×12 el informe recomienda RE20b.
 
 Parámetros del SVG de Ink/Stitch de la versión principal (`Anime_Socks_InkStitch.svg`) y de su informe:
 
@@ -93,9 +117,9 @@ Parámetros del SVG de Ink/Stitch de la versión principal (`Anime_Socks_InkStit
 | | Compensación de tracción | 0,2 mm |
 | | Puntada mínima / máxima / corta | 0,3 / 5 / 0,35 mm |
 | | Base | Sin base de contorno ni de zigzag; center walk en 6 de 14 |
-| Relleno | Separación | 0,5 · 0,75 · 0,85 · 0,95 mm (abierto a propósito, deja ver la gabardina) |
-| | Ángulos / puntada máxima / base | 40° y 75° / 2,5 mm / sin base |
-| Puntada corrida (67 trazos) | Largo | 2,0 · 2,1 · 2,3 mm |
+| Relleno | Separación | 0,45 · 0,5 · 0,75 · 0,85 · 0,95 mm (abierto a propósito, deja ver la gabardina) |
+| | Ángulos / puntada máxima / base | Variados (los más usados, 40° y 75°) / 2,5 mm / sin base |
+| Puntada corrida (67 trazos) | Largo | 1,8 · 2,0 · 2,1 · 2,3 mm |
 | | Tolerancia | 0,12 mm |
 | | Triple (bean) | 13 trazos |
 | Terminales demasiado finos | Técnica | Triple corrida en lugar de satin |
@@ -103,7 +127,9 @@ Parámetros del SVG de Ink/Stitch de la versión principal (`Anime_Socks_InkStit
 | | Bastidor / código JEF | SQ20b / 4 |
 | Cortes | Entre objetos separados hasta 2 mm | Eliminados (la máquina corta saltos desde ≈ 3 mm en modo fácil: coherente, sin confirmar en la 550E) |
 
-La prueba `test_reexport_regression.py` confirma que re-exportar ese SVG da los mismos comandos que `Anime_Socks_Optimizado.jef`. Eso es una prueba digital, no de costura.
+La versión 13×12 (`Anime_Socks_13x12_InkStitch.svg`) usa casi lo mismo. Difiere en: compensación de 0,15 mm en 6 objetos (el resto 0,2 mm), center walk en 4 de 14 satins y puntada corrida de 2,0 mm en casi todos los trazos (y 1,8 mm en 2). Si se cosió esa versión, la tabla anterior vale con esas diferencias.
+
+La prueba `test_reexport_regression.py` confirma que re-exportar el SVG principal da los mismos comandos que `Anime_Socks_Optimizado.jef`. Eso es una prueba digital, no de costura.
 
 ## 7. Qué cubre H3
 Los anchos de la planilla incluyen la compensación (0,6 mm nominal = 1,0 mm cosido). Las predicciones de la columna central son hipótesis a confirmar, no resultados.
@@ -123,7 +149,7 @@ No cubre y convendría sumar (opcional):
 3. **Carga del JEF:** qué bastidor propone la máquina para 140 × 150 mm y si permite bordar con SQ20b.
 
 ## 8. Cambios propuestos (no aplicados)
-Ninguno está hecho. Decide David.
+Ninguno está hecho. Decide David. Los respaldos de Anime Socks valen para gabardina, estabilizador grueso y 400 ppm (§6).
 
 | Parámetro | Hoy en el código | Propuesta | Respaldo |
 |---|---|---|---|
@@ -148,7 +174,11 @@ El catálogo ya separa `MachineProfile`, `HoopProfile`, `FabricProfile` y `Threa
 Procedimiento: ficha → manual → especificación del formato → foros para contrastar → muestra física. Cada valor lleva fuente, fecha y confianza.
 
 ## 10. Pendientes para cerrar H3
-- [ ] David: archivo de Anime Socks cosido, tela, estabilizador, hilo, aguja y velocidad.
+- [x] David: condiciones de la costura de Anime Socks (gabardina, estabilizador grueso, hilo de bordar, aguja de fábrica, 400 ppm). Hecho el 2026-11-02.
+- [ ] David: qué tamaño mostró la máquina al cargar el archivo (150,0 × 142,8 mm o 126,2 × 120,0 mm); identifica el archivo y el bastidor.
+- [ ] David: tipo de estabilizador, número de aguja, marca y grosor del hilo, y fotos del bordado. Las fotos se pueden registrar en la web en «Registrar muestra física» (hasta 4).
+- [ ] Codex: confirmar el nombre y el hash exactos del JEF que le dio a David.
+- [ ] Decidir si `gabardina_inicial` pasa a `physically_calibrated`: exige un registro de calibración con evidencia física (la muestra H3, o fotos y medidas de Anime Socks).
 - [ ] David: manual oficial en PDF y/o hilos de Reddit (ver §2).
 - [ ] En la máquina: umbral de corte de saltos en el menú y bastidor propuesto al cargar `muestra_h3.jef`.
 - [ ] David: coser la muestra H3 (mínimo, filas A y B) y llenar `planilla_h3.csv`.
