@@ -207,8 +207,8 @@ def _median_member_palette(foreground, quantized, keep=None):
     """Color de cada grupo = su miembro mediano por distancia al blanco, en lugar del promedio.
 
     El promedio mezcla el color del diseño con los píxeles suavizados del borde (que son una mezcla con el fondo) y deja
-    todo más pálido: un azul 14285a salía 172a5c y una línea fina oscura, gris. La mediana toma el color que más se
-    repite en el cuerpo del grupo. Medido en las 14 imágenes: el error medio no empeora en ninguna y se reduce a la
+    todo más pálido: un azul 14285a salía 172a5c y una línea fina oscura, gris. Se elige la mediana ponderada por frecuencia
+    tras ordenar por distancia al blanco y RGB; no necesariamente el color más frecuente. En las 14 imágenes, el error medio se reduce a la
     mitad en los logos planos (tests/h2_eval/informes/). Es determinista: se ordena por (distancia, RGB).
     """
     pixels = foreground.tobytes()
