@@ -28,6 +28,10 @@ class ApiConfig:
     dimension_tolerance_mm: float = 0.2
     worker_python_paths: tuple[Path, ...] = field(default_factory=tuple)
     worker_script: Path = ROOT / "workers" / "embroidery" / "worker.py"
+    # Una imagen termina en un JEF con los parámetros de referencia (sin calibrar). Falso: se queda en la geometría de E1.
+    raster_digitizing: bool = True
+    # Ink/Stitch corre dos veces el plan de puntadas (diagnóstico y exportación): un diseño con flores y letras tarda minutos.
+    digitizing_timeout_s: float = 600
     # H2: proveedores de visión. Las claves solo viven en esta configuración privada.
     openai_api_key: str | None = field(default=None, repr=False)
     openai_model: str | None = None
@@ -50,6 +54,8 @@ class ApiConfig:
             raise ValueError("openai_api_key and openai_model must be configured together")
         if not math.isfinite(self.analysis_timeout_s) or self.analysis_timeout_s <= 0:
             raise ValueError("analysis_timeout_s must be positive")
+        if not math.isfinite(self.digitizing_timeout_s) or self.digitizing_timeout_s <= 0:
+            raise ValueError("digitizing_timeout_s must be positive")
         if not math.isfinite(self.ollama_timeout_s) or self.ollama_timeout_s <= 0:
             raise ValueError("ollama_timeout_s must be positive")
         if not self.ollama_base_url.startswith(("http://", "https://")):

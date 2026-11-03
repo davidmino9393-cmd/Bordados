@@ -1,15 +1,35 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { expect, test } from '@playwright/test';
+import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { expect, test, type Page } from '@playwright/test';
 
-// Imagen → E1 REAL → needs_review → SVG editable descargable, contra el backend real
-// levantado con real-backend/serve_with_simulated_analysis.py (solo el análisis de IA es simulado).
+// Imagen → E1 REAL → SVG de Ink/Stitch con parámetros de referencia → worker REAL (Ink/Stitch) → JEF descargable,
+// contra el backend real levantado con real-backend/serve_with_simulated_analysis.py. Aquí no se usa IA: la imagen
+// se envía con «Sin análisis de IA». Cada prueba tarda de uno a tres minutos porque Ink/Stitch corre de verdad.
 const OUT_DIR = 'test-results/real-raster';
-const REVIEW_TIMEOUT_MS = 120_000;
+const JEF_TIMEOUT_MS = 420_000;
+const JEF_MAGIC_BYTES_MIN = 128; // un JEF real trae cabecera y tabla de colores antes de las puntadas
 
-test('imagen: E1 real termina en needs_review con parámetros provisionales y SVG editable descargable', async ({ page }) => {
+async function openImageProject(page: Page, name: string) {
   await page.goto('/');
-  await page.getByLabel('Nombre del proyecto').fill('Verificación E1 real');
+  await page.getByLabel('Nombre del proyecto').fill(name);
   await page.getByRole('button', { name: 'Crear proyecto' }).click();
+}
+
+/** `hero`: el botón de arriba de la página; si no, la fila de la lista de descargas. */
+async function downloadJef(page: Page, fileName: string, hero: boolean) {
+  const link = hero
+    ? page.getByRole('link', { name: 'Descargar archivo JEF' })
+    : page.locator('.list__item', { hasText: /JEF/ }).first().getByRole('link', { name: /Descargar/ });
+  const [download] = await Promise.all([page.waitForEvent('download'), link.click()]);
+  const path = await download.path();
+  expect(path).toBeTruthy();
+  mkdirSync(OUT_DIR, { recursive: true });
+  const bytes = readFileSync(path!);
+  writeFileSync(`${OUT_DIR}/${fileName}`, bytes);
+  return { bytes, suggested: download.suggestedFilename() };
+}
+
+test('imagen sin IA: Ink/Stitch real entrega un JEF descargable con medidas releídas', async ({ page }) => {
+  await openImageProject(page, 'Verificación JEF real');
   const base64 = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
     canvas.width = 640;
@@ -29,81 +49,59 @@ test('imagen: E1 real termina en needs_review con parámetros provisionales y SV
   });
   await page.getByLabel('Elegir archivo').setInputFiles({ name: 'anillo.png', mimeType: 'image/png', buffer: Buffer.from(base64, 'base64') });
   await expect(page.getByText('Imagen para analizar', { exact: true })).toBeVisible();
-  await expect(page.getByRole('radio', { name: /OpenAI/ })).toBeEnabled();
+  await page.getByRole('radio', { name: 'Sin análisis de IA' }).check();
   await page.getByLabel('Ancho máximo (mm)').fill('80');
   await page.getByLabel('Alto máximo (mm)').fill('60');
   await page.getByRole('button', { name: 'Generar bordado' }).click();
 
-  await expect(page.getByText('Hay un elemento que necesita revisión')).toBeVisible({ timeout: REVIEW_TIMEOUT_MS });
-  await expect(page.getByText('Listo para prueba (digital)')).toHaveCount(0);
-
-  // Solo geometría: sin JEF no hay correcciones de puntadas ni muestra física que registrar.
-  await expect(page.getByText('Solo geometría: todavía no hay archivo de bordado')).toBeVisible();
+  await expect(page.getByText('Hay un elemento que necesita revisión')).toBeVisible({ timeout: JEF_TIMEOUT_MS });
+  await expect(page.getByText('Listo para prueba (digital)')).toHaveCount(0); // el JEF no es una aprobación
+  // Ya no es «solo geometría»: hay JEF, medidas releídas y vista previa del JEF.
+  await expect(page.getByText('Solo geometría: todavía no hay archivo de bordado')).toHaveCount(0);
+  await expect(page.locator('.metrics')).toBeVisible();
+  // El JEF está arriba de todo y una imagen no ofrece correcciones (el servidor solo las admite para un SVG preparado).
+  await expect(page.getByRole('heading', { name: 'Tu archivo de bordado' })).toBeVisible();
+  await expect(page.getByText(/no están calibrados para tu tela/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Aplicar y regenerar' })).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'Registrar muestra física' })).toHaveCount(0);
+  await page.screenshot({ path: `${OUT_DIR}/jef-needs-review.png`, fullPage: true });
 
-  // Comparación: el original (enlace firmado) y el vector (SVG editable de E1) cargan como imágenes reales.
-  const original = page.getByRole('img', { name: 'Original', exact: true });
-  await expect(original).toBeVisible();
-  await expect.poll(() => original.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth === 640)).toBe(true);
-  const vector = page.locator('figure', { hasText: 'Vector' }).locator('img');
-  await expect(vector).toBeVisible();
-  await expect.poll(() => vector.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
+  const { bytes, suggested } = await downloadJef(page, 'anillo.jef', true);
+  expect(suggested).toBe('anillo.jef'); // se llama como la imagen que se subió
+  expect(bytes.length).toBeGreaterThan(JEF_MAGIC_BYTES_MIN);
 
-  // Sin JEF no hay medidas releídas ni vista previa del JEF.
-  await expect(page.locator('.metrics')).toHaveCount(0);
-
-  // Descarga del SVG editable.
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('link', { name: /Descargar/ }).first().click(),
-  ]);
-  const path = await download.path();
-  expect(path).toBeTruthy();
-  const { readFileSync } = await import('node:fs');
-  const svg = readFileSync(path!, 'utf-8');
-  expect(svg).toContain('<svg');
-  expect(svg).toContain('evenodd');
-
-  mkdirSync(OUT_DIR, { recursive: true });
   writeFileSync(`${OUT_DIR}/summary.json`, JSON.stringify({
-    filename: download.suggestedFilename(), bytes: svg.length,
+    jefFilename: suggested, jefBytes: bytes.length,
     issuesOnScreen: await page.locator('.issue').allInnerTexts(),
     downloadRows: await page.locator('.list__item').allInnerTexts(),
+    metrics: await page.locator('.metrics').allInnerTexts(),
   }, null, 2));
-  await page.screenshot({ path: `${OUT_DIR}/needs-review.png`, fullPage: true });
 });
 
-// La referencia real del proyecto (1122 × 1402 px, 3 objetos, ~7 MB de SVG): mide tiempos y comprueba que carga en la comparación.
+// La referencia real del proyecto (1122 × 1402 px): la capa casi blanca se omite y quedan dos hilos.
 const ANIME_SOCKS = new URL('../fixtures/h2/Anime_Socks.png', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
 
-test('Anime Socks: SVG editable grande se dibuja en la comparación y se descarga completo', async ({ page }) => {
+test('Anime Socks: del PNG al JEF real, con el aviso de lo que se quitó', async ({ page }) => {
   const started = Date.now();
-  await page.goto('/');
-  await page.getByLabel('Nombre del proyecto').fill('Anime Socks E1 real');
-  await page.getByRole('button', { name: 'Crear proyecto' }).click();
+  await openImageProject(page, 'Anime Socks JEF real');
   await page.getByLabel('Elegir archivo').setInputFiles(ANIME_SOCKS);
   await expect(page.getByText('Imagen para analizar', { exact: true })).toBeVisible();
+  await page.getByRole('radio', { name: 'Sin análisis de IA' }).check();
   await page.getByLabel('Ancho máximo (mm)').fill('150');
-  await page.getByLabel('Alto máximo (mm)').fill('142.8');
+  await page.getByLabel('Alto máximo (mm)').fill('150');
+  await page.getByLabel('Cantidad de colores').fill('3');
   await page.getByRole('button', { name: 'Generar bordado' }).click();
-  await expect(page.getByText('Hay un elemento que necesita revisión')).toBeVisible({ timeout: REVIEW_TIMEOUT_MS });
-  const reviewMs = Date.now() - started;
+  await expect(page.getByText('Hay un elemento que necesita revisión')).toBeVisible({ timeout: JEF_TIMEOUT_MS });
+  const jobMs = Date.now() - started;
+  await expect(page.locator('.metrics')).toBeVisible();
 
-  const vector = page.getByRole('img', { name: 'Vector', exact: true });
-  const vectorStart = Date.now();
-  await expect(vector).toBeVisible();
-  await expect.poll(() => vector.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0), { timeout: 60_000 }).toBe(true);
-  const vectorMs = Date.now() - vectorStart;
+  const { bytes } = await downloadJef(page, 'anime-socks.jef', false);
+  expect(bytes.length).toBeGreaterThan(JEF_MAGIC_BYTES_MIN);
 
-  const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('link', { name: /Descargar/ }).first().click()]);
-  const downloadStart = Date.now();
-  const path = await download.path();
-  const { statSync } = await import('node:fs');
-  const bytes = statSync(path!).size;
-  expect(bytes).toBeGreaterThan(1_000_000);
-
-  mkdirSync(OUT_DIR, { recursive: true });
-  writeFileSync(`${OUT_DIR}/anime-socks.json`, JSON.stringify({ reviewMs, vectorMs, downloadMs: Date.now() - downloadStart, bytes, rows: await page.locator('.list__item').allInnerTexts() }, null, 2));
-  await page.screenshot({ path: `${OUT_DIR}/anime-socks.png`, fullPage: false });
+  writeFileSync(`${OUT_DIR}/anime-socks.json`, JSON.stringify({
+    jobMs, jefBytes: bytes.length, statSize: statSync(`${OUT_DIR}/anime-socks.jef`).size,
+    issuesOnScreen: await page.locator('.issue').allInnerTexts(),
+    downloadRows: await page.locator('.list__item').allInnerTexts(),
+    metrics: await page.locator('.metrics').allInnerTexts(),
+  }, null, 2));
+  await page.screenshot({ path: `${OUT_DIR}/anime-socks.png`, fullPage: true });
 });

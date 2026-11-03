@@ -10,7 +10,7 @@ const channel = process.env.E2E_BROWSER_CHANNEL ?? 'chrome';
 export default defineConfig({
   testDir: '.',
   testMatch: /real-(backend|raster).spec.ts/,
-  timeout: 180_000,
+  timeout: 480_000, // Ink/Stitch corre de verdad: una imagen con flores y letras tarda minutos
   workers: 1,
   reporter: 'list',
   use: {

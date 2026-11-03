@@ -149,7 +149,9 @@ No cubre y convendría sumar (opcional):
 3. **Carga del JEF:** qué bastidor propone la máquina para 140 × 150 mm y si permite bordar con SQ20b.
 
 ## 8. Cambios propuestos (no aplicados)
-Ninguno está hecho. Decide David. Los respaldos de Anime Socks valen para gabardina, estabilizador grueso y 400 ppm (§6).
+Ninguno de la tabla está hecho. Decide David. Los respaldos de Anime Socks valen para gabardina, estabilizador grueso y 400 ppm (§6).
+
+**Ya aplicado (2026-11-02, para que una imagen llegue a un JEF):** la generación de puntadas desde una imagen usa los valores de Anime Socks (relleno a 0,45 mm, puntada de 2,5 mm, compensación de 0,2 mm, sin base; `inkstitch.py`) y un filtro de lo bordable (`stitchable.py`) que quita manchas de menos de 1 mm² (≈ 1 mm de lado, §5) y capas con todos los canales ≥ 240. Cada trabajo lo avisa y queda en revisión. El ancho mínimo de `thin_features.py` (0,4 mm) no cambió.
 
 | Parámetro | Hoy en el código | Propuesta | Respaldo |
 |---|---|---|---|

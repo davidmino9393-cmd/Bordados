@@ -1,13 +1,14 @@
-"""H2: pipeline de imagen de la API (análisis, decisión, continuación) con proveedores falsos inyectados.
+"""H2: pipeline de imagen de la API (análisis, decisión, continuación, vectorización y JEF) con proveedores falsos.
 
-No hay red ni IA real: se comprueba el comportamiento del backend. La vectorización todavía no existe, así que
-todo job de imagen que sigue adelante termina en un fallo controlado y honesto.
+No hay red ni IA real, y el worker es el falso (no corre Ink/Stitch): se comprueba el comportamiento del backend.
+Una imagen termina en needs_review con el JEF de referencia; sin `raster_digitizing` se queda en la geometría de E1.
 """
 import copy
 import hashlib
 import io
 import json
 from pathlib import Path
+import re
 import sys
 import tempfile
 import threading
@@ -63,6 +64,7 @@ class FakeProvider(AnalysisProvider):
 
 class AnalysisApiTests(unittest.TestCase):
     providers = None
+    raster_digitizing = True  # con el worker falso: se prueba el cableado, no la calidad de las puntadas
 
     def start(self, providers):
         self.tmp = tempfile.TemporaryDirectory()
@@ -72,6 +74,7 @@ class AnalysisApiTests(unittest.TestCase):
             python_executable=Path(sys.executable), inkstitch_executable=Path(sys.executable), engine_version="fake",
             signing_key="s" * 32, public_base_url="http://testserver", service_token=TOKEN,
             max_workers=1, max_queued_jobs=8, timeout_s=20, worker_script=FAKE_WORKER,
+            raster_digitizing=self.raster_digitizing,
         )
         server = uvicorn.Server(uvicorn.Config(create_app(config, analysis_providers=providers), host="127.0.0.1", port=0, log_level="critical"))
         thread = threading.Thread(target=server.run, daemon=True)
@@ -192,29 +195,47 @@ class AnalysisFlowTests(AnalysisApiTests):
         self.assertEqual([r["region_id"] for r in analysis["regions"]], ["region_1", "region_2"])
         self.assertEqual((analysis["provider"], analysis["asset_id"]), ("openai", done["asset_id"]))
 
-    def test_a_clean_analysis_does_not_pause_and_vectorizes_into_needs_review_without_digitizing(self):
+    def test_a_clean_analysis_does_not_pause_and_ends_in_needs_review_with_the_jef_and_the_reference_notice(self):
         self.start({"openai": FakeProvider("openai", [INSIDE])})
         _, job = self.raster_job(image=png(shape=True))
         done = self.wait(job["job_id"])
-        self.assertEqual(done["status"], "needs_review")
-        stages = self.stages(done)
-        self.assertEqual((stages["analyzing"], stages["vectorizing"]), ("completed", "completed"))
-        self.assertEqual((stages["digitizing"], stages["validating"]), ("skipped", "skipped"))
+        self.assertEqual(done["status"], "needs_review")  # ready_for_sewout exige comprobaciones que no existen
+        self.assertEqual(self.stages(done), {"analyzing": "completed", "vectorizing": "completed", "digitizing": "completed", "validating": "completed"})
         issue = next(i for i in done["issues"] if i["code"] == "DENSITY_REVIEW_REQUIRED")
         self.assertEqual((issue["severity"], issue["stage"]), ("review_required", "routing"))
         self.assertTrue(issue["object_ids"])
+        self.assertIs(issue["evidence"]["parameters_calibrated"], False)
+        self.assertEqual(issue["evidence"]["parameter_source"], "anime_socks_gabardina_400ppm")
+        self.assertIn("referencia", issue["description"])
         self.assertNotEqual(done["status"], "ready_for_sewout")
         status, manifest = self.call("GET", f"/api/v1/jobs/{job['job_id']}/artifacts")
         self.assertEqual(status, 200, manifest)
-        self.assertIsNone(manifest["reread_metrics"])  # sin JEF no hay relectura
-        self.assertEqual([a["kind"] for a in manifest["artifacts"]], ["editable_svg"])
-        self.assertEqual((manifest["provenance"]["simulated"], manifest["provenance"]["method"]), (False, "e1_raster_mask_vectorization"))
-        artifact = manifest["artifacts"][0]
+        kinds = {a["kind"] for a in manifest["artifacts"]}
+        self.assertTrue({"jef", "preview_png", "inkstitch_svg", "editable_svg", "validation_json"} <= kinds, kinds)
+        self.assertIsNotNone(manifest["reread_metrics"])
+        self.assertIs(manifest["provenance"]["simulated"], False)
+        for kind in ("jef", "inkstitch_svg"):
+            artifact = next(a for a in manifest["artifacts"] if a["kind"] == kind)
+            request = urllib.request.Request(self.base + urllib.parse.urlsplit(artifact["download"]["url"]).path, method="GET")
+            with urllib.request.urlopen(request, timeout=15) as response:
+                payload = response.read()
+            self.assertEqual((len(payload), hashlib.sha256(payload).hexdigest()), (artifact["byte_size"], artifact["sha256"]))
+        self.assertIn(b"<svg", payload[:400])
+        self.assertIn(b"e1-reference-fill-v1", payload)  # el SVG que se bordó es el de referencia, no la entrada cruda
+
+    def test_the_worker_receives_the_reference_svg_made_from_the_vectorized_geometry(self):
+        self.start({"openai": FakeProvider("openai", [INSIDE])})
+        _, job = self.raster_job(image=png(shape=True))
+        done = self.wait(job["job_id"])
+        _, manifest = self.call("GET", f"/api/v1/jobs/{job['job_id']}/artifacts")
+        artifact = next(a for a in manifest["artifacts"] if a["kind"] == "inkstitch_svg")
         request = urllib.request.Request(self.base + urllib.parse.urlsplit(artifact["download"]["url"]).path, method="GET")
         with urllib.request.urlopen(request, timeout=15) as response:
-            payload = response.read()
-        self.assertEqual((len(payload), hashlib.sha256(payload).hexdigest()), (artifact["byte_size"], artifact["sha256"]))
-        self.assertIn(b"<svg", payload[:400])
+            svg = response.read().decode("utf-8")
+        object_ids = {object_id for issue in done["issues"] for object_id in issue["object_ids"]}
+        self.assertTrue(object_ids)
+        self.assertTrue(all(f'id="{object_id}"' in svg for object_id in object_ids if object_id.startswith("mask_")))
+        self.assertIn("inkstitch:row_spacing_mm", svg)
 
     def test_an_empty_image_fails_with_the_original_vectorization_diagnostic_kept(self):
         self.start({"openai": FakeProvider("openai", [INSIDE])})
@@ -338,6 +359,123 @@ class AnalysisFlowTests(AnalysisApiTests):
         self.wait(job["job_id"])
 
 
+def layers_png(colours, width=120, height=60):
+    """Un rectángulo por color sobre fondo blanco."""
+    image = Image.new("RGB", (width, height), "white")
+    draw = ImageDraw.Draw(image)
+    step = width // len(colours)
+    for index, colour in enumerate(colours):
+        draw.rectangle((index * step + 5, 5, (index + 1) * step - 5, height - 5), fill=colour)
+    buffer = io.BytesIO()
+    image.save(buffer, "PNG")
+    return buffer.getvalue()
+
+
+NEAR_WHITE = (243, 241, 240)
+DARK_BLUE, DARK_RED = (10, 20, 90), (90, 10, 20)
+
+
+class JefFromImageTests(AnalysisApiTests):
+    """Una imagen llega a un JEF sin pasar por la IA, y lo que no se puede bordar se avisa."""
+
+    def run_without_ai(self, image, **changes):
+        self.start({})
+        _, job = self.raster_job("none", image=image, settings=dict(self.settings("none"), **changes))
+        return job, self.wait(job["job_id"])
+
+    def artifact(self, job, kind):
+        _, manifest = self.call("GET", f"/api/v1/jobs/{job['job_id']}/artifacts")
+        item = next(a for a in manifest["artifacts"] if a["kind"] == kind)
+        request = urllib.request.Request(self.base + urllib.parse.urlsplit(item["download"]["url"]).path, method="GET")
+        with urllib.request.urlopen(request, timeout=15) as response:
+            return response.read()
+
+    @staticmethod
+    def x_extent(svg):
+        xs = [float(x) for x in re.findall(r"[ML](-?[\d.]+),-?[\d.]+", svg)]
+        return max(xs) - min(xs)
+
+    def test_the_manifest_keeps_the_uploaded_image_apart_from_the_intermediate_svg(self):
+        """R2: input_sha256 es el PNG que subió la persona; geometry_sha256, el SVG intermedio que recibió el worker."""
+        image = png(shape=True)
+        job, _ = self.run_without_ai(image)
+        _, manifest = self.call("GET", f"/api/v1/jobs/{job['job_id']}/artifacts")
+        svg = self.artifact(job, "inkstitch_svg")
+        self.assertEqual(manifest["input_sha256"], hashlib.sha256(image).hexdigest())
+        self.assertEqual(manifest["geometry_sha256"], hashlib.sha256(svg).hexdigest())
+        self.assertNotEqual(manifest["input_sha256"], manifest["geometry_sha256"])
+
+    def test_an_image_without_ai_analysis_goes_straight_to_vectorizing_and_the_jef(self):
+        job, done = self.run_without_ai(png(shape=True))
+        analyzing = next(r for r in done["stages"] if r["stage"] == "analyzing")
+        self.assertEqual((analyzing["outcome"], analyzing["reason"]), ("skipped", "Sin análisis de IA: la persona eligió continuar sin él"))
+        self.assertEqual(done["status"], "needs_review")
+        self.assertEqual(self.stages(done), {"analyzing": "skipped", "vectorizing": "completed", "digitizing": "completed", "validating": "completed"})
+        status, body = self.call("GET", f"/api/v1/jobs/{job['job_id']}/analysis")
+        self.assertEqual((status, body["code"]), (404, "NOT_FOUND"))
+        self.assertTrue(self.artifact(job, "jef"))
+        _, manifest = self.call("GET", f"/api/v1/jobs/{job['job_id']}/artifacts")
+        jef = next(a for a in manifest["artifacts"] if a["kind"] == "jef")
+        self.assertEqual(jef["filename"], "logo.jef")  # se llama como la imagen que se subió, no «output.jef»
+        request = urllib.request.Request(self.base + urllib.parse.urlsplit(jef["download"]["url"]).path, method="GET")
+        with urllib.request.urlopen(request, timeout=15) as response:
+            self.assertIn("logo.jef", response.headers["Content-Disposition"])
+
+    def test_nothing_to_stitch_pauses_for_review_without_a_jef(self):
+        job, done = self.run_without_ai(layers_png([NEAR_WHITE]))
+        self.assertEqual(done["status"], "needs_review")
+        self.assertEqual(self.stages(done), {"analyzing": "skipped", "vectorizing": "completed", "digitizing": "skipped", "validating": "skipped"})
+        issue = done["issues"][0]
+        self.assertEqual((issue["code"], issue["severity"]), ("GEOMETRY_INVALID", "review_required"))
+        self.assertTrue(issue["object_ids"])
+        status, body = self.call("GET", f"/api/v1/jobs/{job['job_id']}/artifacts")
+        self.assertEqual((status, body["code"]), (409, "ARTIFACTS_UNAVAILABLE"))
+
+    def test_a_near_white_layer_does_not_use_up_a_thread_and_the_omission_is_reported(self):
+        job, done = self.run_without_ai(layers_png([DARK_BLUE, DARK_RED, NEAR_WHITE]), color_limit=2)
+        svg = self.artifact(job, "inkstitch_svg").decode("utf-8")
+        self.assertEqual(svg.count("<path"), 2)  # dos hilos: la capa casi blanca no cuenta
+        removed = next(i for i in done["issues"] if i["code"] == "VISUAL_MISMATCH")
+        self.assertEqual(removed["severity"], "review_required")
+        self.assertTrue(removed["object_ids"])
+        omitted = [o for o in removed["evidence"]["stitchable"]["objects"].values() if o["omitted"]]
+        self.assertEqual([o["omitted"] for o in omitted], ["near_white_layer_taken_as_background"])
+
+    def test_the_vectorized_size_leaves_room_for_the_pull_compensation(self):
+        job, _ = self.run_without_ai(Image_bytes((80, 60), DARK_BLUE))
+        extent = self.x_extent(self.artifact(job, "inkstitch_svg").decode("utf-8").split("<path", 1)[1])
+        self.assertAlmostEqual(extent, 150.0 - 0.4, delta=0.02)  # el destino pedido es 150 mm; la compensación suma 0,2 por lado
+
+
+def Image_bytes(size, colour):
+    buffer = io.BytesIO()
+    Image.new("RGB", size, colour).save(buffer, "PNG")
+    return buffer.getvalue()
+
+
+class GeometryOnlyTests(AnalysisApiTests):
+    """Con `raster_digitizing` apagado el trabajo se queda en la geometría de E1: sin JEF ni relectura."""
+
+    raster_digitizing = False
+
+    def test_the_job_stops_at_the_vectorized_geometry_without_digitizing(self):
+        self.start({"openai": FakeProvider("openai", [INSIDE])})
+        _, job = self.raster_job(image=png(shape=True))
+        done = self.wait(job["job_id"])
+        self.assertEqual(done["status"], "needs_review")
+        stages = self.stages(done)
+        self.assertEqual((stages["analyzing"], stages["vectorizing"]), ("completed", "completed"))
+        self.assertEqual((stages["digitizing"], stages["validating"]), ("skipped", "skipped"))
+        issue = next(i for i in done["issues"] if i["code"] == "DENSITY_REVIEW_REQUIRED")
+        self.assertEqual((issue["severity"], issue["stage"]), ("review_required", "routing"))
+        self.assertIn("provisionales", issue["description"])
+        status, manifest = self.call("GET", f"/api/v1/jobs/{job['job_id']}/artifacts")
+        self.assertEqual(status, 200, manifest)
+        self.assertIsNone(manifest["reread_metrics"])  # sin JEF no hay relectura
+        self.assertEqual([a["kind"] for a in manifest["artifacts"]], ["editable_svg"])
+        self.assertEqual((manifest["provenance"]["simulated"], manifest["provenance"]["method"]), (False, "e1_raster_mask_vectorization"))
+
+
 class DecisionTests(AnalysisApiTests):
     def review(self, providers=None, regions=(INSIDE, OUTSIDE), provider="openai"):
         self.start(providers or {"openai": FakeProvider("openai", regions), "ollama": FakeProvider("ollama", regions)})
@@ -356,8 +494,8 @@ class DecisionTests(AnalysisApiTests):
         analyzing = next(r for r in child["stages"] if r["stage"] == "analyzing")
         self.assertEqual((analyzing["outcome"], analyzing["reason"]), ("skipped", f"análisis aprobado en {original['job_id']}"))
         done = self.wait(child["job_id"])
-        self.assertEqual(done["status"], "needs_review")  # E1 vectoriza; sin H3 no hay puntadas validadas
-        self.assertEqual((self.stages(done)["vectorizing"], self.stages(done)["digitizing"]), ("completed", "skipped"))
+        self.assertEqual(done["status"], "needs_review")  # E1 vectoriza y se genera el JEF de referencia
+        self.assertEqual((self.stages(done)["vectorizing"], self.stages(done)["digitizing"]), ("completed", "completed"))
         self.assertIn("DENSITY_REVIEW_REQUIRED", [i["code"] for i in done["issues"]])
         self.assertEqual(self.call("GET", f"/api/v1/jobs/{child['job_id']}/analysis")[1]["analysis_id"], f"analysis_{original['job_id']}")
         self.assertEqual(self.call("GET", f"/api/v1/jobs/{original['job_id']}")[1]["status"], "needs_review")

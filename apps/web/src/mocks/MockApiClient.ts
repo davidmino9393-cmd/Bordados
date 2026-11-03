@@ -25,6 +25,8 @@ import { pickScenario, ScenarioOutcome, type Scenario } from './scenarios/scenar
 const DEFAULT_STAGE_MS = 1500;
 /** Nombre del guion de un job que continúa tras aprobar un análisis. */
 const APPROVED_SCENARIO = 'analisis-aprobado';
+/** Mismo texto que escribe el backend para una imagen enviada sin análisis de IA. */
+const SKIPPED_BY_CHOICE = 'Sin análisis de IA: la persona eligió continuar sin él';
 const FALLBACK_RASTER_PX = { width: 800, height: 600 };
 /** El contrato fija 300 s; solo las pruebas lo acortan (downloadTtlMs). */
 const DEFAULT_DOWNLOAD_TTL_MS = 300_000;
@@ -250,10 +252,18 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
         const provider = request.settings.ai_provider;
         const isSvg = request.input_kind === 'prepared_svg';
         const available = catalog.providers.find((p) => p.provider_id === provider)?.available ?? false;
-        if ((provider === AiProvider.None && !isSvg) || (provider !== AiProvider.None && !available)) {
-          throw problem(ErrorCode.InvalidRequest);
-        }
-        return startJob(projectId, revision.revision_id, stored, request.settings, stored.scenario, null);
+        if (provider !== AiProvider.None && !available) throw problem(ErrorCode.InvalidRequest);
+        // Una imagen con proveedor "none" se procesa sin análisis: la etapa se omite con motivo y nada pausa el trabajo.
+        const scenario: Scenario =
+          provider === AiProvider.None && !isSvg
+            ? {
+                ...stored.scenario,
+                outcome: stored.scenario.outcome === ScenarioOutcome.AnalysisReview ? ScenarioOutcome.Ready : stored.scenario.outcome,
+                skipped: ['analyzing'],
+                skipReason: SKIPPED_BY_CHOICE,
+              }
+            : stored.scenario;
+        return startJob(projectId, revision.revision_id, stored, request.settings, scenario, null);
       });
     },
     async getJob(jobId) {

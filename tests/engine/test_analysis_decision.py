@@ -67,6 +67,34 @@ class AnalysisDecisionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_transition(self._continuation("queued", "pending"), JobResponse.model_validate(analysis_not_skipped))
 
+    SKIP_REASON = "Sin análisis de IA: la persona eligió continuar sin él"
+
+    def _unanalyzed(self, status, vectorizing, provider="none", analysis=("skipped", SKIP_REASON), input_kind="raster_image"):
+        payload = builder.continuation_example()
+        payload.update(status=status, parent_job_id=None, input_kind=input_kind)
+        payload["settings_snapshot"] = dict(payload["settings_snapshot"], ai_provider=provider)
+        for record in payload["stages"]:
+            if record["stage"] == "analyzing":
+                record.update(outcome=analysis[0], reason=analysis[1])
+            if record["stage"] == "vectorizing":
+                record["outcome"] = vectorizing
+        return JobResponse.model_validate(payload)
+
+    def test_an_image_sent_with_ai_none_may_skip_analysis_with_a_recorded_reason(self):
+        """R5: la segunda vía para saltar el análisis (sin padre) está en states.md."""
+        previous, following = self._unanalyzed("queued", "pending"), self._unanalyzed("vectorizing", "running")
+        self.assertEqual(validate_transition(previous, following).status, "vectorizing")
+
+    def test_the_no_ai_skip_has_its_own_conditions(self):
+        cases = {
+            "otro proveedor sin padre": dict(provider="openai"),
+            "análisis no omitido": dict(analysis=("completed", None)),
+            "SVG preparado": dict(input_kind="prepared_svg"),
+        }
+        for name, changes in cases.items():
+            with self.subTest(name), self.assertRaises(ValueError):
+                validate_transition(self._unanalyzed("queued", "pending", **changes), self._unanalyzed("vectorizing", "running", **changes))
+
     def test_openapi_documents_both_operations(self):
         document = builder.build_openapi()
         self.assertIn("get", document["paths"]["/api/v1/jobs/{id}/analysis"])

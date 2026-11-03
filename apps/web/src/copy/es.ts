@@ -150,8 +150,10 @@ export const es = {
     noFallback: 'No se usará otro proveedor en su lugar.',
     experimentalTitle: 'Función experimental',
     experimentalText:
-      'El análisis de imágenes con IA es experimental y puede equivocarse. Antes de generar el bordado vas a poder revisar lo que detectó.',
-    noProviders: 'El servidor no tiene proveedores de IA disponibles para analizar imágenes.',
+      'Convertir una imagen en bordado es experimental y puede equivocarse. Los parámetros de puntada son de referencia, no están calibrados para tu tela: revisá los avisos y probalo en un retazo antes de bordar. Si elegís un análisis con IA, vas a poder revisar lo que detectó.',
+    noAi: 'Sin análisis de IA',
+    noAiHint: 'La imagen se vectoriza directamente, sin regiones sugeridas por la IA.',
+    noProviders: 'El servidor no tiene proveedores de IA disponibles: la imagen se va a procesar sin análisis.',
     noAiForSvg: 'Un SVG ya preparado no se analiza con IA.',
     positive: 'Ingresá un número mayor que cero.',
     colorsRange: (max: number) => `Elegí entre 1 y ${max} colores.`,
@@ -238,6 +240,10 @@ export const es = {
     filesNotReadyTitle: 'Archivos para revisar: no están listos para prueba',
     filesNotReadyText:
       'Los controles digitales no pasaron. Podés inspeccionarlos o registrar una muestra, pero resolvé las incidencias antes de usarlos como versión final.',
+    jefHeroTitle: 'Tu archivo de bordado',
+    jefHeroText:
+      'El JEF está listo para descargar, pero los parámetros de puntada son de referencia y no están calibrados para tu tela. Cosé una prueba en un retazo antes de bordar la pieza final y revisá los avisos de más abajo.',
+    jefHeroDownload: 'Descargar archivo JEF',
     geometryOnlyTitle: 'Solo geometría: todavía no hay archivo de bordado',
     geometryOnlyText:
       'Se vectorizó la imagen y podés descargar el SVG editable. Las puntadas y el JEF no se generan hasta que se validen los parámetros físicos; por eso no hay muestra para registrar ni correcciones para aplicar.',

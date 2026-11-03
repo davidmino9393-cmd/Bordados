@@ -9,6 +9,7 @@ import unittest
 import urllib.error
 import urllib.parse
 import urllib.request
+from unittest.mock import patch
 import uuid
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -20,6 +21,7 @@ import uvicorn
 
 from embroidery_api.app import create_app
 from embroidery_api.config import ApiConfig
+from embroidery_api.runner import JobRunner
 
 
 TOKEN = "test-token"
@@ -203,6 +205,65 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(len(payload), jef["byte_size"])
         self.assertEqual(header(headers, "Cache-Control"), "no-store")
         self.assertTrue(header(headers, "X-Request-ID"))
+
+    def test_a_cancel_accepted_while_the_worker_finishes_leaves_the_job_cancelled_without_artifacts(self):
+        """R1: el subproceso terminó y falta guardar el resultado; la cancelación (202) llega justo en esa ventana."""
+        project_id, asset_id, revision_id = self.setup_project(svg())
+        reached, release = threading.Event(), threading.Event()
+
+        def hold(_runner, _job_id):
+            reached.set()
+            release.wait(15)
+
+        with patch.object(JobRunner, "_worker_finished", hold):
+            status, job, _ = self.create_job(project_id, asset_id, revision_id)
+            self.assertEqual(status, 202)
+            self.assertTrue(reached.wait(15), "el worker no llegó a terminar")
+            status, _, accepted = self.post(f"/api/v1/jobs/{job['job_id']}/cancel", {})
+            self.assertEqual(status, 202)
+            self.assertTrue(accepted["cancellation_requested"])
+            self.assertEqual(accepted["status"], "digitizing")  # el resultado todavía no se guardó
+            release.set()
+            final = self.wait_job(project_id, job["job_id"], {"cancelled", "needs_review", "failed"})
+        self.assertEqual(final["status"], "cancelled")
+        self.assertTrue(final["cancellation_requested"])
+        self.assertIsNone(final.get("artifact_manifest"))
+        self.assertIsNone(final.get("validation_report"))
+        self.assertEqual(final["issues"], [])
+        self.assertEqual({record["stage"]: record["outcome"] for record in final["stages"]}["digitizing"], "cancelled")
+        status, _, problem = self.artifacts(job["job_id"])
+        self.assertEqual((status, problem["code"]), (409, "ARTIFACTS_UNAVAILABLE"))
+
+    def test_a_cancel_after_the_result_was_saved_does_not_touch_it(self):
+        project_id, asset_id, revision_id = self.setup_project(svg())
+        _, job, _ = self.create_job(project_id, asset_id, revision_id)
+        before = self.wait_job(project_id, job["job_id"], {"needs_review"})
+        status, _, answer = self.post(f"/api/v1/jobs/{job['job_id']}/cancel", {})
+        self.assertEqual((status, answer["status"], answer["cancellation_requested"]), (202, "needs_review", False))
+        _, _, after = self.json_request("GET", f"/api/v1/jobs/{job['job_id']}")
+        self.assertEqual(after, before)
+        status, _, manifest = self.artifacts(job["job_id"])
+        self.assertEqual(status, 200, manifest)
+
+    def test_concurrent_cancellations_never_lose_an_accepted_request_or_revive_a_finished_job(self):
+        """Cancelar a distintos instantes del trabajo: la solicitud aceptada se cumple o el trabajo ya había terminado."""
+        project_id, asset_id, revision_id = self.setup_project(svg())
+        final_states = {"cancelled", "needs_review", "failed"}
+        for delay in (0, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1.0, 1.3):
+            with self.subTest(delay=delay):
+                _, job, _ = self.create_job(project_id, asset_id, revision_id)
+                time.sleep(delay)
+                status, _, answer = self.post(f"/api/v1/jobs/{job['job_id']}/cancel", {})
+                self.assertEqual(status, 202)
+                final = self.wait_job(project_id, job["job_id"], final_states)
+                self.assertEqual(final["status"] == "cancelled", final["cancellation_requested"])  # nunca se contradicen
+                if answer["status"] in final_states:  # ya había terminado cuando llegó la cancelación: no se toca
+                    self.assertEqual((final["status"], final["cancellation_requested"]), (answer["status"], False))
+                else:  # aceptada mientras corría: el resultado no la pisa
+                    self.assertEqual(final["status"], "cancelled")
+                    self.assertIsNone(final.get("artifact_manifest"))
+                    status, _, problem = self.artifacts(job["job_id"])
+                    self.assertEqual((status, problem["code"]), (409, "ARTIFACTS_UNAVAILABLE"))
 
     def test_job_creation_does_not_wait_for_worker(self):
         project_id, asset_id, revision_id = self.setup_project(svg("FAKE_SLEEP"))
