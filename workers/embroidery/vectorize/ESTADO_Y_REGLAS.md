@@ -1,45 +1,40 @@
 # Estado y reglas del relevo
 
-Propósito: conservar límites de autoridad y separar lo implementado de lo reportado por otra IA.
+Propósito: conservar autoridad y distinguir revisión software, integridad digital y aprobación física.
 
-Contenido: [Propiedad](#propiedad), [Invariantes](#invariantes), [Estado externo](#estado-externo), [Entrega](#entrega), [Referencias](#referencias).
+Contenido: [Propiedad](#propiedad), [Invariantes](#invariantes), [Contratos e integración](#contratos-e-integración), [Entrega](#entrega), [Referencias](#referencias).
 
 ## Propiedad
 
 | Área | Responsable |
 |---|---|
-| `workers/embroidery/vectorize/**`, adaptador y pruebas E en `tests/engine` | Codex |
-| API, web, e2e, `tests/h2_eval`, manifiesto | Claude |
-| Traslados y merges | David |
+| E, adaptador y pruebas del motor | Codex |
+| API, web, e2e, F, manifiesto y documentación H3 | Claude |
+| Merges, traslados y muestras físicas | David/integrador humano |
 
-- Solo `codex/motor`. Git: `status`, `diff`, `log`, `add`, `commit`. Sin merge, push, checkout ni worktree add.
-- Correcciones internas E y commits atómicos ya autorizados; no volver a pedirlos.
-- `da5e1a1` trasladado con permiso como `094956a`. `4018d97` pendiente aquí: Claude refiere permiso en otro chat. No darlo por instrucción directa; el PNG existe y no bloquea E.
-- Leer `C:\dev\wt-web` está permitido; no escribir allí. Contratos congelados locales: solo lectura.
-- Scripts originales de las dos carpetas Anime Socks: conservar, no ejecutar/importar ni reescribir. `digitalizar.py` no es generalizable.
-- Rutas configurables; sin rutas de esta máquina en producción. No dependencias nuevas ni política API sin decisión correspondiente. La siguiente prueba de paleta no necesita dependencias nuevas.
+- Solo `codex/motor`. Git habitual: `status`, `diff`, `log`, `add`, `commit`. Codex no ejecuta merge, push, checkout ni worktree add.
+- Correcciones internas E y commits atómicos autorizados; no pedirlos de nuevo. La sincronización a `051d8ce` la hizo Claude con permiso de David; no es permiso general para futuras fusiones.
+- `4018d97` y los fixtures ya están integrados. No repetir cherry-pick.
+- Leer `C:\dev\wt-web`/main está permitido; no escribir en otro worktree. Conservar los scripts originales Anime Socks sin ejecutar/importar ni reescribir: `digitalizar.py` no es generalizable.
+- Rutas configurables. Nuevas dependencias, políticas o contratos requieren la decisión correspondiente; esta revisión no los cambia.
 
 ## Invariantes
 
-- `ready_for_sewout` digital ≠ `approved` físico; `approved` no es estado del job. E no asigna estados.
-- E produce `verified_mask`: contorno exacto de máscara segmentada, no garantía semántica. Bboxes IA solo anotan; texto no sustituye fuentes.
-- Todo resultado conserva `DENSITY_REVIEW_REQUIRED`, decisión por objeto y `evidence.h3_validation_required`. H3 no está implementado; no JEF desde imagen.
-- `VectorizeFailure.issue` conserva catálogo/severidad. Revisión sola no justifica `failed`; este requiere bloqueante. Cancelación: `JOB_CANCELLED`.
-- PNG/JPEG hasta 32 MiB y 4 Mpx; SVG preparado sigue el worker previo. Crop fraccional y EXIF no normalizado dan incidencias controladas.
-- No ocultar pérdidas de color/fondo ni borrar detalles para superar límites. Sin constantes por logo.
+- `ready_for_sewout` digital ≠ `approved` físico. E no asigna estados; `approved` no pertenece al job.
+- E produce geometría desde píxeles; bboxes IA orientan, no sustituyen máscaras. Texto es anotación, no fuente reemplazada.
+- Parámetros provisionales: `DENSITY_REVIEW_REQUIRED`, decisión por objeto y bandera H3. El supuesto de 0,4 mm se mide/avisa, no se transforma en calibración por documentación manual.
+- Revisión sola no justifica `failed`: exige bloqueante. Cancelación: `JOB_CANCELLED`. No ocultar avisos de color, fondo o satén.
+- JEF desde SVG preparado funciona; imagen → JEF y selección de técnicas/routing siguen pendientes de H3. No declarar la app completa.
+- Hash y comandos iguales no identifican el archivo realmente cosido. Requiere el original usado y sus condiciones; no extender aprobación física a variantes.
 
-## Estado externo
+## Contratos e integración
 
-Git al preparar relevo: `main` en `af21ed3`; `claude/web` en `7459bb5`. Verificar de nuevo al continuar.
-
-Según Claude: integró E hasta `4a7fd6b` en `claude/web` (merge `19e418e`, autorizado por David). F pasó controles estructurales; calidad de color pendiente. No ejecutamos F localmente.
-
-Claude hizo `ArtifactManifest.reread_metrics` opcional para revisión sin JEF, solo en su rama. Requiere revisión/versionado humano; v0.1 local no acepta ese supuesto.
+La base `051d8ce` incluye los seis cambios ratificados y modelos actuales de `packages/contracts`; `reread_metrics` nullable ya no es una propuesta aislada de Claude. `ready_for_sewout` conserva exigencia de JEF y relectura. No aplicar supuestos viejos del relevo de `4a7fd6b`.
 
 ## Entrega
 
-Terminar siempre con: Hito/tarea; Versión de contratos utilizada; Archivos y rama; Qué funciona con entradas reales; Qué utiliza datos simulados; Comprobaciones y resultado; Limitaciones o bloqueos; Cambios que necesitás de la otra IA.
+Cerrar con: Hito/tarea; Versión de contratos; Archivos y rama; Entradas reales; Datos simulados; Comprobaciones/resultados; Limitaciones/bloqueos; Cambios necesitados de la otra IA.
 
 ## Referencias
 
-- [Inicio](CONTINUAR.md) · [Buzón y reparto](COORDINACION.md)
+- [Inicio](CONTINUAR.md) · [Coordinación](COORDINACION.md)

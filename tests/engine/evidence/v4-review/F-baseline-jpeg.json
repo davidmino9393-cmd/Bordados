@@ -1,0 +1,114 @@
+{
+  "status": "passed",
+  "manifest": "manifest.json",
+  "vectorize_source": "C:\\dev\\bordados\\workers\\embroidery\\vectorize",
+  "not_measured": [
+    "holes_preserved_as_count",
+    "text_as_annotation",
+    "background_assumption"
+  ],
+  "static_review": {
+    "per_logo_literals": []
+  },
+  "summary": {
+    "images": 1,
+    "skipped": 0,
+    "errors": 0,
+    "checks": {
+      "colors_within_limit": {
+        "passed": 1,
+        "of": 1
+      },
+      "deterministic": {
+        "passed": 1,
+        "of": 1
+      },
+      "document_valid": {
+        "passed": 1,
+        "of": 1
+      },
+      "geometry_kinds_allowed": {
+        "passed": 1,
+        "of": 1
+      },
+      "has_objects": {
+        "passed": 1,
+        "of": 1
+      },
+      "minimum_feature_reported_never_removed": {
+        "passed": 1,
+        "of": 1
+      },
+      "provisional_values_marked": {
+        "passed": 1,
+        "of": 1
+      },
+      "within_target_contain": {
+        "passed": 1,
+        "of": 1
+      }
+    },
+    "foreground_iou": {
+      "min": 0.97249,
+      "median": 0.97249,
+      "measured": 1,
+      "of": 1
+    },
+    "duration_ms": {
+      "median": 941.5,
+      "max": 948,
+      "runs": 2
+    }
+  },
+  "images": [
+    {
+      "id": "jpeg-simple-01",
+      "category": "flat_logo",
+      "status": "ok",
+      "checks": {
+        "document_valid": true,
+        "within_target_contain": true,
+        "colors_within_limit": true,
+        "geometry_kinds_allowed": true,
+        "provisional_values_marked": true,
+        "has_objects": true,
+        "minimum_feature_reported_never_removed": true,
+        "deterministic": true
+      },
+      "outcome": {
+        "expected_outcome": "automatic",
+        "issue_severities": [
+          "review_required"
+        ],
+        "review_required_reported": true
+      },
+      "objects": 2,
+      "duration_ms": [
+        935,
+        948
+      ],
+      "thin_features": {
+        "min_width_mm": 0.4,
+        "measurable": true,
+        "thin_fraction_by_object": [
+          0.000588,
+          0.00019
+        ]
+      },
+      "fidelity": {
+        "blurred_error": 0.0817,
+        "foreground_iou": 0.97249,
+        "original_foreground_px": 216028,
+        "rendered_px": 210085,
+        "missing_px": 5943,
+        "extra_px": 0,
+        "large_error_px": 591,
+        "large_error_fraction": 0.002813,
+        "p95_max_channel_error": 4,
+        "large_error_threshold": 64,
+        "mean_abs_rgb_error": 0.5624,
+        "background_rule": "alpha<128 o RGB>=250"
+      }
+    }
+  ]
+}
