@@ -1,6 +1,6 @@
 # Protocolo de la muestra de calibración H3
 
-Propósito: medir en tela lo que hoy son parámetros **provisionales y sin calibrar**: ancho mínimo bordable, densidad y compensación del satin, separación del relleno y pespunte de línea fina. Nada de esto se afirma hasta que haya medidas físicas.
+Propósito: medir en tela lo que hoy son parámetros **provisionales y sin calibrar**: ancho mínimo bordable, densidad y compensación del satin, separación del relleno y pespunte de línea fina. Nada de esto se afirma hasta que haya medidas físicas. Referencias previas de la máquina y de la digitalización: [REFERENCIAS_JANOME_MC550E.md](REFERENCIAS_JANOME_MC550E.md).
 
 Contenido: [Archivos](#archivos) · [Cómo coser](#cómo-coser) · [Qué medir](#qué-medir) · [Para qué sirve](#para-qué-sirve) · [Límites](#límites)
 
