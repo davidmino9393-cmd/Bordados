@@ -79,6 +79,10 @@ def continuation_stages(parent_job_id):
     )
 
 
+class JobSuperseded(Exception):
+    """Otra escritura ya dejó el job en su estado final (una cancelación aceptada): el runner no sigue."""
+
+
 class JobRunner:
     def __init__(self, config, store, providers=None):
         self.config = config
@@ -141,10 +145,14 @@ class JobRunner:
     def _run(self, job_id, event):
         try:
             self._execute(job_id, event)
+        except JobSuperseded as superseded:
+            LOGGER.info("Job %s ya quedó en %s por otra escritura (cancelación aceptada); se descarta lo que faltaba", job_id, superseded)
         except BaseException:
             LOGGER.exception("Unexpected failure while running job %s", job_id)
             try:
                 self._fail_unexpected(job_id)
+            except JobSuperseded:
+                pass
             except Exception:
                 LOGGER.exception("Could not persist failure for job %s", job_id)
         finally:
@@ -174,6 +182,10 @@ class JobRunner:
         )
         self._run_worker(previous, private, event, Path(private["asset_path"]), Path(private["job_dir"]))
 
+    def _worker_finished(self, job_id):
+        """El subproceso ya terminó y falta mapear y guardar su resultado. No hace nada: es el punto donde las pruebas
+        de cancelación concurrente detienen al runner para cancelar justo en esa ventana."""
+
     def _run_worker(self, previous, private, event, svg_path, job_dir, extra_issues=(), timeout_s=None, display_names=None):
         """Corre el worker real sobre un SVG de Ink/Stitch y guarda el resultado (needs_review, ready o failed)."""
         job_id = previous.job_id
@@ -191,6 +203,7 @@ class JobRunner:
         except WorkerFailure as exc:
             self._handle_worker_failure(job_id, previous, private, exc, job_dir)
             return
+        self._worker_finished(job_id)
         try:
             result = json.loads((job_dir / "result.json").read_text(encoding="utf-8"))
         except (OSError, ValueError):
@@ -515,17 +528,52 @@ class JobRunner:
         return make_issue(issue_code, description, {"reason": reason or "worker_failure"})
 
     def _save_transition(self, previous, status, private, updates, extra=None):
-        data = previous.model_dump(mode="json")
+        """Relee, valida y escribe en una sola transacción: una cancelación aceptada (202) no se pierde.
+
+        `previous` solo identifica el job; el estado vigente se lee dentro de la transacción, la misma que usa
+        `POST /cancel`. Si ya hay `cancellation_requested` y el resultado no es la cancelación misma, ese resultado se
+        descarta (sin manifiesto, informe ni incidencias) y el job queda `cancelled`; después se lanza `JobSuperseded`
+        para que quien llamó no siga con trabajo que ya no vale.
+        """
+        outcome = {}
+
+        def change(stored, stored_private):
+            current = JobResponse.model_validate(stored)
+            if current.status in FINAL_STATES:
+                raise JobSuperseded(current.status)
+            cancelling = current.cancellation_requested and status != JobStatus.CANCELLED
+            if cancelling:
+                following = self._next(current, JobStatus.CANCELLED, self._cancelled_stage(current), {"cancellation_requested": True})
+                kept_private = stored_private
+            else:
+                following = self._next(current, status, updates, extra)
+                kept_private = private
+            outcome["following"], outcome["cancelled_instead"] = following, cancelling
+            return following.model_dump(mode="json"), kept_private
+
+        self.store.mutate("job", previous.job_id, change)
+        if outcome["cancelled_instead"]:
+            raise JobSuperseded(JobStatus.CANCELLED)
+        return outcome["following"]
+
+    def _next(self, current, status, updates, extra):
+        data = current.model_dump(mode="json")
         for name in ("failure", "review", "diagnostics", "sewout_status"):
             data.pop(name, None)
         data["status"] = status.value
-        data["stages"] = [record.model_dump(mode="json") for record in self._stages(previous, updates)]
+        data["stages"] = [record.model_dump(mode="json") for record in self._stages(current, updates)]
         if extra:
             data.update(extra)
         following = JobResponse.model_validate(data)
-        validate_transition(previous, following)
-        self.store.update("job", previous.job_id, following.model_dump(mode="json"), private)
+        validate_transition(current, following)
         return following
+
+    @staticmethod
+    def _cancelled_stage(current):
+        """La etapa que estaba corriendo (o, si nada corría, la primera pendiente) queda cancelada."""
+        stage = next((r.stage for r in current.stages if r.outcome == "running"), None) \
+            or next((r.stage for r in current.stages if r.outcome == "pending"), None)
+        return {stage: ("cancelled", None, None)} if stage else {}
 
     @staticmethod
     def _stages(previous, updates):

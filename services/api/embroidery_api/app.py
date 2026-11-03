@@ -537,18 +537,26 @@ def create_app(config: ApiConfig, analysis_providers=None):
         payload: CancelRequest,
         idempotency_key: str = Header(alias="Idempotency-Key"),
     ):
-        job = owned("job", id)
-        body = JobResponse.model_validate(job["body"])
+        owned("job", id)
 
         def action():
-            if body.status in TERMINAL_STATES:
-                return 202, body.model_dump(mode="json")
-            data = body.model_dump(mode="json")
-            data["cancellation_requested"] = True
-            updated = JobResponse.model_validate(data)
-            store.update("job", id, updated.model_dump(mode="json"), job["private"])
-            runner.cancel(id)
-            return 202, updated.model_dump(mode="json")
+            # El estado se relee y se escribe en la misma transacción que el worker usa para guardar su resultado:
+            # si el trabajo terminó un instante antes, no se pisa; si no, la solicitud queda y el job termina cancelled.
+            outcome = {}
+
+            def change(stored, stored_private):
+                current = JobResponse.model_validate(stored)
+                outcome["job"] = current
+                if current.status in TERMINAL_STATES:
+                    return None
+                updated = JobResponse.model_validate(dict(current.model_dump(mode="json"), cancellation_requested=True))
+                outcome["job"], outcome["requested"] = updated, True
+                return updated.model_dump(mode="json"), stored_private
+
+            store.mutate("job", id, change)
+            if outcome.get("requested"):
+                runner.cancel(id)
+            return 202, outcome["job"].model_dump(mode="json")
 
         status, result = store.idempotent(
             f"cancelJob:{owner}:{id}", idempotency_key, {"job_id": id}, action

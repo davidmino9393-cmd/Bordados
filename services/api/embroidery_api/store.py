@@ -54,6 +54,30 @@ class Store:
             else:
                 self.db.execute("UPDATE resources SET body=?,private=? WHERE kind=? AND id=?", (canonical(body), canonical(private), kind, identifier))
 
+    def mutate(self, kind, identifier, change):
+        """Lectura, cambio y escritura de un recurso en una sola transacción.
+
+        `change(body, private)` recibe lo que hay guardado AHORA y devuelve `(body, private)` para escribir, o None para
+        no escribir. Si lanza, no se escribe nada. Sirve a quien escribe sobre lo que otro pudo cambiar un instante antes
+        (el worker y la cancelación sobre el mismo job): ninguna de las dos escrituras pisa a la otra. Si ya hay una
+        transacción abierta (la de `idempotent`), se une a ella en vez de abrir otra.
+        """
+        with self.lock:
+            opened = not self.db.in_transaction
+            if opened:
+                self.db.execute("BEGIN IMMEDIATE")
+            try:
+                current = self.get(kind, identifier)
+                result = change(current["body"], current["private"])
+                if result is not None:
+                    self.update(kind, identifier, *result)
+                if opened:
+                    self.db.execute("COMMIT")
+            except BaseException:
+                if opened:
+                    self.db.execute("ROLLBACK")
+                raise
+
     def get(self, kind, identifier, owner=None):
         with self.lock:
             row = self.db.execute("SELECT * FROM resources WHERE kind=? AND id=?", (kind, identifier)).fetchone()
