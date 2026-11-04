@@ -32,7 +32,10 @@ def validate_transition(previous: JobResponse, following: JobResponse) -> JobRes
             raise ValueError("Only prepared SVG may skip analysis/vectorization, with recorded reasons")
     if previous.status == JobStatus.QUEUED and following.status == JobStatus.VECTORIZING:
         analysis = next((r for r in following.stages if r.stage == "analyzing"), None)
-        if (following.input_kind != "raster_image" or following.parent_job_id is None
-                or analysis is None or analysis.outcome != "skipped"):
-            raise ValueError("Only a continuation after an approved analysis may skip analysis, with parent job and recorded reason")
+        unanalyzed_by_choice = following.parent_job_id is None and following.settings_snapshot.ai_provider == "none"
+        if (following.input_kind != "raster_image" or (following.parent_job_id is None and not unanalyzed_by_choice)
+                or analysis is None or analysis.outcome != "skipped" or analysis.reason is None):
+            raise ValueError(
+                "Only a continuation after an approved analysis, or an image sent with ai_provider none, may skip analysis, "
+                "with a recorded reason")
     return JobResponse.model_validate(following.model_dump())

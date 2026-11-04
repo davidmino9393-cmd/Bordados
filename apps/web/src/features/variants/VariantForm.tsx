@@ -24,6 +24,9 @@ export function VariantForm({ job }: { job: JobResponse }) {
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
 
+  const hoop = job.settings_snapshot.hoop;
+  const outsideHoop = parseMm(width) > hoop.width_mm || parseMm(height) > hoop.height_mm;
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     const w = parseMm(width);
@@ -62,6 +65,7 @@ export function VariantForm({ job }: { job: JobResponse }) {
               <input type="text" inputMode="decimal" value={height} onChange={(e) => setHeight(e.target.value)} />
             </Field>
           </div>
+          {outsideHoop && <Notice tone={NoticeTone.Warning}>{es.settings.outsideHoop(hoop.width_mm, hoop.height_mm)}</Notice>}
           <div className="row">
             <button type="submit" disabled={busy}>{es.variants.create}</button>
           </div>

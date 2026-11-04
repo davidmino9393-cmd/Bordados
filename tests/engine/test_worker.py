@@ -11,7 +11,7 @@ TEST_TMP = ROOT / "tests" / "engine" / ".tmp"
 TEST_TMP.mkdir(exist_ok=True)
 sys.path.insert(0, str(ROOT / "workers" / "embroidery"))
 from process_runner import WorkerFailure, run_logged
-from worker import prepared_input
+from worker import prepared_input, with_hoop_code
 
 
 class WorkerTests(unittest.TestCase):
@@ -49,6 +49,23 @@ class WorkerTests(unittest.TestCase):
             with self.assertRaises(WorkerFailure) as caught:
                 run_logged([sys.executable, "-c", "pass"], tmp, "empty", 5)
             self.assertEqual(caught.exception.issue["reason"], "nonzero_exit_or_empty_payload")
+
+    def test_the_header_hoop_code_follows_the_profile_and_nothing_else_in_the_file_changes(self):
+        original = (ROOT / "Anime_Socks_Bordado_13x12/Anime_Socks_13x12.jef").read_bytes()  # el exportador le puso código 2 (140 x 200)
+        before = struct.unpack_from("<I", original, 32)[0]
+        self.assertNotEqual(before, 4)
+        patched, change = with_hoop_code(original, 4)
+        self.assertEqual(struct.unpack_from("<I", patched, 32)[0], 4)
+        self.assertEqual((patched[:32], patched[36:]), (original[:32], original[36:]))
+        self.assertEqual((change["field"], change["from"], change["to"]), ("hoop_code", before, 4))
+        from jef_audit import binary_commands
+        self.assertEqual(binary_commands(patched)["hoop_code"], 4)  # el lector independiente ve el código nuevo
+        self.assertEqual(binary_commands(patched)["records_2bytes"], binary_commands(original)["records_2bytes"])
+
+    def test_a_truncated_header_cannot_take_a_hoop_code(self):
+        with self.assertRaises(WorkerFailure) as caught:
+            with_hoop_code(b"\x00" * 20, 4)
+        self.assertEqual(caught.exception.issue["code"], "JEF_INVALID")
 
     def test_reader_cannot_hide_missing_or_invalid_end(self):
         from jef_audit import binary_commands

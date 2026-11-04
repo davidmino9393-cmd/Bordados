@@ -1,37 +1,31 @@
-# Continuar Codex motor
+# Continuar motor
 
-Propósito: retomar sin el chat. Snapshot: 2026-11-02; contrastar Git y buzón antes de actuar.
+Propósito: retomar el árbol candidato sin confundir evidencia histórica con trabajo pendiente. Fecha: 2026-11-03.
 
-Contenido: [Arranque](#arranque), [Estado actual](#estado-actual), [Siguiente trabajo](#siguiente-trabajo), [Referencias](#referencias).
+Contenido: [Base](#base), [Estado](#estado), [Próximo trabajo](#próximo-trabajo), [Referencias](#referencias).
 
-## Arranque
+## Base
 
-1. Verificar `Get-Location`, `rtk git status --short --branch` y `rtk git log -6 --oneline`: `C:\dev\wt-motor`, rama `codex/motor`. No crear ramas/worktrees ni deshacer cambios ajenos.
-2. Leer [AGENTS](../../../AGENTS.md), [plan maestro](../../../PLAN_MAESTRO.md), [contratos](../../../CONTRATOS_Y_CALIDAD.md), [tareas](../../../TAREAS_INICIALES.md) y [trabajo entre IAs](../../../TRABAJO_CON_VARIAS_IAS.md).
-3. Leer [reglas](ESTADO_Y_REGLAS.md), [reproducción](REPRODUCIR.md), [próxima tarea](PROXIMA_TAREA.md) y ambos mensajes del [buzón](COORDINACION.md#canal).
+La rama codex/motor ya contiene main `68d7ecdfef23f34e5becd9e5ccb0be9de65244bf` mediante el merge hacia motor autorizado por David en ronda B. Main permanece intacto. El integrador humano decide cualquier fusión a main. No crear worktrees ni hacer push.
 
-Skills opcionales por decisión del usuario; catálogo `.agents/skills/skill-index.json`. El kit no amplía el alcance.
+Resolución de este documento: gana la estructura y relevo actualizado de Codex (1ebfb40), conservando la corrección de finos 2507edf. Se incorporan los hechos posteriores de main: imagen→JEF de referencia, cancelación y variantes SVG corregidas. Se descartan las afirmaciones históricas de que kmeans sigue experimental o de que el motor continúa idéntico a 4a7fd6b.
 
-## Estado actual
+## Estado
 
-La base integrada es `051d8ce`: `main` se propagó a este worktree por Claude con autorización de David. No fue un merge ejecutado por Codex. Incluye fixtures completos, H2, seis cambios de contrato ratificados, E v4 y material H3. **No repetir la investigación ni la promoción inicial de `kmeans=3`; `4018d97` ya está integrado.**
+- E1 v4: paleta refinada, color mediano, cobertura y medición de finos con exterior cero/kernel par. No borra ni engrosa para aprobar; 0,4 mm sigue provisional.
+- Imagen→JEF funciona con parámetros de referencia y avisos; termina needs_review. GO independiente 014e368 y corrección SVG 29f73a8+25370ff. Nunca equivale a calibración física ni ready_for_sewout.
+- Helper image_input.py: PNG/JPEG, 10 MiB/4 Mpx, EXIF visual normalizado y PNG de análisis sin pérdida. Test antes huérfano ya está versionado y pasa.
+- Consumo API del helper todavía pendiente de Claude: límites del catálogo, dimensiones visuales de SourceAsset y PNG orientado para proveedor. No afirmar que esté conectado por existir el helper.
+- Evidencias de auditoría independent-review/ son artefactos locales deliberados; los JEF y capturas no se incluyen en el commit del helper.
 
-E usa `e1-pixel-mask-v4`: cuantización refinada, color representativo mediano y cobertura de borde. `thin_features.py` mide y avisa: nunca borra ni engrosa; 0,4 mm sigue provisional.
+## Próximo trabajo
 
-Codex revisó E v4 independientemente. La corrección `2507edf` usa kernel `ceil` incluso par, exterior cero y filtro acotado; corrige igualdad física afectada por coma flotante. No cambia geometría, paleta ni calibración. Ver [hallazgos y resultados](../../../tests/engine/evidence/v4-review/README.md).
-
-Cierre verificado: motor 121 pruebas (4 omitidas); evaluación 16 (1 omitida); sin fallos. F: 14 raster, 8 comprobaciones 14/14 y 2 SVG omitidos.
-
-Los dos exports JEF históricos están identificados por SHA y comparados con sus referencias: comandos y paletas coinciden; difieren bytes de cabecera. Eso **no identifica qué archivo copió/renombró y cosió David**, ni aprueba físicamente candidatos.
-
-## Siguiente trabajo
-
-La aplicación no está terminada: imagen → JEF aún requiere técnicas/calibración H3. David postergó coser la muestra; no iniciar esa actividad por leer este relevo. Se puede continuar revisión software con nueva evidencia y coordinar condiciones/archivo cosido cuando existan.
-
-OpenAI real, Ollama con visión/hardware reales y licencia EmbroideryPart15 siguen pendientes externos reportados por Claude.
+Claude mantiene API/web/F. Codex mantiene E/adaptador/pruebas. Correcciones de revisiones van después de variantes. La integración real de este árbol y cualquier calibración requieren su validación propia. La muestra H3 preparada se mide con David; coser por sí solo no habilita readiness digital.
 
 ## Referencias
 
-- [Interfaz](README.md) · [Integración](HANDOFF.md)
-- [Identidad de JEF](../../../tests/engine/evidence/v4-review/jef-identity.json)
+- [Entrada orientada](IMAGE_INPUT.md) · [Reglas](ESTADO_Y_REGLAS.md) · [Coordinación](COORDINACION.md)
 - [Protocolo H3](../../../tests/calibration/h3/PROTOCOLO_H3.md)
+
+Control de ronda B: correr motor y F antes del renombre del perfil; F debe reproducir los dos literales preexistentes. Luego renombrar solo el id neutral y su expectativa, sin parámetros físicos ni checker. Límite actual 4 MP hasta aplicar la ampliación medida y autorizada a 20 MP.
+

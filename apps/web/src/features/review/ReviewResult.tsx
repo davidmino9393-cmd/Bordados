@@ -4,7 +4,9 @@ import { es } from '../../copy/es';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { JobFiles } from '../job-progress/JobFiles';
 import { PhysicalSewout } from '../sewout/PhysicalSewout';
-import { isGeometryOnly } from './geometryOnly';
+import { VariantForm } from '../variants/VariantForm';
+import { canCorrect, isGeometryOnly, isRasterWithJef } from './geometryOnly';
+import { JefHero } from './JefHero';
 import { ReviewPanel } from './ReviewPanel';
 
 interface ReviewResultProps {
@@ -23,7 +25,8 @@ export function ReviewResult({ job, asset, onJobChanged }: ReviewResultProps) {
   const geometryOnly = isGeometryOnly(job);
   return (
     <>
-      <ReviewPanel job={job} asset={asset} correctable={!geometryOnly} />
+      {isRasterWithJef(job) && <JefHero job={job} />}
+      <ReviewPanel job={job} asset={asset} correctable={canCorrect(job)} />
       {job.artifact_manifest && (
         <>
           <Notice
@@ -33,6 +36,7 @@ export function ReviewResult({ job, asset, onJobChanged }: ReviewResultProps) {
             <p>{geometryOnly ? es.review.geometryOnlyText : es.review.filesNotReadyText}</p>
           </Notice>
           <JobFiles job={job} asset={asset} onJobChanged={onJobChanged} showIssues={false} />
+          <VariantForm job={job} />
         </>
       )}
       {!geometryOnly && <PhysicalSewout job={job} onJobChanged={onJobChanged} />}

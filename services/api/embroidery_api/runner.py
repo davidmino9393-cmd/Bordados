@@ -14,15 +14,18 @@ from embroidery_contracts.results import Artifact
 from embroidery_contracts.jobs import StageRecord
 from api_adapter import make_issue, result_documents
 from process_runner import WorkerFailure, run_logged
-from vectorize import VectorizeFailure, vectorize
+from vectorize import VectorizeFailure, stitchable, vectorize
+from vectorize.inkstitch import REFERENCE_PULL_COMPENSATION_MM, reference_issues, to_reference_inkstitch_svg
 
 from .analysis import ProviderError, normalize, region_incoherent_issue
 from .errors import ApiProblem
+from .svg_fit import fit_to_target
 
 
 LOGGER = logging.getLogger(__name__)
 SKIPPED_ANALYSIS = "Prepared SVG: analysis omitted"
 SKIPPED_VECTORIZATION = "Prepared SVG: vectorization omitted"
+SKIPPED_ANALYSIS_BY_CHOICE = "Sin análisis de IA: la persona eligió continuar sin él"
 FINAL_STATES = frozenset({JobStatus.NEEDS_REVIEW, JobStatus.READY_FOR_SEWOUT, JobStatus.FAILED, JobStatus.CANCELLED})
 FAILURE_DESCRIPTIONS = {
     IssueCode.INPUT_UNREADABLE: "La entrada no pudo decodificarse.",
@@ -38,6 +41,13 @@ FAILURE_DESCRIPTIONS = {
 }
 VECTORIZATION_REVIEW_UNLOCALIZED = "vectorization_review_unlocalized"
 DIGITIZING_BLOCKED = "Bloqueado hasta que H3 valide técnica y parámetros físicos"
+MAX_COLOR_LIMIT = 256  # el tope de `JobSettings.color_limit` en el contrato
+DEFAULT_JEF_STEM = "bordado"  # si el original no tiene nombre; el JEF descargado se llama como la imagen de origen
+NOTHING_STITCHABLE = "No queda geometría que se pueda bordar"
+REFERENCE_SVG_FILENAME = "reference-inkstitch.svg"
+FIT_SVG_TO_TARGET = "fit_svg_to_target"  # dato privado del job: la variante de un SVG preparado toma el tamaño del destino
+FITTED_SVG_FILENAME = "fitted-input.svg"
+DIGITIZING_DIRECTORY = "digitizing"  # el worker exige una carpeta de trabajo nueva: la de E1 ya tiene archivos
 VECTORIZATION_METHOD = "e1_raster_mask_vectorization"
 VECTORIZATION_FILES = {"document": "vectorized-document.json", "svg": "vectorized-editable.svg", "evidence": "vectorized-evidence.json"}
 STAGE_ORDER = ("analyzing", "vectorizing", "digitizing", "validating")
@@ -56,12 +66,24 @@ def raster_stages():
     return tuple(StageRecord(stage=stage, outcome="pending") for stage in STAGE_ORDER)
 
 
+def unanalyzed_raster_stages():
+    """Imagen enviada con `ai_provider: none`: la persona eligió no analizar; la vectorización parte de los píxeles."""
+    return (
+        StageRecord(stage="analyzing", outcome="skipped", reason=SKIPPED_ANALYSIS_BY_CHOICE),
+        *(StageRecord(stage=stage, outcome="pending") for stage in STAGE_ORDER[1:]),
+    )
+
+
 def continuation_stages(parent_job_id):
     """Job de imagen que continúa tras aprobar el análisis de `parent_job_id`: `analyzing` omitido con motivo."""
     return (
         StageRecord(stage="analyzing", outcome="skipped", reason=f"análisis aprobado en {parent_job_id}"),
         *(StageRecord(stage=stage, outcome="pending") for stage in STAGE_ORDER[1:]),
     )
+
+
+class JobSuperseded(Exception):
+    """Otra escritura ya dejó el job en su estado final (una cancelación aceptada): el runner no sigue."""
 
 
 class JobRunner:
@@ -126,10 +148,14 @@ class JobRunner:
     def _run(self, job_id, event):
         try:
             self._execute(job_id, event)
+        except JobSuperseded as superseded:
+            LOGGER.info("Job %s ya quedó en %s por otra escritura (cancelación aceptada); se descarta lo que faltaba", job_id, superseded)
         except BaseException:
             LOGGER.exception("Unexpected failure while running job %s", job_id)
             try:
                 self._fail_unexpected(job_id)
+            except JobSuperseded:
+                pass
             except Exception:
                 LOGGER.exception("Could not persist failure for job %s", job_id)
         finally:
@@ -157,20 +183,56 @@ class JobRunner:
             previous, JobStatus.DIGITIZING, private,
             {"digitizing": ("running", None, None)},
         )
-        job_dir = Path(private["job_dir"])
+        svg_path, input_sha256 = Path(private["asset_path"]), None
+        if private.get(FIT_SVG_TO_TARGET):
+            fitted = self._fitted_svg(previous, private)
+            if fitted is None:
+                return
+            svg_path, input_sha256 = fitted
+        self._run_worker(previous, private, event, svg_path, Path(private["job_dir"]), input_sha256=input_sha256)
+
+    def _fitted_svg(self, previous, private):
+        """El SVG de una variante con el tamaño del destino, antes de digitalizar. Devuelve (ruta, sha256 del original).
+
+        El original sigue siendo la entrada de la que se informa la procedencia; el ajustado es la geometría que ve el motor.
+        Devuelve None si el original ya no se puede ajustar (el job quedó `failed`).
+        """
+        original = Path(private["asset_path"]).read_bytes()
+        target = previous.settings_snapshot.target
+        try:
+            fitted, _ = fit_to_target(original, target.width_mm, target.height_mm)
+        except ValueError as error:
+            LOGGER.warning("Job %s: el SVG no se puede ajustar al destino: %s", previous.job_id, error)
+            self._save_failed(previous, private, IssueCode.INPUT_UNREADABLE, "svg_size_not_adjustable")
+            return None
+        path = Path(private["run_dir"]) / FITTED_SVG_FILENAME
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(fitted)
+        return path, hashlib.sha256(original).hexdigest()
+
+    def _worker_finished(self, job_id):
+        """El subproceso ya terminó y falta mapear y guardar su resultado. No hace nada: es el punto donde las pruebas
+        de cancelación concurrente detienen al runner para cancelar justo en esa ventana."""
+
+    def _run_worker(self, previous, private, event, svg_path, job_dir, extra_issues=(), timeout_s=None, display_names=None,
+                    input_sha256=None):
+        """Corre el worker real sobre un SVG de Ink/Stitch y guarda el resultado (needs_review, ready o failed)."""
+        job_id = previous.job_id
+        timeout_s = timeout_s or self.config.timeout_s
         run_dir = Path(private["run_dir"])
         run_dir.mkdir(parents=True, exist_ok=True)
-        command = self._command(Path(private["asset_path"]), job_dir)
+        command = self._command(svg_path, job_dir, timeout_s, previous.settings_snapshot.hoop.jef_hoop_code)
         environment = {}
         if self.config.worker_python_paths:
             environment["PYTHONPATH"] = os.pathsep.join(str(path) for path in self.config.worker_python_paths)
         try:
             _, record = run_logged(
-                command, run_dir, "worker", self.config.timeout_s + 30, event, environment
+                command, run_dir, "worker", timeout_s + 30, event, environment
             )
         except WorkerFailure as exc:
             self._handle_worker_failure(job_id, previous, private, exc, job_dir)
             return
+        self._worker_finished(job_id)
         try:
             result = json.loads((job_dir / "result.json").read_text(encoding="utf-8"))
         except (OSError, ValueError):
@@ -184,14 +246,14 @@ class JobRunner:
         try:
             report, manifest, artifact_paths = result_documents(
                 previous.model_dump(mode="json"), result, job_dir, duration_ms,
-                self.config.dimension_tolerance_mm,
+                self.config.dimension_tolerance_mm, display_names, input_sha256,
             )
         except Exception:
             LOGGER.exception("Could not map worker result for job %s", job_id)
             self._save_failed(previous, private, "WORKER_EXPORT_FAILED", "result_mapping_failed")
             return
         private["artifact_paths"] = artifact_paths
-        issues = tuple(report.issues)
+        issues = tuple(extra_issues) + tuple(report.issues)
         blocking = any(issue.severity == Severity.BLOCKING_ERROR for issue in issues)
         review = any(
             issue.severity == Severity.REVIEW_REQUIRED and (issue.object_ids or issue.region_ids)
@@ -305,12 +367,17 @@ class JobRunner:
 
     def _vectorize(self, previous, private, event):
         """H2-E1: geometría desde los píxeles. Sin H3 no hay puntadas validadas: el job termina en needs_review."""
+        stitching = None
         try:
             asset = SourceAsset.model_validate(self.store.get("asset", previous.asset_id)["body"])
-            result = vectorize(
-                Path(private["asset_path"]).read_bytes(), asset.media_type, asset, self._analysis_for(private, asset),
-                previous.settings_snapshot, job_id=previous.job_id, revision_id=previous.revision_id, cancel=event,
-            )
+            image, analysis = Path(private["asset_path"]).read_bytes(), self._analysis_for(private, asset)
+            if self.config.raster_digitizing:
+                result, stitching = self._vectorize_for_stitching(image, asset, analysis, previous, event)
+            else:
+                result = vectorize(
+                    image, asset.media_type, asset, analysis, previous.settings_snapshot,
+                    job_id=previous.job_id, revision_id=previous.revision_id, cancel=event,
+                )
         except VectorizeFailure as failure:
             self._vectorize_failure(previous, private, failure.issue)
             return
@@ -319,7 +386,8 @@ class JobRunner:
         files = {name: job_dir / filename for name, filename in VECTORIZATION_FILES.items()}
         files["document"].write_text(result.document.model_dump_json(indent=2), encoding="utf-8")
         files["svg"].write_bytes(result.editable_svg)
-        files["evidence"].write_text(json.dumps(result.evidence, ensure_ascii=False, sort_keys=True, indent=2), encoding="utf-8")
+        evidence = {**result.evidence, **({"stitching": stitching} if stitching else {})}
+        files["evidence"].write_text(json.dumps(evidence, ensure_ascii=False, sort_keys=True, indent=2), encoding="utf-8")
         private["vectorization"] = {name: str(path) for name, path in files.items()}
         manifest = self._vectorization_manifest(previous, asset, files)
         private["artifact_paths"] = {artifact.artifact_id: str(files["svg"]) for artifact in manifest.artifacts}
@@ -328,6 +396,9 @@ class JobRunner:
         if any(issue.severity == Severity.BLOCKING_ERROR for issue in issues):
             self._save_transition(previous, JobStatus.FAILED, private, {"vectorizing": ("failed", result.duration_ms, None)},
                                   {"issues": [issue.model_dump(mode="json") for issue in issues]})
+            return
+        if self.config.raster_digitizing:
+            self._digitize_vectorized(previous, private, event, result, done, asset)
             return
         if not any(issue.severity == Severity.REVIEW_REQUIRED and (issue.object_ids or issue.region_ids) for issue in issues):
             self._save_failed(previous, private, IssueCode.WORKER_EXPORT_FAILED, VECTORIZATION_REVIEW_UNLOCALIZED, stage="vectorizing")
@@ -338,6 +409,35 @@ class JobRunner:
             {"issues": [issue.model_dump(mode="json") for issue in issues],
              "artifact_manifest": manifest.model_dump(mode="json")},
         )
+
+    def _vectorize_for_stitching(self, image, asset, analysis, previous, event):
+        """E1 para un bordado: el destino es el tamaño del bordado y el límite de colores es de hilos.
+
+        La compensación de tracción engorda cada relleno `REFERENCE_PULL_COMPENSATION_MM` por lado, así que se vectoriza
+        dentro de un destino más chico para que lo bordado entre en el pedido. Una capa casi blanca (el resplandor del
+        fondo) no gasta un hilo: si E1 la produjo, se repite con una capa más.
+        """
+        settings = previous.settings_snapshot
+        inset = 2 * REFERENCE_PULL_COMPENSATION_MM
+        target = settings.target
+        if min(target.width_mm, target.height_mm) > 2 * inset:
+            target = target.model_copy(update={"width_mm": target.width_mm - inset, "height_mm": target.height_mm - inset})
+
+        def run(limit):
+            adjusted = settings.model_copy(update={"target": target, "color_limit": limit})
+            return vectorize(image, asset.media_type, asset, analysis, adjusted,
+                             job_id=previous.job_id, revision_id=previous.revision_id, cancel=event)
+
+        result, limit = run(settings.color_limit), settings.color_limit
+        background = sum(1 for item in stitchable.plan(result.document) if item.omitted == stitchable.OMITTED_NEAR_WHITE)
+        if background and settings.color_limit + background <= MAX_COLOR_LIMIT:
+            limit = settings.color_limit + background
+            result = run(limit)
+        return result, {
+            "target_requested_mm": [settings.target.width_mm, settings.target.height_mm],
+            "target_vectorized_mm": [target.width_mm, target.height_mm], "pull_compensation_inset_mm": inset,
+            "colour_limit_requested": settings.color_limit, "colour_limit_used": limit,
+        }
 
     def _vectorization_manifest(self, previous, asset, files):
         """Manifiesto sin JEF: solo el SVG editable generado por E1. Sin relectura no hay `reread_metrics`."""
@@ -382,13 +482,36 @@ class JobRunner:
                 {"issues": [unlocalized.model_dump(mode="json")]},
             )
 
-    def _command(self, asset_path, job_dir):
+    def _digitize_vectorized(self, previous, private, event, result, done, asset):
+        """JEF desde la geometría de E1 con los parámetros de referencia, que no están calibrados.
+
+        El trabajo termina en needs_review con el JEF, el SVG de Ink/Stitch y los avisos: `ready_for_sewout` exige
+        comprobaciones geométricas que todavía no existen y la aprobación física es de la persona que cose.
+        """
+        previous = self._save_transition(previous, JobStatus.DIGITIZING, private, {**done, "digitizing": ("running", None, None)})
+        try:
+            svg = to_reference_inkstitch_svg(result)
+        except VectorizeFailure as failure:
+            self._save_transition(
+                previous, JobStatus.NEEDS_REVIEW, private,
+                {"digitizing": ("skipped", None, NOTHING_STITCHABLE), "validating": ("skipped", None, NOTHING_STITCHABLE)},
+                {"issues": [failure.issue.model_dump(mode="json")]},
+            )
+            return
+        job_dir = Path(private["job_dir"])
+        svg_path = job_dir / REFERENCE_SVG_FILENAME
+        svg_path.write_bytes(svg)
+        stem = Path(asset.original_filename).stem or DEFAULT_JEF_STEM
+        self._run_worker(previous, private, event, svg_path, job_dir / DIGITIZING_DIRECTORY, reference_issues(result),
+                         self.config.digitizing_timeout_s, {"jef": f"{stem}.jef"}, asset.sha256)
+
+    def _command(self, asset_path, job_dir, timeout_s, hoop_code):
         command = [
             str(self.config.python_executable), str(self.config.worker_script),
             "--svg", str(asset_path), "--job-dir", str(job_dir),
             "--inkstitch", str(self.config.inkstitch_executable),
             "--engine-version", self.config.engine_version,
-            "--timeout", str(self.config.timeout_s),
+            "--timeout", str(timeout_s), "--jef-hoop-code", str(hoop_code),
         ]
         if self.config.inkscape_executable is not None:
             command += ["--inkscape", str(self.config.inkscape_executable)]
@@ -434,17 +557,52 @@ class JobRunner:
         return make_issue(issue_code, description, {"reason": reason or "worker_failure"})
 
     def _save_transition(self, previous, status, private, updates, extra=None):
-        data = previous.model_dump(mode="json")
+        """Relee, valida y escribe en una sola transacción: una cancelación aceptada (202) no se pierde.
+
+        `previous` solo identifica el job; el estado vigente se lee dentro de la transacción, la misma que usa
+        `POST /cancel`. Si ya hay `cancellation_requested` y el resultado no es la cancelación misma, ese resultado se
+        descarta (sin manifiesto, informe ni incidencias) y el job queda `cancelled`; después se lanza `JobSuperseded`
+        para que quien llamó no siga con trabajo que ya no vale.
+        """
+        outcome = {}
+
+        def change(stored, stored_private):
+            current = JobResponse.model_validate(stored)
+            if current.status in FINAL_STATES:
+                raise JobSuperseded(current.status)
+            cancelling = current.cancellation_requested and status != JobStatus.CANCELLED
+            if cancelling:
+                following = self._next(current, JobStatus.CANCELLED, self._cancelled_stage(current), {"cancellation_requested": True})
+                kept_private = stored_private
+            else:
+                following = self._next(current, status, updates, extra)
+                kept_private = private
+            outcome["following"], outcome["cancelled_instead"] = following, cancelling
+            return following.model_dump(mode="json"), kept_private
+
+        self.store.mutate("job", previous.job_id, change)
+        if outcome["cancelled_instead"]:
+            raise JobSuperseded(JobStatus.CANCELLED)
+        return outcome["following"]
+
+    def _next(self, current, status, updates, extra):
+        data = current.model_dump(mode="json")
         for name in ("failure", "review", "diagnostics", "sewout_status"):
             data.pop(name, None)
         data["status"] = status.value
-        data["stages"] = [record.model_dump(mode="json") for record in self._stages(previous, updates)]
+        data["stages"] = [record.model_dump(mode="json") for record in self._stages(current, updates)]
         if extra:
             data.update(extra)
         following = JobResponse.model_validate(data)
-        validate_transition(previous, following)
-        self.store.update("job", previous.job_id, following.model_dump(mode="json"), private)
+        validate_transition(current, following)
         return following
+
+    @staticmethod
+    def _cancelled_stage(current):
+        """La etapa que estaba corriendo (o, si nada corría, la primera pendiente) queda cancelada."""
+        stage = next((r.stage for r in current.stages if r.outcome == "running"), None) \
+            or next((r.stage for r in current.stages if r.outcome == "pending"), None)
+        return {stage: ("cancelled", None, None)} if stage else {}
 
     @staticmethod
     def _stages(previous, updates):

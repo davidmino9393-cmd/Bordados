@@ -37,7 +37,7 @@ function initialValues(catalog: ProfileCatalog): SettingsFormValues {
     fabric_profile: catalog.fabrics[0].profile_id,
     thread_profile: catalog.thread_profiles[0].profile_id,
     color_limit: DEFAULT_COLORS,
-    ai_provider: catalog.providers.find((p) => p.available)?.provider_id ?? AiProvider.OpenAI,
+    ai_provider: catalog.providers.find((p) => p.available)?.provider_id ?? AiProvider.None,
   };
 }
 
@@ -50,7 +50,6 @@ export function SettingsForm({ catalog, asset, busy, onSubmit }: SettingsFormPro
   const preparedSvg = asset?.media_type === MediaType.Svg;
   const isImage = !!asset && !preparedSvg;
   const noProviderAvailable = !catalog.providers.some((p) => p.available);
-  const blockedByProvider = isImage && noProviderAvailable;
   const set = <K extends keyof SettingsFormValues>(key: K, value: SettingsFormValues[K]) =>
     setValues((v) => ({ ...v, [key]: value }));
 
@@ -72,8 +71,7 @@ export function SettingsForm({ catalog, asset, busy, onSubmit }: SettingsFormPro
     const found = validateSettings(values, machine);
     setErrors(found);
     if (Object.keys(found).length === 0 && asset) {
-      const provider = preparedSvg ? AiProvider.None : values.ai_provider;
-      onSubmit(toJobSettings({ ...values, ai_provider: provider }, catalog));
+      onSubmit(toJobSettings({ ...values, ai_provider: preparedSvg ? AiProvider.None : values.ai_provider }, catalog));
     }
   };
 
@@ -136,10 +134,10 @@ export function SettingsForm({ catalog, asset, busy, onSubmit }: SettingsFormPro
               <p>{text.experimentalText}</p>
             </Notice>
           )}
-          {blockedByProvider && <Notice tone={NoticeTone.Error}>{text.noProviders}</Notice>}
+          {isImage && noProviderAvailable && <Notice tone={NoticeTone.Info}>{text.noProviders}</Notice>}
           {!asset && <p className="field__hint">{text.needAsset}</p>}
           <div className="row">
-            <button type="submit" disabled={busy || !asset || blockedByProvider}>{busy ? text.submitting : text.submit}</button>
+            <button type="submit" disabled={busy || !asset}>{busy ? text.submitting : text.submit}</button>
           </div>
         </form>
       </Card.Body>

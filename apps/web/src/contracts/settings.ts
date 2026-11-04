@@ -3,7 +3,7 @@
 export const FitMode = { Contain: 'contain' } as const;
 export type FitMode = (typeof FitMode)[keyof typeof FitMode];
 
-/** "none" solo es válido para un SVG ya preparado (jobs.py: JobCreate). */
+/** "none": un SVG ya preparado, o una imagen que la persona elige procesar sin análisis de IA. */
 export const AiProvider = { None: 'none', OpenAI: 'openai', Ollama: 'ollama' } as const;
 export type AiProvider = (typeof AiProvider)[keyof typeof AiProvider];
 

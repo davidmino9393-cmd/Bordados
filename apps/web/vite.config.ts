@@ -9,7 +9,16 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       // En desarrollo, /api puede reenviarse al backend sin exponer su origen al navegador.
-      proxy: env.API_PROXY_TARGET ? { '/api': env.API_PROXY_TARGET } : undefined,
+      // `API_PROXY_AUTHORIZATION` (lo pone scripts/iniciar-web.ps1) agrega las credenciales al reenviar: el navegador
+      // no las pide ni las guarda, así que la clave no sale del proceso del servidor de desarrollo.
+      proxy: env.API_PROXY_TARGET
+        ? {
+            '/api': {
+              target: env.API_PROXY_TARGET,
+              headers: env.API_PROXY_AUTHORIZATION ? { Authorization: env.API_PROXY_AUTHORIZATION } : undefined,
+            },
+          }
+        : undefined,
     },
     test: {
       environment: 'jsdom',

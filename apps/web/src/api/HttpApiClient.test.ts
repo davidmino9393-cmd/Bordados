@@ -88,6 +88,18 @@ describe('createHttpApiClient (contratos-v0.1)', () => {
     expect(error.message).toBe('No tenés permiso para ver o modificar esto.');
   });
 
+  it('un INVALID_REQUEST muestra el motivo concreto del servidor', async () => {
+    const problem = {
+      schema_version: '0.1', type: 'urn:embroidery:problem:invalid-request', title: 'Invalid', status: 422,
+      detail: 'No se puede cambiar el tamaño de este SVG: el SVG no declara viewBox.',
+      instance: '/api/v1/projects/p/revisions', code: ErrorCode.InvalidRequest, request_id: 'req_10', errors: [],
+    };
+    const api = clientWith((async () => json(problem, 422, 'application/problem+json')) as unknown as typeof fetch);
+    const error = (await api.createDerivedRevision('p', {} as never, 'k').catch((e: unknown) => e)) as ApiError;
+    expect(error).toMatchObject({ code: ErrorCode.InvalidRequest, detail: problem.detail });
+    expect(error.message).toBe(problem.detail);
+  });
+
   it('un 501 se informa como operación no ofrecida todavía', async () => {
     const api = clientWith((async () => new Response('', { status: 501 })) as unknown as typeof fetch);
     const error = (await api.createJob('p', {} as never, 'k').catch((e: unknown) => e)) as ApiError;

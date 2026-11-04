@@ -25,6 +25,7 @@ def main():
     parser.add_argument("--inkscape", type=Path)
     parser.add_argument("--engine-version", required=True)
     parser.add_argument("--timeout", type=float, default=180)
+    parser.add_argument("--jef-hoop-code", type=int)
     args = parser.parse_args()
 
     job_dir = args.job_dir.resolve()

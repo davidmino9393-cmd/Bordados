@@ -115,11 +115,11 @@ describe('recorrido principal (cliente SIMULADO)', () => {
     expect(screen.queryByRole('link', { name: /Descargar/ })).not.toBeInTheDocument();
   });
 
-  it('pide revisión localizada y regenera con una corrección', async () => {
+  it('pide revisión localizada y regenera con una corrección (SVG preparado: una imagen no admite correcciones)', async () => {
     const user = setupUser();
     const { client, calls } = instrument();
     renderApp(client);
-    await generateFrom(user, pngFile('logo-revision.png'));
+    await generateFrom(user, svgFile('logo-revision.svg'));
     await advance(FULL_RUN_MS);
 
     expect(await screen.findByText('Hay un elemento que necesita revisión')).toBeInTheDocument();
@@ -159,6 +159,29 @@ describe('recorrido principal (cliente SIMULADO)', () => {
     await user.click(await screen.findByRole('link', { name: /Prueba/ }));
     expect(await screen.findByText(/Derivado de otro trabajo/)).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: 'Abrir' })).toHaveLength(2);
+  });
+
+  it('un trabajo en revisión con archivos también ofrece la variante de tamaño y avisa si no entra en el bastidor', async () => {
+    const user = setupUser();
+    const { client, calls } = instrument();
+    renderApp(client);
+    await generateFrom(user, svgFile('logo-completo.svg'));
+    await advance(FULL_RUN_MS);
+    await screen.findByText('Hay un elemento que necesita revisión');
+    await screen.findByText('Variante de tamaño'); // el servidor real nunca llega a «listo para prueba»: la variante se pide desde acá
+
+    const width = screen.getByLabelText('Ancho máximo (mm)');
+    await user.clear(width);
+    await user.type(width, '250');
+    expect(screen.getByText(/mayor que el bastidor \(200 × 200 mm\)/)).toBeInTheDocument();
+    await user.clear(width);
+    await user.type(width, '90');
+    expect(screen.queryByText(/mayor que el bastidor/)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Generar variante' }));
+    await screen.findByRole('heading', { name: 'Generación del bordado' });
+    const request = calls.find((c) => c.method === 'createDerivedRevision')!.args[1];
+    expect(request).toMatchObject({ kind: 'size_variant', target: { width_mm: 90 } });
   });
 
   it('renueva los enlaces antes de que venzan (TTL de 300 s) sin conservarlos más allá de expires_at', async () => {
@@ -755,7 +778,7 @@ describe('H2: imágenes y análisis visual (SIMULADO, operaciones propuestas)', 
     expect(screen.queryByRole('radio', { name: /OpenAI/ })).not.toBeInTheDocument();
   });
 
-  it('sin proveedores de IA disponibles no deja generar una imagen, pero sí un SVG preparado', async () => {
+  it('sin proveedores de IA una imagen se genera igual, sin análisis, y el SVG preparado también', async () => {
     const user = setupUser();
     const base = createMockApiClient();
     renderApp({ ...base, async getProfiles() { return { ...(await base.getProfiles()), providers: [] }; } });
@@ -764,11 +787,33 @@ describe('H2: imágenes y análisis visual (SIMULADO, operaciones propuestas)', 
     await user.upload(input, pngFile('logo.png'));
     await screen.findByText(/logo\.png · /);
     expect(screen.getByText(/no tiene proveedores de IA disponibles/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Generar bordado' })).toBeDisabled();
+    expect(screen.getByRole('radio', { name: 'Sin análisis de IA' })).toBeChecked();
+    expect(screen.queryByRole('radio', { name: /OpenAI/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Generar bordado' })).toBeEnabled();
 
     await user.upload(input, svgFile('preparado.svg'));
     await screen.findByText(/preparado\.svg · /);
     expect(screen.getByRole('button', { name: 'Generar bordado' })).toBeEnabled();
+  });
+
+  it('una imagen sin análisis de IA omite la etapa con motivo, no pausa por análisis y llega a "listo para prueba"', async () => {
+    const { client, calls } = instrument();
+    const user = setupUser();
+    renderApp(client);
+    const input = await openProject(user);
+
+    await user.upload(input, pngFile('logo-analisis.png'));
+    await screen.findByText(/logo-analisis\.png · /);
+    await user.click(screen.getByRole('radio', { name: 'Sin análisis de IA' }));
+    await user.click(screen.getByRole('button', { name: 'Generar bordado' }));
+    await advance(FULL_RUN_MS);
+
+    const created = calls.find((c) => c.method === 'createJob')!;
+    expect((created.args[1] as { settings: { ai_provider: string } }).settings.ai_provider).toBe('none');
+    expect(screen.queryByText(ANALYSIS_TITLE)).not.toBeInTheDocument(); // el nombre pediría análisis; sin IA no hay pausa
+    expect(calls.some((c) => c.method === 'decideAnalysis')).toBe(false);
+    expect(screen.getByText('Omitida')).toBeInTheDocument();
+    expect((await screen.findAllByText(READY)).length).toBeGreaterThan(0);
   });
 
   it('muestra regiones, texto, colores y dudas del análisis, con la zona incierta señalada', async () => {

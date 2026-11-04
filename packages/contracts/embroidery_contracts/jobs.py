@@ -41,13 +41,8 @@ class JobCreate(Versioned):
     asset_id: Identifier
     revision_id: Identifier
     input_kind: Literal["prepared_svg", "raster_image"]
+    # `ai_provider: none` en una imagen es una elección explícita: se vectoriza sin análisis de IA (etapa `analyzing` omitida).
     settings: JobSettings
-
-    @model_validator(mode="after")
-    def image_requires_provider(self):
-        if self.input_kind == "raster_image" and self.settings.ai_provider == "none":
-            raise ValueError("Raster analysis requires an explicitly selected provider")
-        return self
 
 
 class JobResponse(Versioned):
