@@ -205,7 +205,7 @@ class AnalysisFlowTests(AnalysisApiTests):
         self.assertEqual((issue["severity"], issue["stage"]), ("review_required", "routing"))
         self.assertTrue(issue["object_ids"])
         self.assertIs(issue["evidence"]["parameters_calibrated"], False)
-        self.assertEqual(issue["evidence"]["parameter_source"], "anime_socks_gabardina_400ppm")
+        self.assertEqual(issue["evidence"]["parameter_source"], "gabardina_400ppm_referencia")
         self.assertIn("referencia", issue["description"])
         self.assertNotEqual(done["status"], "ready_for_sewout")
         status, manifest = self.call("GET", f"/api/v1/jobs/{job['job_id']}/artifacts")
