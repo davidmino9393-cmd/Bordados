@@ -20,9 +20,12 @@ sys.path.insert(0, str(ROOT / "workers" / "embroidery"))
 
 import uvicorn
 
+import embroidery_api.app as api_app
+import embroidery_api.runner as api_runner
 from embroidery_api.app import create_app
 from embroidery_api.config import ApiConfig
 from embroidery_api.runner import JobRunner
+from embroidery_api.svg_fit import fit_to_target
 
 
 TOKEN = "test-token"
@@ -121,7 +124,7 @@ class ApiTests(unittest.TestCase):
             }, raw=body,
         )
 
-    def setup_project(self, content):
+    def setup_project(self, content, settings=SETTINGS):
         status, _, project = self.post("/api/v1/projects", {"name": "Integration"})
         self.assertEqual(status, 201, project)
         project_id = project["project_id"]
@@ -129,16 +132,16 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(status, 201, asset)
         revision = {
             "schema_version": "0.1", "base_revision_id": None, "reason": "initial",
-            "settings": SETTINGS, "document": None,
+            "settings": settings, "document": None,
         }
         status, _, revision = self.post(f"/api/v1/projects/{project_id}/revisions", revision)
         self.assertEqual(status, 201, revision)
         return project_id, asset["asset_id"], revision["revision_id"]
 
-    def create_job(self, project_id, asset_id, revision_id):
+    def create_job(self, project_id, asset_id, revision_id, settings=SETTINGS):
         body = {
             "schema_version": "0.1", "asset_id": asset_id,
-            "revision_id": revision_id, "input_kind": "prepared_svg", "settings": SETTINGS,
+            "revision_id": revision_id, "input_kind": "prepared_svg", "settings": settings,
         }
         started = time.perf_counter()
         status, _, job = self.post(f"/api/v1/projects/{project_id}/jobs", body)
@@ -377,6 +380,80 @@ class ApiTests(unittest.TestCase):
                 self.assertIn(reason, problem["detail"])
                 _, _, revisions = self.json_request("GET", f"/api/v1/projects/{project_id}/revisions")
                 self.assertEqual(sum(1 for item in revisions["items"] if item["kind"] == "size_variant"), 0)
+
+    def with_target(self, width, height):
+        return {**SETTINGS, "target": {"width_mm": width, "height_mm": height, "fit": "contain"}}
+
+    def test_a_prepared_svg_job_is_digitized_at_its_declared_size_and_the_target_is_only_a_limit(self):
+        """B2: el job base no escala el SVG preparado aunque el destino difiera; solo una variante cambia el tamaño."""
+        cases = (
+            ("destino mayor que la hoja", svg(), self.with_target(160.0, 160.0)),
+            ("destino igual a la hoja", svg(root='width="160mm" height="160mm" viewBox="0 0 160 160"'), self.with_target(160.0, 160.0)),
+        )
+        for label, original, settings in cases:
+            with self.subTest(label):
+                project_id, asset_id, revision_id = self.setup_project(original, settings)
+                status, job, _ = self.create_job(project_id, asset_id, revision_id, settings)
+                self.assertEqual(status, 202, job)
+                self.assertEqual(job["settings_snapshot"]["target"], settings["target"])  # el destino pedido queda registrado tal cual
+                self.wait_job(project_id, job["job_id"], {"needs_review"})
+                self.assertEqual(self.job_input(job["job_id"]), original)  # el worker recibió el SVG sin tocar
+                _, _, manifest = self.artifacts(job["job_id"])
+                digest = hashlib.sha256(original).hexdigest()
+                self.assertEqual((manifest["input_sha256"], manifest["geometry_sha256"]), (digest, digest))
+
+    def test_a_prepared_svg_larger_than_the_target_still_fails_with_the_dimensions_issue(self):
+        """El destino sigue siendo un límite: lo que no entra se rechaza con motivo, no se achica en silencio."""
+        settings = self.with_target(100.0, 100.0)  # el worker de prueba entrega un JEF de 150 × 142,8 mm
+        project_id, asset_id, revision_id = self.setup_project(svg(), settings)
+        _, job, _ = self.create_job(project_id, asset_id, revision_id, settings)
+        failed = self.wait_job(project_id, job["job_id"], {"failed"})
+        self.assertIn("DIMENSIONS_EXCEEDED", [issue["code"] for issue in failed["issues"]])
+        self.assertEqual(self.job_input(job["job_id"]), svg())
+
+    def test_a_variant_of_a_variant_is_fitted_from_the_original_asset_not_from_the_parents_fitted_svg(self):
+        """B3: la cadena base -> A -> B parte siempre del asset que subió la persona."""
+        original = svg()
+        digest = hashlib.sha256(original).hexdigest()
+        project_id, asset_id, revision_id = self.setup_project(original)
+        _, base, _ = self.create_job(project_id, asset_id, revision_id)
+        self.wait_job(project_id, base["job_id"], {"needs_review"})
+        with patch.object(api_runner, "fit_to_target", wraps=fit_to_target) as fitted:
+            _, _, first = self.variant(project_id, base["job_id"], 200.0, 170.0)
+            self.wait_job(project_id, first["job_id"], {"needs_review"})
+            status, _, second = self.variant(project_id, first["job_id"], 160.0, 160.0)  # el padre es la variante A
+            self.assertEqual(status, 202, second)
+            self.wait_job(project_id, second["job_id"], {"needs_review"})
+        self.assertEqual([call.args[0] for call in fitted.call_args_list], [original, original])  # ninguna parte del SVG ajustado
+        self.assertEqual((second["parent_job_id"], second["asset_id"]), (first["job_id"], base["asset_id"]))
+        self.assertEqual(second["settings_snapshot"]["target"], {"width_mm": 160.0, "height_mm": 160.0, "fit": "contain"})
+        first_input, second_input = self.job_input(first["job_id"]), self.job_input(second["job_id"])
+        self.assertEqual(second_input, fit_to_target(original, 160.0, 160.0)[0])  # igual que ajustar el original de una vez
+        self.assertIn(b'width="160mm" height="160mm"', second_input)
+        self.assertIn(b'width="170mm" height="170mm"', first_input)
+        for job, fitted_input in ((first, first_input), (second, second_input)):
+            _, _, manifest = self.artifacts(job["job_id"])
+            self.assertEqual(manifest["input_sha256"], digest)  # lo que subió la persona, también en la cadena
+            self.assertEqual(manifest["geometry_sha256"], hashlib.sha256(fitted_input).hexdigest())
+        self.assertEqual(self.job_input(base["job_id"]), original)  # y el origen sigue igual
+
+    def test_repeating_a_prepared_svg_variant_request_returns_the_same_body_and_does_not_fit_again(self):
+        """B3: el replay con la misma clave no crea otra revisión ni vuelve a leer y ajustar el SVG."""
+        project_id, asset_id, revision_id = self.setup_project(svg())
+        _, base, _ = self.create_job(project_id, asset_id, revision_id)
+        self.wait_job(project_id, base["job_id"], {"needs_review"})
+        with patch.object(api_app, "fit_to_target", wraps=fit_to_target) as on_request, \
+                patch.object(api_runner, "fit_to_target", wraps=fit_to_target) as on_worker:
+            status, _, first = self.variant(project_id, base["job_id"], 200.0, 170.0, key="misma-clave-svg")
+            self.assertEqual(status, 202, first)
+            self.wait_job(project_id, first["job_id"], {"needs_review"})
+            self.assertEqual((on_request.call_count, on_worker.call_count), (1, 1))
+            status, _, again = self.variant(project_id, base["job_id"], 200.0, 170.0, key="misma-clave-svg")
+            self.assertEqual((status, again), (202, first))  # el mismo cuerpo, no solo el mismo job
+            self.assertEqual((on_request.call_count, on_worker.call_count), (1, 1))  # no se leyó ni se ajustó de nuevo
+        _, _, revisions = self.json_request("GET", f"/api/v1/projects/{project_id}/revisions")
+        self.assertEqual(sum(1 for item in revisions["items"] if item["kind"] == "size_variant"), 1)
+        self.assertEqual(self.job_input(first["job_id"]), fit_to_target(svg(), 200.0, 170.0)[0])  # el job guardado no se tocó
 
     def test_job_creation_does_not_wait_for_worker(self):
         project_id, asset_id, revision_id = self.setup_project(svg("FAKE_SLEEP"))

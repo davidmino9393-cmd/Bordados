@@ -10,6 +10,7 @@ import { advance, generateFrom, instrument, pngFile, renderApp, setupUser, svgFi
 const FULL_RUN_MS = 8000;
 const TTL_MS = 300_000;
 const READY = 'Listo para prueba (digital)';
+const PREPARED_SVG_SIZE_NOTE = /se borda al tamaño con el que se preparó/;
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -769,10 +770,12 @@ describe('H2: imágenes y análisis visual (SIMULADO, operaciones propuestas)', 
     expect(screen.getByRole('radio', { name: /OpenAI/ })).toBeEnabled();
     expect(screen.getByRole('radio', { name: /Ollama/ })).toBeEnabled();
     expect(screen.getByAltText('Imagen original: logo.png')).toBeInTheDocument(); // vista previa de la imagen subida
+    expect(screen.queryByText(PREPARED_SVG_SIZE_NOTE)).not.toBeInTheDocument(); // una imagen sí se ajusta al cuadro
 
     await user.upload(input, svgFile('preparado.svg'));
     await screen.findByText(/preparado\.svg · /);
     expect(screen.getByText('SVG preparado')).toBeInTheDocument();
+    expect(screen.getByText(PREPARED_SVG_SIZE_NOTE)).toBeInTheDocument(); // el destino de un SVG es un límite, no una escala
     expect(screen.getByText('Va directo a la generación del bordado.')).toBeInTheDocument();
     expect(screen.queryByText('Función experimental')).not.toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: /OpenAI/ })).not.toBeInTheDocument();

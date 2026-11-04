@@ -369,6 +369,7 @@ def create_app(config: ApiConfig, analysis_providers=None):
         Una imagen con proveedor de IA vuelve a analizarse (la variante es un trabajo nuevo, no una continuación aprobada).
         Un SVG preparado toma el tamaño del destino antes de digitalizar (la hoja entra en el cuadro sin deformarse); si su
         tamaño no se puede cambiar se rechaza acá, con el motivo, en vez de crear un job que exporte el tamaño original.
+        Una variante de una variante parte siempre del asset original, nunca del SVG ya ajustado del padre.
         """
         parent = owned("job", request.parent_job_id, project_id)
         original = JobResponse.model_validate(parent["body"])
@@ -380,15 +381,16 @@ def create_app(config: ApiConfig, analysis_providers=None):
         extra = None
         if original.input_kind == "prepared_svg":
             stages = initial_stages()
-            try:
-                fit_to_target(Path(asset["private"]["path"]).read_bytes(), request.target.width_mm, request.target.height_mm)
-            except ValueError as error:
-                raise ApiProblem("INVALID_REQUEST", f"No se puede cambiar el tamaño de este SVG: {error}")
             extra = {FIT_SVG_TO_TARGET: True}
         else:
             stages = unanalyzed_raster_stages() if settings.ai_provider == "none" else raster_stages()
 
         def build():
+            if extra:  # recién acá: repetir la misma clave devuelve lo guardado y no vuelve a leer ni a ajustar el SVG
+                try:
+                    fit_to_target(Path(asset["private"]["path"]).read_bytes(), request.target.width_mm, request.target.height_mm)
+                except ValueError as error:
+                    raise ApiProblem("INVALID_REQUEST", f"No se puede cambiar el tamaño de este SVG: {error}")
             revision_id = _new_id("rev")
             body, private = new_job(project_id, revision_id, asset, settings, original.input_kind, stages, original.job_id, extra)
             revision = RevisionResponse(
@@ -477,6 +479,8 @@ def create_app(config: ApiConfig, analysis_providers=None):
         if payload.input_kind == "prepared_svg":
             if media_type != "image/svg+xml":
                 raise ApiProblem("INVALID_REQUEST", "La entrada prepared_svg requiere un asset SVG.")
+            # El destino de un SVG preparado es un límite (DIMENSIONS_EXCEEDED), no una escala: se borda a su tamaño declarado.
+            # Solo una variante de tamaño lo cambia; la web lo avisa en el formulario.
             stages = initial_stages()
         else:
             if media_type not in ("image/png", "image/jpeg"):
