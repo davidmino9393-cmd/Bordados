@@ -19,6 +19,7 @@ from vectorize.inkstitch import REFERENCE_PULL_COMPENSATION_MM, reference_issues
 
 from .analysis import ProviderError, normalize, region_incoherent_issue
 from .errors import ApiProblem
+from .svg_fit import fit_to_target
 
 
 LOGGER = logging.getLogger(__name__)
@@ -44,6 +45,8 @@ MAX_COLOR_LIMIT = 256  # el tope de `JobSettings.color_limit` en el contrato
 DEFAULT_JEF_STEM = "bordado"  # si el original no tiene nombre; el JEF descargado se llama como la imagen de origen
 NOTHING_STITCHABLE = "No queda geometría que se pueda bordar"
 REFERENCE_SVG_FILENAME = "reference-inkstitch.svg"
+FIT_SVG_TO_TARGET = "fit_svg_to_target"  # dato privado del job: la variante de un SVG preparado toma el tamaño del destino
+FITTED_SVG_FILENAME = "fitted-input.svg"
 DIGITIZING_DIRECTORY = "digitizing"  # el worker exige una carpeta de trabajo nueva: la de E1 ya tiene archivos
 VECTORIZATION_METHOD = "e1_raster_mask_vectorization"
 VECTORIZATION_FILES = {"document": "vectorized-document.json", "svg": "vectorized-editable.svg", "evidence": "vectorized-evidence.json"}
@@ -180,7 +183,32 @@ class JobRunner:
             previous, JobStatus.DIGITIZING, private,
             {"digitizing": ("running", None, None)},
         )
-        self._run_worker(previous, private, event, Path(private["asset_path"]), Path(private["job_dir"]))
+        svg_path, input_sha256 = Path(private["asset_path"]), None
+        if private.get(FIT_SVG_TO_TARGET):
+            fitted = self._fitted_svg(previous, private)
+            if fitted is None:
+                return
+            svg_path, input_sha256 = fitted
+        self._run_worker(previous, private, event, svg_path, Path(private["job_dir"]), input_sha256=input_sha256)
+
+    def _fitted_svg(self, previous, private):
+        """El SVG de una variante con el tamaño del destino, antes de digitalizar. Devuelve (ruta, sha256 del original).
+
+        El original sigue siendo la entrada de la que se informa la procedencia; el ajustado es la geometría que ve el motor.
+        Devuelve None si el original ya no se puede ajustar (el job quedó `failed`).
+        """
+        original = Path(private["asset_path"]).read_bytes()
+        target = previous.settings_snapshot.target
+        try:
+            fitted, _ = fit_to_target(original, target.width_mm, target.height_mm)
+        except ValueError as error:
+            LOGGER.warning("Job %s: el SVG no se puede ajustar al destino: %s", previous.job_id, error)
+            self._save_failed(previous, private, IssueCode.INPUT_UNREADABLE, "svg_size_not_adjustable")
+            return None
+        path = Path(private["run_dir"]) / FITTED_SVG_FILENAME
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(fitted)
+        return path, hashlib.sha256(original).hexdigest()
 
     def _worker_finished(self, job_id):
         """El subproceso ya terminó y falta mapear y guardar su resultado. No hace nada: es el punto donde las pruebas

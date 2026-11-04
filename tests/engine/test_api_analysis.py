@@ -441,6 +441,25 @@ class JefFromImageTests(AnalysisApiTests):
         omitted = [o for o in removed["evidence"]["stitchable"]["objects"].values() if o["omitted"]]
         self.assertEqual([o["omitted"] for o in omitted], ["near_white_layer_taken_as_background"])
 
+    def test_a_size_variant_of_an_image_regenerates_from_the_original_at_the_new_size_without_ai(self):
+        job, done = self.run_without_ai(png(shape=True))
+        status, variant = self.call("POST", f"/api/v1/projects/{done['project_id']}/revisions", {
+            "schema_version": "0.1", "kind": "size_variant", "parent_job_id": job["job_id"],
+            "target": {"width_mm": 160.0, "height_mm": 160.0, "fit": "contain"}})  # el worker falso devuelve 150 x 142,8 mm: no cabe en uno menor
+        self.assertEqual(status, 202, variant)
+        self.assertEqual((variant["input_kind"], variant["parent_job_id"], variant["asset_id"]), ("raster_image", job["job_id"], done["asset_id"]))
+        analyzing = next(r for r in variant["stages"] if r["stage"] == "analyzing")
+        self.assertEqual((analyzing["outcome"], analyzing["reason"]), ("skipped", "Sin análisis de IA: la persona eligió continuar sin él"))
+        final = self.wait(variant["job_id"])
+        self.assertEqual(final["status"], "needs_review")
+        self.assertEqual(self.stages(final), {"analyzing": "skipped", "vectorizing": "completed", "digitizing": "completed", "validating": "completed"})
+        self.assertEqual(final["settings_snapshot"]["target"], {"width_mm": 160.0, "height_mm": 160.0, "fit": "contain"})
+        self.assertTrue(self.artifact(variant, "jef"))
+        # Se vuelve a generar desde los píxeles: el SVG de la variante crece en la proporción de los destinos (149,6 -> 159,6).
+        extent = lambda item: self.x_extent(self.artifact(item, "inkstitch_svg").decode("utf-8").split("<path", 1)[1])  # noqa: E731
+        self.assertAlmostEqual(extent(variant) / extent(job), 159.6 / 149.6, delta=0.01)
+        self.assertEqual(self.call("GET", f"/api/v1/jobs/{job['job_id']}")[1]["status"], "needs_review")  # el origen no cambió
+
     def test_the_vectorized_size_leaves_room_for_the_pull_compensation(self):
         job, _ = self.run_without_ai(Image_bytes((80, 60), DARK_BLUE))
         extent = self.x_extent(self.artifact(job, "inkstitch_svg").decode("utf-8").split("<path", 1)[1])

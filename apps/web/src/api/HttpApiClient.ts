@@ -1,4 +1,5 @@
 import type { ProblemResponse } from '../contracts/http';
+import { ErrorCode } from '../contracts/http';
 import { es } from '../copy/es';
 import { newIdempotencyKey } from '../shared/utils/idempotency';
 import { ApiError, ClientErrorCode, type ApiClient } from './ApiClient';
@@ -44,8 +45,12 @@ async function toApiError(response: Response): Promise<ApiError> {
   if (isProblem) {
     try {
       const problem = (await response.json()) as ProblemResponse;
-      const message = es.errors.byCode[problem.code] ?? problem.detail;
-      return new ApiError(problem.code, message, response.status, problem.request_id);
+      // INVALID_REQUEST trae el motivo concreto (qué regla no se cumplió); el mensaje por código es
+      // sólo el respaldo, así que ahí manda el texto del servidor.
+      const message = problem.code === ErrorCode.InvalidRequest && problem.detail
+        ? problem.detail
+        : es.errors.byCode[problem.code] ?? problem.detail;
+      return new ApiError(problem.code, message, response.status, problem.request_id, problem.detail);
     } catch {
       // cae al error genérico
     }

@@ -34,6 +34,8 @@ export class ApiError extends Error {
     message: string,
     public readonly status?: number,
     public readonly requestId?: string,
+    /** Texto del servidor, cuando explica el motivo mejor que el mensaje por código. */
+    public readonly detail?: string,
   ) {
     super(message);
     this.name = 'ApiError';

@@ -75,6 +75,29 @@ test('imagen sin IA: Ink/Stitch real entrega un JEF descargable con medidas rele
     downloadRows: await page.locator('.list__item').allInnerTexts(),
     metrics: await page.locator('.metrics').allInnerTexts(),
   }, null, 2));
+
+  // Variante de tamaño: un trabajo nuevo que vuelve a generar desde la imagen (no escala el JEF) y deja el origen como estaba.
+  const measuredWidth = async () => {
+    const found = (await page.locator('.metrics').innerText()).match(/([\d.,]+) × ([\d.,]+) mm/);
+    return Number(found![1].replace('.', '').replace(',', '.'));
+  };
+  const originalWidth = await measuredWidth();
+  const originalUrl = page.url();
+  await expect(page.getByRole('heading', { name: 'Variante de tamaño' })).toBeVisible();
+  await page.getByLabel('Ancho máximo (mm)').fill('60');
+  await page.getByLabel('Alto máximo (mm)').fill('45');
+  await page.getByRole('button', { name: 'Generar variante' }).click();
+  await expect(page).not.toHaveURL(originalUrl);
+  await expect(page.getByRole('link', { name: 'Descargar archivo JEF' })).toBeVisible({ timeout: JEF_TIMEOUT_MS });
+  const variantWidth = await measuredWidth();
+  expect(variantWidth).toBeLessThan(originalWidth * 0.9); // 60 mm de destino frente a 80 mm: el bordado se regeneró más chico
+  const variantJef = await downloadJef(page, 'anillo-variante.jef', true);
+  expect(variantJef.bytes.length).toBeGreaterThan(JEF_MAGIC_BYTES_MIN);
+  expect(variantJef.bytes.equals(bytes)).toBe(false);
+  await page.goto(originalUrl);
+  await expect(page.getByRole('link', { name: 'Descargar archivo JEF' })).toBeVisible(); // el origen sigue con su JEF
+  expect(await measuredWidth()).toBe(originalWidth);
+  writeFileSync(`${OUT_DIR}/variante.json`, JSON.stringify({ originalWidth, variantWidth, variantBytes: variantJef.bytes.length }, null, 2));
 });
 
 // La referencia real del proyecto (1122 × 1402 px): la capa casi blanca se omite y quedan dos hilos.

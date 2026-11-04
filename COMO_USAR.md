@@ -24,6 +24,7 @@ La primera vez hace falta `cd apps\web` y `npm install`, y que existan Inkscape,
 | 4 | Dejar «Sin análisis de IA» (no hace falta OpenAI ni Ollama) |
 | 5 | «Generar bordado» y esperar: de unos segundos a unos minutos, según el diseño |
 | 6 | «Descargar archivo JEF»: se llama como la imagen. Copiarlo al pendrive de la máquina |
+| 7 | Para otro tamaño, más abajo está «Variante de tamaño»: genera un trabajo nuevo desde la imagen original y deja el anterior intacto (no achica el JEF). Con un SVG preparado, la hoja entra en el cuadro sin deformarse; si el SVG no tiene `viewBox` ni ancho y alto absolutos, la página lo rechaza y dice por qué |
 
 ## Qué esperar
 | Tema | Detalle |
