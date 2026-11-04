@@ -1,0 +1,9 @@
+{
+  "main_observed": "68d7ecdfef23f34e5becd9e5ccb0be9de65244bf",
+  "base_candidate": "e42645661d3c51c4ce3181c289e4871319d5e0c4",
+  "motor_tested": "96695e47b74c564fe1b7e4969e66bd4a6869a48f",
+  "tree": "8e57b556bcd2e198699283b80574329f90aa56ed",
+  "main_updated_by_codex": false,
+  "main_posterior_confirmed": false,
+  "provisional_until_main_hash_confirmed": true
+}
