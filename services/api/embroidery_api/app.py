@@ -31,7 +31,8 @@ from .config import ApiConfig
 from .downloads import ASSET_SCOPE, DownloadSigner
 from .errors import ApiProblem
 from .profiles import load_profiles, validate_settings
-from .runner import JobRunner, continuation_stages, initial_stages, raster_stages, unanalyzed_raster_stages
+from .runner import FIT_SVG_TO_TARGET, JobRunner, continuation_stages, initial_stages, raster_stages, unanalyzed_raster_stages
+from .svg_fit import fit_to_target
 from .store import Store
 
 
@@ -366,6 +367,8 @@ def create_app(config: ApiConfig, analysis_providers=None):
 
         Nunca se escala un archivo ya generado ni se toca el job de origen. Los ajustes son los del origen salvo el destino.
         Una imagen con proveedor de IA vuelve a analizarse (la variante es un trabajo nuevo, no una continuación aprobada).
+        Un SVG preparado toma el tamaño del destino antes de digitalizar (la hoja entra en el cuadro sin deformarse); si su
+        tamaño no se puede cambiar se rechaza acá, con el motivo, en vez de crear un job que exporte el tamaño original.
         """
         parent = owned("job", request.parent_job_id, project_id)
         original = JobResponse.model_validate(parent["body"])
@@ -374,14 +377,20 @@ def create_app(config: ApiConfig, analysis_providers=None):
         asset = owned("asset", original.asset_id, project_id)
         settings = original.settings_snapshot.model_copy(update={"target": request.target})
         validate_settings(settings, catalog)
+        extra = None
         if original.input_kind == "prepared_svg":
             stages = initial_stages()
+            try:
+                fit_to_target(Path(asset["private"]["path"]).read_bytes(), request.target.width_mm, request.target.height_mm)
+            except ValueError as error:
+                raise ApiProblem("INVALID_REQUEST", f"No se puede cambiar el tamaño de este SVG: {error}")
+            extra = {FIT_SVG_TO_TARGET: True}
         else:
             stages = unanalyzed_raster_stages() if settings.ai_provider == "none" else raster_stages()
 
         def build():
             revision_id = _new_id("rev")
-            body, private = new_job(project_id, revision_id, asset, settings, original.input_kind, stages, original.job_id)
+            body, private = new_job(project_id, revision_id, asset, settings, original.input_kind, stages, original.job_id, extra)
             revision = RevisionResponse(
                 revision_id=revision_id, project_id=project_id, base_revision_id=original.revision_id,
                 reason="size_variant", created_at=_now(), kind="size_variant",

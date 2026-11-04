@@ -1,4 +1,5 @@
 """HTTP integration checks for H0-04 using a deterministic worker fixture."""
+import hashlib
 import json
 from pathlib import Path
 import sys
@@ -29,10 +30,10 @@ SETTINGS = json.loads((ROOT / "packages" / "contracts" / "fixtures" / "generatio
 FAKE_WORKER = ROOT / "tests" / "engine" / "fixtures" / "fake_worker.py"
 
 
-def svg(marker="", path_id="shape_1"):
+def svg(marker="", path_id="shape_1", root='width="10mm" height="10mm" viewBox="0 0 10 10"'):
     comment = f"<!-- {marker} -->" if marker else ""
     return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="10mm" height="10mm">'
+        f'<svg xmlns="http://www.w3.org/2000/svg" {root}>'
         f'{comment}<path id="{path_id}" d="M 0 0 L 10 10"/></svg>'
     ).encode()
 
@@ -326,6 +327,56 @@ class ApiTests(unittest.TestCase):
         _, _, revisions = self.json_request("GET", f"/api/v1/projects/{project_id}/revisions")
         self.assertEqual(sum(1 for item in revisions["items"] if item["kind"] == "size_variant"), 1)
         self.wait_job(project_id, first["job_id"], {"needs_review"})
+
+    def job_input(self, job_id):
+        """El SVG que recibió el worker de ese job."""
+        return (Path(self.tmp.name) / "data" / "jobs" / job_id / "input.svg").read_bytes()
+
+    def test_a_size_variant_of_a_prepared_svg_reaches_the_worker_at_the_new_size_and_the_origin_keeps_its_bytes(self):
+        """V1: la variante de un SVG preparado cambia la geometría antes de digitalizar; no solo el destino."""
+        original = svg()
+        project_id, asset_id, revision_id = self.setup_project(original)
+        _, parent, _ = self.create_job(project_id, asset_id, revision_id)
+        self.wait_job(project_id, parent["job_id"], {"needs_review"})
+        parent_input = self.job_input(parent["job_id"])
+        self.assertEqual(parent_input, original)  # el original va tal cual
+        status, _, child = self.variant(project_id, parent["job_id"], 200.0, 170.0)  # la hoja es cuadrada: manda el alto
+        self.assertEqual(status, 202, child)
+        self.wait_job(project_id, child["job_id"], {"needs_review"})
+        fitted = self.job_input(child["job_id"])
+        self.assertIn(b'width="170mm" height="170mm" viewBox="0 0 10 10"', fitted)  # viewBox intacto: el motor escala por él
+        self.assertEqual(fitted.replace(b'width="170mm" height="170mm"', b'width="10mm" height="10mm"'), original)  # solo cambió la hoja
+        self.assertEqual(self.job_input(parent["job_id"]), parent_input)
+        _, _, manifest = self.artifacts(child["job_id"])
+        self.assertEqual(manifest["input_sha256"], hashlib.sha256(original).hexdigest())  # lo que subió la persona
+        self.assertEqual(manifest["geometry_sha256"], hashlib.sha256(fitted).hexdigest())  # lo que vio el motor
+        _, _, parent_manifest = self.artifacts(parent["job_id"])
+        self.assertEqual(parent_manifest["input_sha256"], parent_manifest["geometry_sha256"])
+
+    def test_a_size_variant_of_a_prepared_svg_can_also_be_smaller(self):
+        project_id, asset_id, revision_id = self.setup_project(svg(root='width="400mm" height="400mm" viewBox="0 0 400 400"'))
+        _, parent, _ = self.create_job(project_id, asset_id, revision_id)
+        self.wait_job(project_id, parent["job_id"], {"needs_review"})
+        _, _, child = self.variant(project_id, parent["job_id"], 160.0, 200.0)
+        self.wait_job(project_id, child["job_id"], {"needs_review"})
+        self.assertIn(b'width="160mm" height="160mm"', self.job_input(child["job_id"]))
+
+    def test_a_size_variant_is_refused_when_the_svg_cannot_change_size(self):
+        """Sin viewBox o sin tamaño absoluto el motor no escalaría el dibujo: se dice por qué, y no se crea nada."""
+        for root, reason in (
+            ('width="10mm" height="10mm"', "viewBox"),
+            ('width="100%" height="100%" viewBox="0 0 10 10"', "width"),
+            ('viewBox="0 0 10 10"', "width"),
+        ):
+            with self.subTest(root=root):
+                project_id, asset_id, revision_id = self.setup_project(svg(root=root))
+                _, parent, _ = self.create_job(project_id, asset_id, revision_id)
+                self.wait_job(project_id, parent["job_id"], {"needs_review"})
+                status, _, problem = self.variant(project_id, parent["job_id"])
+                self.assertEqual((status, problem["code"]), (422, "INVALID_REQUEST"))
+                self.assertIn(reason, problem["detail"])
+                _, _, revisions = self.json_request("GET", f"/api/v1/projects/{project_id}/revisions")
+                self.assertEqual(sum(1 for item in revisions["items"] if item["kind"] == "size_variant"), 0)
 
     def test_job_creation_does_not_wait_for_worker(self):
         project_id, asset_id, revision_id = self.setup_project(svg("FAKE_SLEEP"))
