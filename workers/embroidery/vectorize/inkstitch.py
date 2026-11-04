@@ -113,7 +113,7 @@ def to_inkstitch_svg(result: VectorizeResult, *, h3_document: EmbroideryDocument
 # Perfil de referencia: parámetros del bordado de Anime Socks que David confirmó que «salió muy bien» (gabardina,
 # estabilizador grueso, hilo de bordar, aguja de fábrica de la Janome MC 550E, 400 ppm). No es una calibración: vale
 # para esas condiciones y cada trabajo lo avisa (tests/calibration/h3/REFERENCIAS_JANOME_MC550E.md).
-REFERENCE_PROFILE_ID = "anime_socks_gabardina_400ppm"
+REFERENCE_PROFILE_ID = "gabardina_400ppm_referencia"
 REFERENCE_ADAPTER = "e1-reference-fill-v1"
 REFERENCE_ROW_SPACING_MM = 0.45  # entre los 0,40 mm de la referencia publicada y los 0,45-0,50 mm de los rellenos chicos de Anime Socks
 REFERENCE_MAX_STITCH_LENGTH_MM = 2.5

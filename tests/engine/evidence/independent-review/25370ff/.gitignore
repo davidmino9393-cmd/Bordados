@@ -1,0 +1,10 @@
+*
+!.gitignore
+!README.md
+!*.json
+!*.log
+!svg-real/
+svg-real/*
+!svg-real/*/
+svg-real/*/*
+!svg-real/*/result.json

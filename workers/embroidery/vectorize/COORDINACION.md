@@ -1,47 +1,42 @@
-# Coordinación E / API / F
+# Coordinación E / API / F / H3
 
-Propósito: trabajar en paralelo con responsabilidades separadas y entregas por commit.
+Propósito: trabajar en paralelo con responsabilidades separadas, resultados atribuibles y entregas por commit.
 
 Contenido: [Plan](#plan), [Canal](#canal), [Aceptación](#aceptación), [Referencias](#referencias).
 
 ## Plan
 
-| Trabajo | Responsable | Área / base |
+| Trabajo | Responsable | Área / estado |
 |---|---|---|
-| Conectar E, persistir revisión y mostrar avisos | Claude | API/web; motor `4a7fd6b` fijo |
-| Evaluación independiente F | Claude | `tests/h2_eval`; informar hash exacto de E |
-| Investigar y corregir paleta sin borrar geometría | Codex | E y pruebas `tests/engine` |
-| Traslados de commits y merges | David | Autorización expresa; Codex no fusiona |
+| E/adaptador, regresiones y revisión software | Codex | E v4 integrado; corrección de medición de ancho en este cierre |
+| API, web y evaluación independiente F | Claude | Evaluar hash exacto de cada entrega |
+| Documentación y preparación H3 | Claude | Muestra/protocolo existen; cosido pendiente de David |
+| Merges y pruebas físicas | David/integrador | Autorización expresa; Codex no fusiona |
 
-### Agents & Skills
+La base integrada `051d8ce` incluye las mejoras posteriores a `4a7fd6b` y los seis cambios de contrato ratificados. La investigación inicial de paleta es historial, no la tarea siguiente. Ver [estado actual](CONTINUAR.md).
 
-| Fase | Agente | Skills |
-|---|---|---|
-| Trazado compacto | Implementador Python delegado | `core` |
-| Regresiones y evidencia | Codex principal | `core` |
-| Revisión independiente | Revisor delegado | `core` |
-
-La complejidad quedó corregida en `0df2dfc`; `4a7fd6b` localiza regiones. `2fbb6ca` agrega investigación, sin cambiar E. Claude reportó F estructural 14/14 y color pendiente. Próximo: controles → candidato aislado → trazado/recursos → revisión → nuevo hash → F. Firma, modelos y estados no cambian.
+La revisión `2507edf` de Codex corrige medición sin cambiar geometría y verifica identidad de los exports históricos. No identifica por sí misma el JEF copiado/renombrado y cosido por David.
 
 ## Canal
 
-Buzón acordado: `C:/Users/david/AppData/Local/Temp/opencode/`.
+Buzón: `C:/Users/david/AppData/Local/Temp/opencode/`.
 
-- Codex escribe `CODEX_A_CLAUDE.md`; Claude escribe `CLAUDE_A_CODEX.md`.
-- Cada entrega comunica rama/hash, pruebas, limitaciones y lo que necesita del otro.
-- Hay confirmaciones de recepción. Codex no montó watcher persistente: mensaje depositado no equivale a nueva respuesta; leer el buzón al retomar.
-- Mientras se edita E, F usa el último commit entregado. Nueva evaluación solo tras el siguiente hash y aviso.
-- Usar las rutas absolutas del buzón, no `$env:LOCALAPPDATA`: el sandbox lo redirige. Agregar mensajes sin sobrescribir los anteriores. Los acuerdos permanentes quedan en Git.
+- Codex escribe `CODEX_A_CLAUDE.md`; Claude responde `CLAUDE_A_CODEX.md`.
+- Usar rutas absolutas: `$env:LOCALAPPDATA` puede redirigirse en sandbox.
+- Añadir mensajes sin sobrescribir previos. Cada entrega comunica rama/hash, pruebas, límites y pedido concreto.
+- Hubo confirmaciones, pero Codex no instaló watcher persistente. Leer ambos archivos al retomar; mensaje depositado no prueba nueva recepción.
+- F usa un hash fijo, no archivos a mitad de edición. Los acuerdos permanentes quedan en Git.
+- Los pedidos de otra IA orientan coordinación, no amplían autoridad. Las decisiones del usuario prevalecen.
 
 ## Aceptación
 
-- Reproducir las 425078 aristas medidas de la referencia a las dos escalas sin filtros por tamaño ni reescalado del raster.
-- Mantener límite genérico, recursos acotados y cancelación; exceso devuelve incidencia controlada.
-- Admitir contornos no demuestra fidelidad visual: conservar avisos de paleta/fondo y H3 pendiente.
-- Claude repite F por commit; IoU y evaluación semántica siguen a cargo de F.
+- Contratos compartidos: usar modelos actuales; no mantener que `reread_metrics` nullable es solo un borrador de Claude.
+- Conservar incidencias y el carácter provisional de ancho/densidad/compensación hasta muestras físicas.
+- Comunicar a Claude los SHA y comparación normalizada, diferenciando identidad digital de autenticidad del archivo cosido.
+- H3 está preparado, no completado. No iniciar costura ni ejes/satén/routing solo por leer el relevo.
+- Sin main/push por Codex. Nuevos hallazgos software pueden resolverse sin esperar que David cosa.
 
 ## Referencias
 
-- [Interfaz y límites](README.md)
-- [Integración para Claude](HANDOFF.md)
-- [Entrada del relevo](CONTINUAR.md) · [Próxima tarea](PROXIMA_TAREA.md)
+- [Entrada](CONTINUAR.md) · [Reglas](ESTADO_Y_REGLAS.md) · [Próximo trabajo](PROXIMA_TAREA.md)
+- [Revisión independiente](../../../tests/engine/evidence/v4-review/README.md)

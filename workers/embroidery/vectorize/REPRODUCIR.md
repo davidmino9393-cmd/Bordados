@@ -25,7 +25,6 @@ Observado: Python 3.12.14, Pillow 12.3.0, Pydantic 2.14.1. Dependencias aisladas
 & $enginePython -m unittest discover -s tests/engine -p 'test_vectorize*.py' -v
 & $enginePython -m unittest discover -s tests/engine -p 'test_quantization_probe.py' -v
 & $enginePython tests/engine/experiments/quantization_probe.py --image tests/fixtures/h2/Anime_Socks.png --colors 3 --output tests/engine/.tmp/color-research
-& $enginePython tests/engine/experiments/trace_candidate.py --output tests/engine/.tmp/trace-recheck
 & $enginePython -m unittest discover -s tests/engine -p 'test_*.py' -v
 ```
 
@@ -35,9 +34,9 @@ Preferir RTK para Git/búsqueda/lectura compatibles; fallback original si falla.
 
 ## Resultados previos
 
-- Verificación final en `2fbb6ca`, antes de este relevo: **50/50 pruebas completas**, 0 fallos/errores, 19,337 s, fuera del sandbox. Incluye las 49 previas y el control de investigación.
-- Candidato aislado: 10 casos × 2 variantes × 2 corridas. Máscara total idéntica; topología por color cambia. No promovido.
-- F reportado por Claude: 14/14 raster estructural, 2 SVG omitidos, mediana 0,64 s, máximo 5,1 s. IoU de primer plano 1 usa la misma regla de fondo y no demuestra calidad.
+- Cierre `2507edf`, base `051d8ce`: motor 121 pruebas sin fallos (4 omitidas), 31,497 s; arnés F 16 sin fallos (1 omitida). HTTP requiere salir del sandbox.
+- F ejecutado en este cierre: 14 raster, 8 controles estructurales 14/14, 2 SVG omitidos; [evidencia](../../../tests/engine/evidence/v4-review/README.md). No prueba calidad física ni fondo semántico.
+- Los experimentos de paleta/trazado conservan su valor histórico en `2fbb6ca`/`cf447b4`; su receta de parche corresponde a E anterior. No ejecutar `trace_candidate.py` contra v4 esperando el mismo parche.
 - Previews del probe a 500 px: solo visualización. Métricas calculadas a resolución original; no son puntadas.
 
 ## Referencias

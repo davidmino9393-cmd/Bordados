@@ -1,0 +1,7 @@
+39dc496d0167f93e663d2fd26f577ced2016630b
+100644 5a6c2be0fa107ff82db0e8c538c5a667edd1b6ac 1	workers/embroidery/vectorize/CONTINUAR.md
+100644 6cedfbf0c4fd4a4657559f922c0797996157b127 2	workers/embroidery/vectorize/CONTINUAR.md
+100644 56fae67dae6bcb009f134e9aa683667789f74132 3	workers/embroidery/vectorize/CONTINUAR.md
+
+Auto-merging workers/embroidery/vectorize/CONTINUAR.md
+CONFLICT (content): Merge conflict in workers/embroidery/vectorize/CONTINUAR.md

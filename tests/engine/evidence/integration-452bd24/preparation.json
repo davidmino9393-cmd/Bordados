@@ -1,0 +1,93 @@
+{
+  "main": "68d7ecdfef23f34e5becd9e5ccb0be9de65244bf",
+  "motor": "452bd249d765c53d6d4e7155259cff2e47913f73",
+  "merge_tree_initial": "39dc496d0167f93e663d2fd26f577ced2016630b",
+  "resolved_tree": "c094fad22189747ec686bf52bcfe61b24b519f03",
+  "conflicts": [
+    "workers/embroidery/vectorize/CONTINUAR.md"
+  ],
+  "resolution": "Codex structure/current review wins; add newer main pipeline facts and helper handoff",
+  "refs_before": {
+    "main": "68d7ecdfef23f34e5becd9e5ccb0be9de65244bf",
+    "codex/motor": "452bd249d765c53d6d4e7155259cff2e47913f73"
+  },
+  "refs_after": {
+    "main": "68d7ecdfef23f34e5becd9e5ccb0be9de65244bf",
+    "codex/motor": "452bd249d765c53d6d4e7155259cff2e47913f73"
+  },
+  "actual_index_unchanged": true,
+  "commands": [
+    [
+      "git",
+      "log",
+      "-1",
+      "--format=%H",
+      "main"
+    ],
+    [
+      "git",
+      "log",
+      "-1",
+      "--format=%H",
+      "codex/motor"
+    ],
+    [
+      "git",
+      "rev-parse",
+      "--git-path",
+      "index"
+    ],
+    [
+      "git",
+      "merge-tree",
+      "--write-tree",
+      "68d7ecdfef23f34e5becd9e5ccb0be9de65244bf",
+      "452bd249d765c53d6d4e7155259cff2e47913f73"
+    ],
+    [
+      "git",
+      "read-tree",
+      "39dc496d0167f93e663d2fd26f577ced2016630b"
+    ],
+    [
+      "git",
+      "hash-object",
+      "-w",
+      "--stdin"
+    ],
+    [
+      "git",
+      "update-index",
+      "--add",
+      "--cacheinfo",
+      "100644,28aaf7431eba02c9ef5375700e76a17bdaa08ff2,workers/embroidery/vectorize/CONTINUAR.md"
+    ],
+    [
+      "git",
+      "write-tree"
+    ],
+    [
+      "git",
+      "archive",
+      "--format=zip",
+      "--output=C:\\dev\\wt-motor\\tests\\engine\\.tmp\\integration-452bd24\\source.zip",
+      "c094fad22189747ec686bf52bcfe61b24b519f03"
+    ],
+    [
+      "git",
+      "log",
+      "-1",
+      "--format=%H",
+      "main"
+    ],
+    [
+      "git",
+      "log",
+      "-1",
+      "--format=%H",
+      "codex/motor"
+    ]
+  ],
+  "no_worktree_created": true,
+  "no_ref_merge_performed": true
+}

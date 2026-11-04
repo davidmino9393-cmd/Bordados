@@ -1,0 +1,7 @@
+{
+  "candidate": "e42645661d3c51c4ce3181c289e4871319d5e0c4",
+  "svg_notice_visible": true,
+  "image_notice_absent": true,
+  "text": "Un SVG preparado se borda al tamaño con el que se preparó: las medidas de arriba son solo el límite (si el dibujo es más grande, el trabajo se rechaza). Para otro tamaño, pedí una «Variante de tamaño» desde el resultado.",
+  "backend": "real API, no intercepted routes; no job generation needed for this UI notice"
+}

@@ -1,43 +1,42 @@
-# Próxima tarea: paleta con contraste verificable
+# Próximo trabajo tras revisar E v4
 
-Propósito: evaluar refinamiento sin romper firma, contratos ni F por commit.
+Propósito: continuar con evidencia nueva sin repetir mejoras ya integradas ni iniciar la costura que David postergó.
 
-Contenido: [Base](#base), [Agents & Skills](#agents--skills), [Ejecución](#ejecución), [Aceptación](#aceptación), [Referencias](#referencias).
+Contenido: [Base](#base), [Agents & Skills](#agents--skills), [Continuación](#continuación), [Aceptación](#aceptación), [Referencias](#referencias).
 
 ## Base
 
-Motor: `4a7fd6b`; investigación: `2fbb6ca`. Mantener `vectorize(image, media_type, asset, analysis, settings, *, job_id, revision_id, cancel)` y los cinco campos de `VectorizeResult`.
+Base integrada `051d8ce`, E `e1-pixel-mask-v4`. Cuantización `kmeans=3`, mediana de grupo, cobertura de borde y medición de ancho ya existen. La revisión `2507edf` corrige bordes, kernels pares, igualdad física por coma flotante y filtros desmesurados de `thin_features.py`; no modifica geometría ni el supuesto provisional de 0,4 mm.
 
-MEDIANCUT actual deja 0 píxeles L<192 de los 68534 originales de contraste en Anime Socks. `kmeans=3` retiene 58895 y baja error RGB medio 7,671→3,985. Ese umbral es diagnóstico, no legibilidad. MAXCOVERAGE empeora otros diseños: no adoptarlo globalmente.
+Mantener firma `vectorize()` y campos `VectorizeResult`. Imagen → JEF no está habilitado por esta revisión.
 
 ## Agents & Skills
 
-| Orden | Responsable | Skills / escritura |
+| Orden futuro | Responsable | Skills / área |
 |---|---|---|
-| 1 | `tester` | `core`, `test`; pruebas E en `tests/engine` |
-| 2 | `backend-developer` | `core`; candidato en E y evidencia |
+| 1 | `tester` | `core`, `test`; reproducir hallazgo y prueba mínima |
+| 2 | `backend-developer` | `core`; E/adaptador y evidencia |
 | 3 | `code-reviewer` | `core`, `code-review`; revisión independiente |
-| 4 | Claude, evaluación F | Su arnés; sin escritura de Codex |
+| 4 | Claude | F/API/web, por hash fijo |
 
-Corrección interna E ya autorizada. Aplicar la cadena al implementar, sin otra aprobación rutinaria. Orquesta el principal; los delegados no crean agentes.
+Aplicar la cadena al implementar; leer el plan no inicia H3. Orquesta el principal; delegados no crean agentes. Correcciones E ya autorizadas no necesitan otra aprobación.
 
-## Ejecución
+## Continuación
 
-1. Leer buzón y fijar hashes. Registrar errores de F por caso y distinguir mediciones de inferencias.
-2. Escribir controles pequeños: dos colores exactos, color escaso, bordes suavizados, texto fino como máscara/anotación, islas y huecos. Comprobar determinismo y cancelación.
-3. Trazado aislado ya medido: 10 casos, 40 ejecuciones. Revisar [resultados](../../../tests/engine/evidence/trace-candidate/README.md); máscara total idéntica no prueba conservación de huecos por color. Falta medir memoria.
-4. Comparar conjunto disponible y ambas escalas. Documentar especialmente sol/anillos, donde el error medio empeora levemente. No borrar el disco pálido automáticamente: puede ser relleno intencional.
-5. Revisar y ejecutar las pruebas pertinentes. Si hay ventaja defendible, comunicar política/método y nuevo hash antes de pedir F. No presentar el experimento como producción terminada.
+1. Verificar último commit, buzón y [cierre independiente](../../../tests/engine/evidence/v4-review/README.md). No reabrir la promoción de paleta ya hecha.
+2. Si llega un fallo software concreto, reproducirlo y corregirlo dentro de E. Medir geometría/máscara, color, unidades, recursos y cancelación según el cambio; conservar incidencias. No inventar calibración ni umbrales de aprobación.
+3. Si David aporta el archivo JEF realmente utilizado, comparar SHA/comandos con [identidades verificadas](../../../tests/engine/evidence/v4-review/jef-identity.json). Registrar condiciones reales; no deducir la muestra cosida de un nombre o preview.
+4. Cuando David retome H3, coordinar muestra, tela, estabilizador, hilo, aguja, máquina/bastidor y mediciones mediante el protocolo preparado. Antes de eso, 0,4 mm, densidad y compensación siguen provisionales.
+5. Futuras técnicas, ejes, satén, routing y regeneración por tamaño requieren su trabajo y validación propios. No incluirlos como terminados por existir un JEF de muestra.
 
 ## Aceptación
 
-- Controles estructurales, unidades `contain`, límite de colores, recursos y cancelación conservados.
-- Sin cambio de firma/modelos, coordenadas por logo, resize silencioso ni descarte de detalles.
-- Medir máscara y topología por color, contraste y costo; documentar cualquier regresión. No inventar umbrales de aprobación semántica por falta de ground truth.
-- Claude repite F por hash fijo y revisa texto/bordes. Error RGB medio o IoU dependiente del mismo fondo no bastan para aceptar.
-- Incidencias y H3 pendiente visibles; sin JEF ni aprobación física.
+- Revisión software puede avanzar con evidencia nueva; el cosido pendiente no bloquea todo el proyecto.
+- Sin borrado/engrosado silencioso de zonas finas. No ocultar pérdidas de fondo/color ni advertencias para aprobar.
+- Igualdad digital no demuestra resultado físico. No afirmar qué archivo cosió David sin verificarlo.
+- Nueva entrega: pruebas pertinentes, revisión independiente, commit/hash y F de Claude. Cambios de contrato o calibración deben quedar explícitos.
 
 ## Referencias
 
 - [Inicio](CONTINUAR.md) · [Comandos](REPRODUCIR.md)
-- [Experimentos](../../../tests/engine/evidence/quantization-research/README.md)
+- [Protocolo H3](../../../tests/calibration/h3/PROTOCOLO_H3.md)

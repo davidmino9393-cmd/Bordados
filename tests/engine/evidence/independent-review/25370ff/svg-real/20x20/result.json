@@ -1,0 +1,81 @@
+{
+  "input_sha256": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+  "engine_sha256": "2866a523b74e8b99dddaf09a5f7b0f0808bc2654c42843a5caeb41191ee96277",
+  "engine_version": "Ink/Stitch3.2.2 independent25370ff review",
+  "engine_backend": "inkstitch_cli",
+  "python_version": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+  "digital_readiness_evaluated": false,
+  "physical_approval": "untested",
+  "processes": [
+    {
+      "command": [
+        "C:\\Users\\david\\AppData\\Roaming\\inkscape\\extensions\\inkstitch\\inkstitch\\bin\\inkstitch.exe",
+        "--extension=troubleshoot",
+        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\review-25370ff\\svg-variant-real\\run-1793752787964445100\\jobs\\job_09fb69d52e6545c1a75ac197c4a9a27a\\input.svg"
+      ],
+      "timeout_s": 90.0,
+      "stdin": "DEVNULL",
+      "shell": false,
+      "hidden_window": true,
+      "started_suspended": true,
+      "pid": 41716,
+      "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
+      "returncode": 0,
+      "duration_ms": 2000
+    },
+    {
+      "command": [
+        "C:\\Users\\david\\AppData\\Roaming\\inkscape\\extensions\\inkstitch\\inkstitch\\bin\\inkstitch.exe",
+        "--extension=output",
+        "--format=jef",
+        "--trims=true",
+        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\review-25370ff\\svg-variant-real\\run-1793752787964445100\\jobs\\job_09fb69d52e6545c1a75ac197c4a9a27a\\input.svg"
+      ],
+      "timeout_s": 90.0,
+      "stdin": "DEVNULL",
+      "shell": false,
+      "hidden_window": true,
+      "started_suspended": true,
+      "pid": 38344,
+      "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
+      "returncode": 0,
+      "duration_ms": 3468
+    }
+  ],
+  "diagnostics": [],
+  "jef_header_patch": {
+    "field": "hoop_code",
+    "offset": 32,
+    "from": 1,
+    "to": 4,
+    "reason": "El c\u00f3digo de bastidor de la cabecera es el del perfil elegido, no el que deduce el exportador por tama\u00f1o.",
+    "exporter_output": "exporter-output.jef"
+  },
+  "metrics": {
+    "width_mm": 20.0,
+    "height_mm": 19.8,
+    "stitch_bounds_mm": [
+      -10.0,
+      -9.9,
+      10.0,
+      9.9
+    ],
+    "needle_stitches": 402,
+    "thread_blocks": 1,
+    "color_changes": 0,
+    "raw_jump_commands": 1,
+    "displacement_jump_commands": 1,
+    "interpreted_trims": 0,
+    "end_commands": 1,
+    "hoop_code": 4,
+    "count_method": "pyembroidery 1.5.1: trims=True,trim_at=3,trim_distance=None,clipping=True; STITCH endpoint bounds; native coordinates /10 to mm",
+    "physical_trim_execution_verified": false,
+    "jef_sha256": "d700c6d534623e9df12c8c62e7b8be5e768583879a7168f5cdf8f0da0154f0e1",
+    "byte_size": 934,
+    "normalized_commands_sha256": "78987fb5aeb023adbda4e3f54ff349b96533364583d7676fbea92b0c87f439c9"
+  },
+  "reader_version": "1.5.1",
+  "ok": true,
+  "format_checks_passed": true,
+  "acceptance": "not_assessed; retain geometry/satin diagnostics for review"
+}

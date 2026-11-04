@@ -1,0 +1,26 @@
+{
+  "base_commit": "051d8ce",
+  "method": "e1-pixel-mask-v4; minimum-feature measurement correction only",
+  "engine_suite": {"tests": 121, "skipped": 4, "failures": 0, "errors": 0, "duration_s": 31.497},
+  "evaluation_suite": {"tests": 16, "skipped": 1, "failures": 0, "errors": 0, "duration_s": 0.138},
+  "thin_feature_tests": 10,
+  "independent_review": {
+    "blocking_findings_remaining": 0,
+    "float_boundary_finding_corrected": true,
+    "opening_reference_masks": 50,
+    "coverage_existing_tests_passed": 7
+  },
+  "dataset": {"raster_cases": 14, "svg_skipped": 2, "structural_checks_per_case": 8, "all_structural_checks_passed": true},
+  "visual_comparison": {
+    "archived_F_v5_fidelity_identical_cases": 13,
+    "archived_F_v5_fidelity_different_case": "jpeg-simple-01",
+    "jpeg_live_main_recheck_matches_corrected_fidelity": true,
+    "jpeg_live_main_report": "F-baseline-jpeg.json"
+  },
+  "minimum_width_mm": 0.4,
+  "minimum_width_calibrated": false,
+  "geometry_policy_changed": false,
+  "contracts_or_api_changed": false,
+  "jef_reexported": false,
+  "physical_sewout_file_confirmed": false
+}

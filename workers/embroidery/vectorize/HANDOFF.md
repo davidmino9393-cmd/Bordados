@@ -27,7 +27,7 @@ No se modificaron API, contratos, worker anterior ni regresiones existentes.
 ## Pendientes
 
 - Fondo blanco opaco inferido por borde; puede eliminar blancos intencionales. Transparencia parcial binarizada. Ambos se advierten.
-- F sobre `4a7fd6b` confirmó pérdidas de color. La investigación `2fbb6ca` no cambia E; fidelidad semántica y legibilidad siguen pendientes.
+- v4 ya integra las mejoras de color/cobertura. Cierre independiente `2507edf`: medición de ancho corregida; [pruebas y límites](../../../tests/engine/evidence/v4-review/README.md). H3 sigue pendiente.
 - Recorte fraccional, orientación EXIF no normalizada y complejidad excesiva: incidencias controladas.
 - SVG preparados siguen su recorrido existente. Ejes centrales, satén y casos difíciles quedan fuera de esta tanda.
 - Cancelación cooperativa: Pillow nativo se consulta antes/después, no se interrumpe internamente.

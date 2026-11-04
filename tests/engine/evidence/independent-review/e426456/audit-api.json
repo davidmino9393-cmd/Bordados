@@ -1,0 +1,1564 @@
+{
+  "candidate": "e42645661d3c51c4ce3181c289e4871319d5e0c4",
+  "base": "68d7ecd",
+  "method": "real HTTP, real Ink/Stitch3.2.2 and pyembroidery; four supplied regression tests use their labelled fake worker",
+  "runtime": "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\review-e426456\\runtime\\run-1793756107947840300",
+  "checks": {
+    "base_target_larger_is_only_limit": {
+      "passed": true,
+      "metrics": {
+        "width_mm": 20.0,
+        "height_mm": 19.8,
+        "needle_stitches": 402,
+        "worker_input_sha256": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+        "status": "needs_review",
+        "job_id": "job_11bec629739444d0b9403ad4547699da"
+      }
+    },
+    "base_target_equal": {
+      "passed": true,
+      "metrics": {
+        "width_mm": 20.0,
+        "height_mm": 19.8,
+        "needle_stitches": 402,
+        "worker_input_sha256": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+        "status": "needs_review",
+        "job_id": "job_e5a8fee790a742268b1e3146fa3ce8f5"
+      }
+    },
+    "base_target_smaller_fails_without_scaling": {
+      "passed": true,
+      "metrics": {
+        "width_mm": 20.0,
+        "height_mm": 19.8,
+        "needle_stitches": 402,
+        "worker_input_sha256": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+        "status": "failed",
+        "job_id": "job_3c3fd1c3fe9040ef95125482a7e61836"
+      },
+      "issues": [
+        {
+          "code": "DIMENSIONS_EXCEEDED",
+          "severity": "blocking_error",
+          "stage": "dimensions",
+          "object_ids": [],
+          "region_ids": [],
+          "description": "Las medidas rele\u00eddas superan el destino configurado.",
+          "evidence": {
+            "height_mm": 19.8,
+            "tolerance_mm": 0.2,
+            "width_mm": 20.0
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisi\u00f3n o intento si corresponde."
+        },
+        {
+          "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+          "severity": "review_required",
+          "stage": "geometry",
+          "object_ids": [
+            "square"
+          ],
+          "region_ids": [],
+          "description": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+          "evidence": {
+            "localization": "candidate source objects",
+            "reason": "digital_geometry_checks_not_implemented"
+          },
+          "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisi\u00f3n o intento si corresponde."
+        }
+      ]
+    },
+    "exact_replay_does_not_read_or_fit": {
+      "passed": true,
+      "http": 202,
+      "full_body_equal": true,
+      "guarded_original_asset_reads": [],
+      "request_fit_calls": 0,
+      "worker_fit_calls": 0,
+      "resources_unchanged": true
+    },
+    "base_A_B_original_input_and_immutability": {
+      "passed": true,
+      "A_metrics": {
+        "width_mm": 40.0,
+        "height_mm": 39.6,
+        "needle_stitches": 1388,
+        "worker_input_sha256": "64f869f27bb0b76fd42e2f3640a8dc2990b087099d3b70dddf8428feab30fce1",
+        "status": "needs_review",
+        "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e"
+      },
+      "B_metrics": {
+        "width_mm": 10.0,
+        "height_mm": 10.0,
+        "needle_stitches": 135,
+        "worker_input_sha256": "8c552697b9ea4493046987e4402c64ab8780eaf91242359a85c3caa15008c4f9",
+        "status": "needs_review",
+        "job_id": "job_1e0b698a26084a08a4cd64d10dd3d138"
+      },
+      "runner_fit_inputs": [
+        {
+          "input_sha256": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+          "target": [
+            40.0,
+            40.0
+          ]
+        },
+        {
+          "input_sha256": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+          "target": [
+            10.0,
+            10.0
+          ]
+        }
+      ],
+      "base_before": {
+        "job": {
+          "schema_version": "0.1",
+          "job_id": "job_11bec629739444d0b9403ad4547699da",
+          "project_id": "project_125cc08080af45758852c0c21787f6c2",
+          "revision_id": "rev_56b164a802974ab0ab7cceacd7e199ef",
+          "asset_id": "asset_0b18ccb5fd304529954d0dbf53c13979",
+          "input_kind": "prepared_svg",
+          "settings_snapshot": {
+            "schema_version": "0.1",
+            "target": {
+              "width_mm": 40.0,
+              "height_mm": 40.0,
+              "fit": "contain"
+            },
+            "machine_profile": "janome_mc550e",
+            "machine_profile_version": "0.1",
+            "hoop_profile": "sq20b",
+            "hoop": {
+              "profile_id": "sq20b",
+              "profile_version": "0.1",
+              "width_mm": 200.0,
+              "height_mm": 200.0,
+              "jef_hoop_code": 4
+            },
+            "fabric_profile": "gabardina_inicial",
+            "fabric_profile_version": "0.1",
+            "thread_profile": "embroidery_thread_initial",
+            "color_limit": 3,
+            "ai_provider": "none",
+            "ai_model": null
+          },
+          "status": "needs_review",
+          "stages": [
+            {
+              "stage": "analyzing",
+              "outcome": "skipped",
+              "reason": "Prepared SVG: analysis omitted",
+              "measured_duration_ms": null
+            },
+            {
+              "stage": "vectorizing",
+              "outcome": "skipped",
+              "reason": "Prepared SVG: vectorization omitted",
+              "measured_duration_ms": null
+            },
+            {
+              "stage": "digitizing",
+              "outcome": "completed",
+              "reason": null,
+              "measured_duration_ms": 5610
+            },
+            {
+              "stage": "validating",
+              "outcome": "completed",
+              "reason": null,
+              "measured_duration_ms": 5610
+            }
+          ],
+          "parent_job_id": null,
+          "estimated_remaining_s": null,
+          "sewout_status": "untested",
+          "sewout_record": null,
+          "failure": null,
+          "review": {
+            "cause": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+            "issues": [
+              {
+                "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+                "severity": "review_required",
+                "stage": "geometry",
+                "object_ids": [
+                  "square"
+                ],
+                "region_ids": [],
+                "description": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+                "evidence": {
+                  "localization": "candidate source objects",
+                  "reason": "digital_geometry_checks_not_implemented"
+                },
+                "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisi\u00f3n o intento si corresponde."
+              }
+            ],
+            "object_ids": [
+              "square"
+            ],
+            "region_ids": []
+          },
+          "diagnostics": [
+            {
+              "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+              "severity": "review_required",
+              "stage": "geometry",
+              "object_ids": [
+                "square"
+              ],
+              "region_ids": [],
+              "description": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+              "evidence": {
+                "localization": "candidate source objects",
+                "reason": "digital_geometry_checks_not_implemented"
+              },
+              "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisi\u00f3n o intento si corresponde."
+            }
+          ],
+          "cancellation_requested": false,
+          "issues": [
+            {
+              "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+              "severity": "review_required",
+              "stage": "geometry",
+              "object_ids": [
+                "square"
+              ],
+              "region_ids": [],
+              "description": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+              "evidence": {
+                "localization": "candidate source objects",
+                "reason": "digital_geometry_checks_not_implemented"
+              },
+              "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisi\u00f3n o intento si corresponde."
+            }
+          ],
+          "validation_report": {
+            "schema_version": "0.1",
+            "report_id": "job_11bec629739444d0b9403ad4547699da_report",
+            "job_id": "job_11bec629739444d0b9403ad4547699da",
+            "revision_id": "rev_56b164a802974ab0ab7cceacd7e199ef",
+            "provenance": {
+              "simulated": false,
+              "method": "standalone Ink/Stitch CLI; independent binary audit and JEF reread",
+              "engine_version": "Ink/Stitch3.2.2 independent roundB audit",
+              "parser_version": "1.5.1"
+            },
+            "checks": [
+              {
+                "kind": "file",
+                "outcome": "passed",
+                "method": "independent JEF binary parser and pyembroidery reread"
+              },
+              {
+                "kind": "dimensions",
+                "outcome": "passed",
+                "method": "reread bounds within target; tolerance 0.2 mm; no resizing"
+              },
+              {
+                "kind": "hoop",
+                "outcome": "passed",
+                "method": "reread dimensions and unmodified JEF code versus configured profile"
+              },
+              {
+                "kind": "geometry",
+                "outcome": "not_run",
+                "method": "not implemented in H0-04; no inferred approval"
+              },
+              {
+                "kind": "satin",
+                "outcome": "not_run",
+                "method": "not implemented in H0-04; no inferred approval"
+              },
+              {
+                "kind": "routing",
+                "outcome": "not_run",
+                "method": "not implemented in H0-04; no inferred approval"
+              },
+              {
+                "kind": "visual",
+                "outcome": "not_run",
+                "method": "not implemented in H0-04; no inferred approval"
+              }
+            ],
+            "issues": [
+              {
+                "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+                "severity": "review_required",
+                "stage": "geometry",
+                "object_ids": [
+                  "square"
+                ],
+                "region_ids": [],
+                "description": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+                "evidence": {
+                  "localization": "candidate source objects",
+                  "reason": "digital_geometry_checks_not_implemented"
+                },
+                "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisi\u00f3n o intento si corresponde."
+              }
+            ],
+            "digital_checks_passed": false,
+            "metrics": {
+              "stitch_bounds_mm": {
+                "min_x_mm": -10.0,
+                "min_y_mm": -9.9,
+                "max_x_mm": 10.0,
+                "max_y_mm": 9.9
+              },
+              "needle_stitches": 402,
+              "thread_blocks": 1,
+              "color_changes": 0,
+              "raw_jump_commands": 1,
+              "displacement_jump_commands": 1,
+              "interpreted_trims": 0,
+              "max_stitch_length_mm": 3.0,
+              "jump_travel_mm": 14.071602609511114,
+              "processing_duration_ms": 5610,
+              "count_method": "pyembroidery 1.5.1: trims=True,trim_at=3,trim_distance=None,clipping=True; STITCH endpoint bounds; native coordinates /10 to mm; lengths from normalized raw commands /10; native JEF frame",
+              "raw_commands_artifact_id": "job_11bec629739444d0b9403ad4547699da_raw_commands_json",
+              "physical_trim_execution_verified": false
+            }
+          },
+          "artifact_manifest": {
+            "schema_version": "0.1",
+            "manifest_id": "job_11bec629739444d0b9403ad4547699da_manifest",
+            "job_id": "job_11bec629739444d0b9403ad4547699da",
+            "revision_id": "rev_56b164a802974ab0ab7cceacd7e199ef",
+            "provenance": {
+              "simulated": false,
+              "method": "standalone Ink/Stitch CLI; independent binary audit and JEF reread",
+              "engine_version": "Ink/Stitch3.2.2 independent roundB audit",
+              "parser_version": "1.5.1"
+            },
+            "input_sha256": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+            "settings_sha256": "ca28e44940f827099ca491f2c90d8db93a66026c44c64f547727845840383784",
+            "geometry_sha256": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+            "artifacts": [
+              {
+                "artifact_id": "job_11bec629739444d0b9403ad4547699da_jef",
+                "job_id": "job_11bec629739444d0b9403ad4547699da",
+                "kind": "jef",
+                "filename": "output.jef",
+                "media_type": "application/octet-stream",
+                "sha256": "b837a54495b46806b936847f2ebed63c420484b938fa6b67c151f1c70de0b33f",
+                "byte_size": 934,
+                "derived_from": "export",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_11bec629739444d0b9403ad4547699da_editable_svg",
+                "job_id": "job_11bec629739444d0b9403ad4547699da",
+                "kind": "editable_svg",
+                "filename": "editable.svg",
+                "media_type": "image/svg+xml",
+                "sha256": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+                "byte_size": 412,
+                "derived_from": "document",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_11bec629739444d0b9403ad4547699da_inkstitch_svg",
+                "job_id": "job_11bec629739444d0b9403ad4547699da",
+                "kind": "inkstitch_svg",
+                "filename": "inkstitch.svg",
+                "media_type": "image/svg+xml",
+                "sha256": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+                "byte_size": 412,
+                "derived_from": "document",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_11bec629739444d0b9403ad4547699da_preview_png",
+                "job_id": "job_11bec629739444d0b9403ad4547699da",
+                "kind": "preview_png",
+                "filename": "preview.png",
+                "media_type": "image/png",
+                "sha256": "66e1e2da7d0ff26c089e8edf16dbdb6102d09a3aebdfca4bb41e449a30f35314",
+                "byte_size": 14350,
+                "derived_from": "jef_reread",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_11bec629739444d0b9403ad4547699da_validation_json",
+                "job_id": "job_11bec629739444d0b9403ad4547699da",
+                "kind": "validation_json",
+                "filename": "validation.json",
+                "media_type": "application/json",
+                "sha256": "55b7ca69f5423f6eb81f00de55318807c975801cd36bdba2b158bd72db4c2260",
+                "byte_size": 2857,
+                "derived_from": "validation",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_11bec629739444d0b9403ad4547699da_raw_commands_json",
+                "job_id": "job_11bec629739444d0b9403ad4547699da",
+                "kind": "raw_commands_json",
+                "filename": "raw-commands.json",
+                "media_type": "application/json",
+                "sha256": "92516dc796a7dc07c62c1d148e122228c7538213974bfb1ed26461d136dd00c7",
+                "byte_size": 7304,
+                "derived_from": "jef_reread",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              }
+            ],
+            "reread_metrics": {
+              "stitch_bounds_mm": {
+                "min_x_mm": -10.0,
+                "min_y_mm": -9.9,
+                "max_x_mm": 10.0,
+                "max_y_mm": 9.9
+              },
+              "needle_stitches": 402,
+              "thread_blocks": 1,
+              "color_changes": 0,
+              "raw_jump_commands": 1,
+              "displacement_jump_commands": 1,
+              "interpreted_trims": 0,
+              "max_stitch_length_mm": 3.0,
+              "jump_travel_mm": 14.071602609511114,
+              "processing_duration_ms": 5610,
+              "count_method": "pyembroidery 1.5.1: trims=True,trim_at=3,trim_distance=None,clipping=True; STITCH endpoint bounds; native coordinates /10 to mm; lengths from normalized raw commands /10; native JEF frame",
+              "raw_commands_artifact_id": "job_11bec629739444d0b9403ad4547699da_raw_commands_json",
+              "physical_trim_execution_verified": false
+            }
+          }
+        },
+        "revision": {
+          "schema_version": "0.1",
+          "revision_id": "rev_56b164a802974ab0ab7cceacd7e199ef",
+          "project_id": "project_125cc08080af45758852c0c21787f6c2",
+          "base_revision_id": null,
+          "reason": "initial",
+          "created_at": "2026-11-04T01:35:12.176554Z",
+          "kind": "initial",
+          "parent_job_id": null,
+          "job_id": null
+        },
+        "artifact_hashes": {
+          "jef": "b837a54495b46806b936847f2ebed63c420484b938fa6b67c151f1c70de0b33f",
+          "editable_svg": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+          "inkstitch_svg": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+          "preview_png": "66e1e2da7d0ff26c089e8edf16dbdb6102d09a3aebdfca4bb41e449a30f35314",
+          "validation_json": "55b7ca69f5423f6eb81f00de55318807c975801cd36bdba2b158bd72db4c2260",
+          "raw_commands_json": "92516dc796a7dc07c62c1d148e122228c7538213974bfb1ed26461d136dd00c7"
+        },
+        "worker_input_sha256": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321"
+      },
+      "base_after": {
+        "job": {
+          "schema_version": "0.1",
+          "job_id": "job_11bec629739444d0b9403ad4547699da",
+          "project_id": "project_125cc08080af45758852c0c21787f6c2",
+          "revision_id": "rev_56b164a802974ab0ab7cceacd7e199ef",
+          "asset_id": "asset_0b18ccb5fd304529954d0dbf53c13979",
+          "input_kind": "prepared_svg",
+          "settings_snapshot": {
+            "schema_version": "0.1",
+            "target": {
+              "width_mm": 40.0,
+              "height_mm": 40.0,
+              "fit": "contain"
+            },
+            "machine_profile": "janome_mc550e",
+            "machine_profile_version": "0.1",
+            "hoop_profile": "sq20b",
+            "hoop": {
+              "profile_id": "sq20b",
+              "profile_version": "0.1",
+              "width_mm": 200.0,
+              "height_mm": 200.0,
+              "jef_hoop_code": 4
+            },
+            "fabric_profile": "gabardina_inicial",
+            "fabric_profile_version": "0.1",
+            "thread_profile": "embroidery_thread_initial",
+            "color_limit": 3,
+            "ai_provider": "none",
+            "ai_model": null
+          },
+          "status": "needs_review",
+          "stages": [
+            {
+              "stage": "analyzing",
+              "outcome": "skipped",
+              "reason": "Prepared SVG: analysis omitted",
+              "measured_duration_ms": null
+            },
+            {
+              "stage": "vectorizing",
+              "outcome": "skipped",
+              "reason": "Prepared SVG: vectorization omitted",
+              "measured_duration_ms": null
+            },
+            {
+              "stage": "digitizing",
+              "outcome": "completed",
+              "reason": null,
+              "measured_duration_ms": 5610
+            },
+            {
+              "stage": "validating",
+              "outcome": "completed",
+              "reason": null,
+              "measured_duration_ms": 5610
+            }
+          ],
+          "parent_job_id": null,
+          "estimated_remaining_s": null,
+          "sewout_status": "untested",
+          "sewout_record": null,
+          "failure": null,
+          "review": {
+            "cause": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+            "issues": [
+              {
+                "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+                "severity": "review_required",
+                "stage": "geometry",
+                "object_ids": [
+                  "square"
+                ],
+                "region_ids": [],
+                "description": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+                "evidence": {
+                  "localization": "candidate source objects",
+                  "reason": "digital_geometry_checks_not_implemented"
+                },
+                "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisi\u00f3n o intento si corresponde."
+              }
+            ],
+            "object_ids": [
+              "square"
+            ],
+            "region_ids": []
+          },
+          "diagnostics": [
+            {
+              "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+              "severity": "review_required",
+              "stage": "geometry",
+              "object_ids": [
+                "square"
+              ],
+              "region_ids": [],
+              "description": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+              "evidence": {
+                "localization": "candidate source objects",
+                "reason": "digital_geometry_checks_not_implemented"
+              },
+              "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisi\u00f3n o intento si corresponde."
+            }
+          ],
+          "cancellation_requested": false,
+          "issues": [
+            {
+              "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+              "severity": "review_required",
+              "stage": "geometry",
+              "object_ids": [
+                "square"
+              ],
+              "region_ids": [],
+              "description": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+              "evidence": {
+                "localization": "candidate source objects",
+                "reason": "digital_geometry_checks_not_implemented"
+              },
+              "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisi\u00f3n o intento si corresponde."
+            }
+          ],
+          "validation_report": {
+            "schema_version": "0.1",
+            "report_id": "job_11bec629739444d0b9403ad4547699da_report",
+            "job_id": "job_11bec629739444d0b9403ad4547699da",
+            "revision_id": "rev_56b164a802974ab0ab7cceacd7e199ef",
+            "provenance": {
+              "simulated": false,
+              "method": "standalone Ink/Stitch CLI; independent binary audit and JEF reread",
+              "engine_version": "Ink/Stitch3.2.2 independent roundB audit",
+              "parser_version": "1.5.1"
+            },
+            "checks": [
+              {
+                "kind": "file",
+                "outcome": "passed",
+                "method": "independent JEF binary parser and pyembroidery reread"
+              },
+              {
+                "kind": "dimensions",
+                "outcome": "passed",
+                "method": "reread bounds within target; tolerance 0.2 mm; no resizing"
+              },
+              {
+                "kind": "hoop",
+                "outcome": "passed",
+                "method": "reread dimensions and unmodified JEF code versus configured profile"
+              },
+              {
+                "kind": "geometry",
+                "outcome": "not_run",
+                "method": "not implemented in H0-04; no inferred approval"
+              },
+              {
+                "kind": "satin",
+                "outcome": "not_run",
+                "method": "not implemented in H0-04; no inferred approval"
+              },
+              {
+                "kind": "routing",
+                "outcome": "not_run",
+                "method": "not implemented in H0-04; no inferred approval"
+              },
+              {
+                "kind": "visual",
+                "outcome": "not_run",
+                "method": "not implemented in H0-04; no inferred approval"
+              }
+            ],
+            "issues": [
+              {
+                "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+                "severity": "review_required",
+                "stage": "geometry",
+                "object_ids": [
+                  "square"
+                ],
+                "region_ids": [],
+                "description": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+                "evidence": {
+                  "localization": "candidate source objects",
+                  "reason": "digital_geometry_checks_not_implemented"
+                },
+                "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisi\u00f3n o intento si corresponde."
+              }
+            ],
+            "digital_checks_passed": false,
+            "metrics": {
+              "stitch_bounds_mm": {
+                "min_x_mm": -10.0,
+                "min_y_mm": -9.9,
+                "max_x_mm": 10.0,
+                "max_y_mm": 9.9
+              },
+              "needle_stitches": 402,
+              "thread_blocks": 1,
+              "color_changes": 0,
+              "raw_jump_commands": 1,
+              "displacement_jump_commands": 1,
+              "interpreted_trims": 0,
+              "max_stitch_length_mm": 3.0,
+              "jump_travel_mm": 14.071602609511114,
+              "processing_duration_ms": 5610,
+              "count_method": "pyembroidery 1.5.1: trims=True,trim_at=3,trim_distance=None,clipping=True; STITCH endpoint bounds; native coordinates /10 to mm; lengths from normalized raw commands /10; native JEF frame",
+              "raw_commands_artifact_id": "job_11bec629739444d0b9403ad4547699da_raw_commands_json",
+              "physical_trim_execution_verified": false
+            }
+          },
+          "artifact_manifest": {
+            "schema_version": "0.1",
+            "manifest_id": "job_11bec629739444d0b9403ad4547699da_manifest",
+            "job_id": "job_11bec629739444d0b9403ad4547699da",
+            "revision_id": "rev_56b164a802974ab0ab7cceacd7e199ef",
+            "provenance": {
+              "simulated": false,
+              "method": "standalone Ink/Stitch CLI; independent binary audit and JEF reread",
+              "engine_version": "Ink/Stitch3.2.2 independent roundB audit",
+              "parser_version": "1.5.1"
+            },
+            "input_sha256": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+            "settings_sha256": "ca28e44940f827099ca491f2c90d8db93a66026c44c64f547727845840383784",
+            "geometry_sha256": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+            "artifacts": [
+              {
+                "artifact_id": "job_11bec629739444d0b9403ad4547699da_jef",
+                "job_id": "job_11bec629739444d0b9403ad4547699da",
+                "kind": "jef",
+                "filename": "output.jef",
+                "media_type": "application/octet-stream",
+                "sha256": "b837a54495b46806b936847f2ebed63c420484b938fa6b67c151f1c70de0b33f",
+                "byte_size": 934,
+                "derived_from": "export",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_11bec629739444d0b9403ad4547699da_editable_svg",
+                "job_id": "job_11bec629739444d0b9403ad4547699da",
+                "kind": "editable_svg",
+                "filename": "editable.svg",
+                "media_type": "image/svg+xml",
+                "sha256": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+                "byte_size": 412,
+                "derived_from": "document",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_11bec629739444d0b9403ad4547699da_inkstitch_svg",
+                "job_id": "job_11bec629739444d0b9403ad4547699da",
+                "kind": "inkstitch_svg",
+                "filename": "inkstitch.svg",
+                "media_type": "image/svg+xml",
+                "sha256": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+                "byte_size": 412,
+                "derived_from": "document",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_11bec629739444d0b9403ad4547699da_preview_png",
+                "job_id": "job_11bec629739444d0b9403ad4547699da",
+                "kind": "preview_png",
+                "filename": "preview.png",
+                "media_type": "image/png",
+                "sha256": "66e1e2da7d0ff26c089e8edf16dbdb6102d09a3aebdfca4bb41e449a30f35314",
+                "byte_size": 14350,
+                "derived_from": "jef_reread",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_11bec629739444d0b9403ad4547699da_validation_json",
+                "job_id": "job_11bec629739444d0b9403ad4547699da",
+                "kind": "validation_json",
+                "filename": "validation.json",
+                "media_type": "application/json",
+                "sha256": "55b7ca69f5423f6eb81f00de55318807c975801cd36bdba2b158bd72db4c2260",
+                "byte_size": 2857,
+                "derived_from": "validation",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_11bec629739444d0b9403ad4547699da_raw_commands_json",
+                "job_id": "job_11bec629739444d0b9403ad4547699da",
+                "kind": "raw_commands_json",
+                "filename": "raw-commands.json",
+                "media_type": "application/json",
+                "sha256": "92516dc796a7dc07c62c1d148e122228c7538213974bfb1ed26461d136dd00c7",
+                "byte_size": 7304,
+                "derived_from": "jef_reread",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              }
+            ],
+            "reread_metrics": {
+              "stitch_bounds_mm": {
+                "min_x_mm": -10.0,
+                "min_y_mm": -9.9,
+                "max_x_mm": 10.0,
+                "max_y_mm": 9.9
+              },
+              "needle_stitches": 402,
+              "thread_blocks": 1,
+              "color_changes": 0,
+              "raw_jump_commands": 1,
+              "displacement_jump_commands": 1,
+              "interpreted_trims": 0,
+              "max_stitch_length_mm": 3.0,
+              "jump_travel_mm": 14.071602609511114,
+              "processing_duration_ms": 5610,
+              "count_method": "pyembroidery 1.5.1: trims=True,trim_at=3,trim_distance=None,clipping=True; STITCH endpoint bounds; native coordinates /10 to mm; lengths from normalized raw commands /10; native JEF frame",
+              "raw_commands_artifact_id": "job_11bec629739444d0b9403ad4547699da_raw_commands_json",
+              "physical_trim_execution_verified": false
+            }
+          }
+        },
+        "revision": {
+          "schema_version": "0.1",
+          "revision_id": "rev_56b164a802974ab0ab7cceacd7e199ef",
+          "project_id": "project_125cc08080af45758852c0c21787f6c2",
+          "base_revision_id": null,
+          "reason": "initial",
+          "created_at": "2026-11-04T01:35:12.176554Z",
+          "kind": "initial",
+          "parent_job_id": null,
+          "job_id": null
+        },
+        "artifact_hashes": {
+          "jef": "b837a54495b46806b936847f2ebed63c420484b938fa6b67c151f1c70de0b33f",
+          "editable_svg": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+          "inkstitch_svg": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+          "preview_png": "66e1e2da7d0ff26c089e8edf16dbdb6102d09a3aebdfca4bb41e449a30f35314",
+          "validation_json": "55b7ca69f5423f6eb81f00de55318807c975801cd36bdba2b158bd72db4c2260",
+          "raw_commands_json": "92516dc796a7dc07c62c1d148e122228c7538213974bfb1ed26461d136dd00c7"
+        },
+        "worker_input_sha256": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321"
+      },
+      "A_before": {
+        "job": {
+          "schema_version": "0.1",
+          "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e",
+          "project_id": "project_125cc08080af45758852c0c21787f6c2",
+          "revision_id": "rev_d9285ec30cc54ec9be4cd55e0c75c219",
+          "asset_id": "asset_0b18ccb5fd304529954d0dbf53c13979",
+          "input_kind": "prepared_svg",
+          "settings_snapshot": {
+            "schema_version": "0.1",
+            "target": {
+              "width_mm": 40.0,
+              "height_mm": 40.0,
+              "fit": "contain"
+            },
+            "machine_profile": "janome_mc550e",
+            "machine_profile_version": "0.1",
+            "hoop_profile": "sq20b",
+            "hoop": {
+              "profile_id": "sq20b",
+              "profile_version": "0.1",
+              "width_mm": 200.0,
+              "height_mm": 200.0,
+              "jef_hoop_code": 4
+            },
+            "fabric_profile": "gabardina_inicial",
+            "fabric_profile_version": "0.1",
+            "thread_profile": "embroidery_thread_initial",
+            "color_limit": 3,
+            "ai_provider": "none",
+            "ai_model": null
+          },
+          "status": "needs_review",
+          "stages": [
+            {
+              "stage": "analyzing",
+              "outcome": "skipped",
+              "reason": "Prepared SVG: analysis omitted",
+              "measured_duration_ms": null
+            },
+            {
+              "stage": "vectorizing",
+              "outcome": "skipped",
+              "reason": "Prepared SVG: vectorization omitted",
+              "measured_duration_ms": null
+            },
+            {
+              "stage": "digitizing",
+              "outcome": "completed",
+              "reason": null,
+              "measured_duration_ms": 5609
+            },
+            {
+              "stage": "validating",
+              "outcome": "completed",
+              "reason": null,
+              "measured_duration_ms": 5609
+            }
+          ],
+          "parent_job_id": "job_11bec629739444d0b9403ad4547699da",
+          "estimated_remaining_s": null,
+          "sewout_status": "untested",
+          "sewout_record": null,
+          "failure": null,
+          "review": {
+            "cause": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+            "issues": [
+              {
+                "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+                "severity": "review_required",
+                "stage": "geometry",
+                "object_ids": [
+                  "square"
+                ],
+                "region_ids": [],
+                "description": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+                "evidence": {
+                  "localization": "candidate source objects",
+                  "reason": "digital_geometry_checks_not_implemented"
+                },
+                "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisi\u00f3n o intento si corresponde."
+              }
+            ],
+            "object_ids": [
+              "square"
+            ],
+            "region_ids": []
+          },
+          "diagnostics": [
+            {
+              "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+              "severity": "review_required",
+              "stage": "geometry",
+              "object_ids": [
+                "square"
+              ],
+              "region_ids": [],
+              "description": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+              "evidence": {
+                "localization": "candidate source objects",
+                "reason": "digital_geometry_checks_not_implemented"
+              },
+              "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisi\u00f3n o intento si corresponde."
+            }
+          ],
+          "cancellation_requested": false,
+          "issues": [
+            {
+              "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+              "severity": "review_required",
+              "stage": "geometry",
+              "object_ids": [
+                "square"
+              ],
+              "region_ids": [],
+              "description": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+              "evidence": {
+                "localization": "candidate source objects",
+                "reason": "digital_geometry_checks_not_implemented"
+              },
+              "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisi\u00f3n o intento si corresponde."
+            }
+          ],
+          "validation_report": {
+            "schema_version": "0.1",
+            "report_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_report",
+            "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e",
+            "revision_id": "rev_d9285ec30cc54ec9be4cd55e0c75c219",
+            "provenance": {
+              "simulated": false,
+              "method": "standalone Ink/Stitch CLI; independent binary audit and JEF reread",
+              "engine_version": "Ink/Stitch3.2.2 independent roundB audit",
+              "parser_version": "1.5.1"
+            },
+            "checks": [
+              {
+                "kind": "file",
+                "outcome": "passed",
+                "method": "independent JEF binary parser and pyembroidery reread"
+              },
+              {
+                "kind": "dimensions",
+                "outcome": "passed",
+                "method": "reread bounds within target; tolerance 0.2 mm; no resizing"
+              },
+              {
+                "kind": "hoop",
+                "outcome": "passed",
+                "method": "reread dimensions and unmodified JEF code versus configured profile"
+              },
+              {
+                "kind": "geometry",
+                "outcome": "not_run",
+                "method": "not implemented in H0-04; no inferred approval"
+              },
+              {
+                "kind": "satin",
+                "outcome": "not_run",
+                "method": "not implemented in H0-04; no inferred approval"
+              },
+              {
+                "kind": "routing",
+                "outcome": "not_run",
+                "method": "not implemented in H0-04; no inferred approval"
+              },
+              {
+                "kind": "visual",
+                "outcome": "not_run",
+                "method": "not implemented in H0-04; no inferred approval"
+              }
+            ],
+            "issues": [
+              {
+                "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+                "severity": "review_required",
+                "stage": "geometry",
+                "object_ids": [
+                  "square"
+                ],
+                "region_ids": [],
+                "description": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+                "evidence": {
+                  "localization": "candidate source objects",
+                  "reason": "digital_geometry_checks_not_implemented"
+                },
+                "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisi\u00f3n o intento si corresponde."
+              }
+            ],
+            "digital_checks_passed": false,
+            "metrics": {
+              "stitch_bounds_mm": {
+                "min_x_mm": -20.0,
+                "min_y_mm": -19.8,
+                "max_x_mm": 20.0,
+                "max_y_mm": 19.8
+              },
+              "needle_stitches": 1388,
+              "thread_blocks": 1,
+              "color_changes": 0,
+              "raw_jump_commands": 2,
+              "displacement_jump_commands": 2,
+              "interpreted_trims": 0,
+              "max_stitch_length_mm": 3.0,
+              "jump_travel_mm": 28.143205219022228,
+              "processing_duration_ms": 5609,
+              "count_method": "pyembroidery 1.5.1: trims=True,trim_at=3,trim_distance=None,clipping=True; STITCH endpoint bounds; native coordinates /10 to mm; lengths from normalized raw commands /10; native JEF frame",
+              "raw_commands_artifact_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_raw_commands_json",
+              "physical_trim_execution_verified": false
+            }
+          },
+          "artifact_manifest": {
+            "schema_version": "0.1",
+            "manifest_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_manifest",
+            "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e",
+            "revision_id": "rev_d9285ec30cc54ec9be4cd55e0c75c219",
+            "provenance": {
+              "simulated": false,
+              "method": "standalone Ink/Stitch CLI; independent binary audit and JEF reread",
+              "engine_version": "Ink/Stitch3.2.2 independent roundB audit",
+              "parser_version": "1.5.1"
+            },
+            "input_sha256": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+            "settings_sha256": "ca28e44940f827099ca491f2c90d8db93a66026c44c64f547727845840383784",
+            "geometry_sha256": "64f869f27bb0b76fd42e2f3640a8dc2990b087099d3b70dddf8428feab30fce1",
+            "artifacts": [
+              {
+                "artifact_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_jef",
+                "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e",
+                "kind": "jef",
+                "filename": "output.jef",
+                "media_type": "application/octet-stream",
+                "sha256": "cd45dec0544dd94891d3d05e8bf17d3cda7bd6b9932db12ae2dec26983a50a96",
+                "byte_size": 2910,
+                "derived_from": "export",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_editable_svg",
+                "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e",
+                "kind": "editable_svg",
+                "filename": "editable.svg",
+                "media_type": "image/svg+xml",
+                "sha256": "64f869f27bb0b76fd42e2f3640a8dc2990b087099d3b70dddf8428feab30fce1",
+                "byte_size": 412,
+                "derived_from": "document",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_inkstitch_svg",
+                "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e",
+                "kind": "inkstitch_svg",
+                "filename": "inkstitch.svg",
+                "media_type": "image/svg+xml",
+                "sha256": "64f869f27bb0b76fd42e2f3640a8dc2990b087099d3b70dddf8428feab30fce1",
+                "byte_size": 412,
+                "derived_from": "document",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_preview_png",
+                "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e",
+                "kind": "preview_png",
+                "filename": "preview.png",
+                "media_type": "image/png",
+                "sha256": "e55d464eebbd254ecfc65c63648ca5cc486712e495e34c1f41a1e9cb73c99f4a",
+                "byte_size": 14654,
+                "derived_from": "jef_reread",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_validation_json",
+                "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e",
+                "kind": "validation_json",
+                "filename": "validation.json",
+                "media_type": "application/json",
+                "sha256": "204bbf01b8446cf5d7d16709485f4e424fca884f91e834cb12000198c7b44105",
+                "byte_size": 2860,
+                "derived_from": "validation",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_raw_commands_json",
+                "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e",
+                "kind": "raw_commands_json",
+                "filename": "raw-commands.json",
+                "media_type": "application/json",
+                "sha256": "9d0ea5882573d170fcf140ad4fcf4f4cc77300a98753c6d64ed7604a66fca139",
+                "byte_size": 26397,
+                "derived_from": "jef_reread",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              }
+            ],
+            "reread_metrics": {
+              "stitch_bounds_mm": {
+                "min_x_mm": -20.0,
+                "min_y_mm": -19.8,
+                "max_x_mm": 20.0,
+                "max_y_mm": 19.8
+              },
+              "needle_stitches": 1388,
+              "thread_blocks": 1,
+              "color_changes": 0,
+              "raw_jump_commands": 2,
+              "displacement_jump_commands": 2,
+              "interpreted_trims": 0,
+              "max_stitch_length_mm": 3.0,
+              "jump_travel_mm": 28.143205219022228,
+              "processing_duration_ms": 5609,
+              "count_method": "pyembroidery 1.5.1: trims=True,trim_at=3,trim_distance=None,clipping=True; STITCH endpoint bounds; native coordinates /10 to mm; lengths from normalized raw commands /10; native JEF frame",
+              "raw_commands_artifact_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_raw_commands_json",
+              "physical_trim_execution_verified": false
+            }
+          }
+        },
+        "revision": {
+          "schema_version": "0.1",
+          "revision_id": "rev_d9285ec30cc54ec9be4cd55e0c75c219",
+          "project_id": "project_125cc08080af45758852c0c21787f6c2",
+          "base_revision_id": "rev_56b164a802974ab0ab7cceacd7e199ef",
+          "reason": "size_variant",
+          "created_at": "2026-11-04T01:35:29.233962Z",
+          "kind": "size_variant",
+          "parent_job_id": "job_11bec629739444d0b9403ad4547699da",
+          "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e"
+        },
+        "artifact_hashes": {
+          "jef": "cd45dec0544dd94891d3d05e8bf17d3cda7bd6b9932db12ae2dec26983a50a96",
+          "editable_svg": "64f869f27bb0b76fd42e2f3640a8dc2990b087099d3b70dddf8428feab30fce1",
+          "inkstitch_svg": "64f869f27bb0b76fd42e2f3640a8dc2990b087099d3b70dddf8428feab30fce1",
+          "preview_png": "e55d464eebbd254ecfc65c63648ca5cc486712e495e34c1f41a1e9cb73c99f4a",
+          "validation_json": "204bbf01b8446cf5d7d16709485f4e424fca884f91e834cb12000198c7b44105",
+          "raw_commands_json": "9d0ea5882573d170fcf140ad4fcf4f4cc77300a98753c6d64ed7604a66fca139"
+        },
+        "worker_input_sha256": "64f869f27bb0b76fd42e2f3640a8dc2990b087099d3b70dddf8428feab30fce1"
+      },
+      "A_after": {
+        "job": {
+          "schema_version": "0.1",
+          "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e",
+          "project_id": "project_125cc08080af45758852c0c21787f6c2",
+          "revision_id": "rev_d9285ec30cc54ec9be4cd55e0c75c219",
+          "asset_id": "asset_0b18ccb5fd304529954d0dbf53c13979",
+          "input_kind": "prepared_svg",
+          "settings_snapshot": {
+            "schema_version": "0.1",
+            "target": {
+              "width_mm": 40.0,
+              "height_mm": 40.0,
+              "fit": "contain"
+            },
+            "machine_profile": "janome_mc550e",
+            "machine_profile_version": "0.1",
+            "hoop_profile": "sq20b",
+            "hoop": {
+              "profile_id": "sq20b",
+              "profile_version": "0.1",
+              "width_mm": 200.0,
+              "height_mm": 200.0,
+              "jef_hoop_code": 4
+            },
+            "fabric_profile": "gabardina_inicial",
+            "fabric_profile_version": "0.1",
+            "thread_profile": "embroidery_thread_initial",
+            "color_limit": 3,
+            "ai_provider": "none",
+            "ai_model": null
+          },
+          "status": "needs_review",
+          "stages": [
+            {
+              "stage": "analyzing",
+              "outcome": "skipped",
+              "reason": "Prepared SVG: analysis omitted",
+              "measured_duration_ms": null
+            },
+            {
+              "stage": "vectorizing",
+              "outcome": "skipped",
+              "reason": "Prepared SVG: vectorization omitted",
+              "measured_duration_ms": null
+            },
+            {
+              "stage": "digitizing",
+              "outcome": "completed",
+              "reason": null,
+              "measured_duration_ms": 5609
+            },
+            {
+              "stage": "validating",
+              "outcome": "completed",
+              "reason": null,
+              "measured_duration_ms": 5609
+            }
+          ],
+          "parent_job_id": "job_11bec629739444d0b9403ad4547699da",
+          "estimated_remaining_s": null,
+          "sewout_status": "untested",
+          "sewout_record": null,
+          "failure": null,
+          "review": {
+            "cause": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+            "issues": [
+              {
+                "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+                "severity": "review_required",
+                "stage": "geometry",
+                "object_ids": [
+                  "square"
+                ],
+                "region_ids": [],
+                "description": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+                "evidence": {
+                  "localization": "candidate source objects",
+                  "reason": "digital_geometry_checks_not_implemented"
+                },
+                "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisi\u00f3n o intento si corresponde."
+              }
+            ],
+            "object_ids": [
+              "square"
+            ],
+            "region_ids": []
+          },
+          "diagnostics": [
+            {
+              "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+              "severity": "review_required",
+              "stage": "geometry",
+              "object_ids": [
+                "square"
+              ],
+              "region_ids": [],
+              "description": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+              "evidence": {
+                "localization": "candidate source objects",
+                "reason": "digital_geometry_checks_not_implemented"
+              },
+              "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisi\u00f3n o intento si corresponde."
+            }
+          ],
+          "cancellation_requested": false,
+          "issues": [
+            {
+              "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+              "severity": "review_required",
+              "stage": "geometry",
+              "object_ids": [
+                "square"
+              ],
+              "region_ids": [],
+              "description": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+              "evidence": {
+                "localization": "candidate source objects",
+                "reason": "digital_geometry_checks_not_implemented"
+              },
+              "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisi\u00f3n o intento si corresponde."
+            }
+          ],
+          "validation_report": {
+            "schema_version": "0.1",
+            "report_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_report",
+            "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e",
+            "revision_id": "rev_d9285ec30cc54ec9be4cd55e0c75c219",
+            "provenance": {
+              "simulated": false,
+              "method": "standalone Ink/Stitch CLI; independent binary audit and JEF reread",
+              "engine_version": "Ink/Stitch3.2.2 independent roundB audit",
+              "parser_version": "1.5.1"
+            },
+            "checks": [
+              {
+                "kind": "file",
+                "outcome": "passed",
+                "method": "independent JEF binary parser and pyembroidery reread"
+              },
+              {
+                "kind": "dimensions",
+                "outcome": "passed",
+                "method": "reread bounds within target; tolerance 0.2 mm; no resizing"
+              },
+              {
+                "kind": "hoop",
+                "outcome": "passed",
+                "method": "reread dimensions and unmodified JEF code versus configured profile"
+              },
+              {
+                "kind": "geometry",
+                "outcome": "not_run",
+                "method": "not implemented in H0-04; no inferred approval"
+              },
+              {
+                "kind": "satin",
+                "outcome": "not_run",
+                "method": "not implemented in H0-04; no inferred approval"
+              },
+              {
+                "kind": "routing",
+                "outcome": "not_run",
+                "method": "not implemented in H0-04; no inferred approval"
+              },
+              {
+                "kind": "visual",
+                "outcome": "not_run",
+                "method": "not implemented in H0-04; no inferred approval"
+              }
+            ],
+            "issues": [
+              {
+                "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+                "severity": "review_required",
+                "stage": "geometry",
+                "object_ids": [
+                  "square"
+                ],
+                "region_ids": [],
+                "description": "Geometr\u00eda, satin y recorrido a\u00fan requieren revisi\u00f3n independiente.",
+                "evidence": {
+                  "localization": "candidate source objects",
+                  "reason": "digital_geometry_checks_not_implemented"
+                },
+                "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisi\u00f3n o intento si corresponde."
+              }
+            ],
+            "digital_checks_passed": false,
+            "metrics": {
+              "stitch_bounds_mm": {
+                "min_x_mm": -20.0,
+                "min_y_mm": -19.8,
+                "max_x_mm": 20.0,
+                "max_y_mm": 19.8
+              },
+              "needle_stitches": 1388,
+              "thread_blocks": 1,
+              "color_changes": 0,
+              "raw_jump_commands": 2,
+              "displacement_jump_commands": 2,
+              "interpreted_trims": 0,
+              "max_stitch_length_mm": 3.0,
+              "jump_travel_mm": 28.143205219022228,
+              "processing_duration_ms": 5609,
+              "count_method": "pyembroidery 1.5.1: trims=True,trim_at=3,trim_distance=None,clipping=True; STITCH endpoint bounds; native coordinates /10 to mm; lengths from normalized raw commands /10; native JEF frame",
+              "raw_commands_artifact_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_raw_commands_json",
+              "physical_trim_execution_verified": false
+            }
+          },
+          "artifact_manifest": {
+            "schema_version": "0.1",
+            "manifest_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_manifest",
+            "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e",
+            "revision_id": "rev_d9285ec30cc54ec9be4cd55e0c75c219",
+            "provenance": {
+              "simulated": false,
+              "method": "standalone Ink/Stitch CLI; independent binary audit and JEF reread",
+              "engine_version": "Ink/Stitch3.2.2 independent roundB audit",
+              "parser_version": "1.5.1"
+            },
+            "input_sha256": "99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321",
+            "settings_sha256": "ca28e44940f827099ca491f2c90d8db93a66026c44c64f547727845840383784",
+            "geometry_sha256": "64f869f27bb0b76fd42e2f3640a8dc2990b087099d3b70dddf8428feab30fce1",
+            "artifacts": [
+              {
+                "artifact_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_jef",
+                "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e",
+                "kind": "jef",
+                "filename": "output.jef",
+                "media_type": "application/octet-stream",
+                "sha256": "cd45dec0544dd94891d3d05e8bf17d3cda7bd6b9932db12ae2dec26983a50a96",
+                "byte_size": 2910,
+                "derived_from": "export",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_editable_svg",
+                "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e",
+                "kind": "editable_svg",
+                "filename": "editable.svg",
+                "media_type": "image/svg+xml",
+                "sha256": "64f869f27bb0b76fd42e2f3640a8dc2990b087099d3b70dddf8428feab30fce1",
+                "byte_size": 412,
+                "derived_from": "document",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_inkstitch_svg",
+                "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e",
+                "kind": "inkstitch_svg",
+                "filename": "inkstitch.svg",
+                "media_type": "image/svg+xml",
+                "sha256": "64f869f27bb0b76fd42e2f3640a8dc2990b087099d3b70dddf8428feab30fce1",
+                "byte_size": 412,
+                "derived_from": "document",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_preview_png",
+                "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e",
+                "kind": "preview_png",
+                "filename": "preview.png",
+                "media_type": "image/png",
+                "sha256": "e55d464eebbd254ecfc65c63648ca5cc486712e495e34c1f41a1e9cb73c99f4a",
+                "byte_size": 14654,
+                "derived_from": "jef_reread",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_validation_json",
+                "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e",
+                "kind": "validation_json",
+                "filename": "validation.json",
+                "media_type": "application/json",
+                "sha256": "204bbf01b8446cf5d7d16709485f4e424fca884f91e834cb12000198c7b44105",
+                "byte_size": 2860,
+                "derived_from": "validation",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              },
+              {
+                "artifact_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_raw_commands_json",
+                "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e",
+                "kind": "raw_commands_json",
+                "filename": "raw-commands.json",
+                "media_type": "application/json",
+                "sha256": "9d0ea5882573d170fcf140ad4fcf4f4cc77300a98753c6d64ed7604a66fca139",
+                "byte_size": 26397,
+                "derived_from": "jef_reread",
+                "download": null,
+                "download_url": null,
+                "expires_at": null
+              }
+            ],
+            "reread_metrics": {
+              "stitch_bounds_mm": {
+                "min_x_mm": -20.0,
+                "min_y_mm": -19.8,
+                "max_x_mm": 20.0,
+                "max_y_mm": 19.8
+              },
+              "needle_stitches": 1388,
+              "thread_blocks": 1,
+              "color_changes": 0,
+              "raw_jump_commands": 2,
+              "displacement_jump_commands": 2,
+              "interpreted_trims": 0,
+              "max_stitch_length_mm": 3.0,
+              "jump_travel_mm": 28.143205219022228,
+              "processing_duration_ms": 5609,
+              "count_method": "pyembroidery 1.5.1: trims=True,trim_at=3,trim_distance=None,clipping=True; STITCH endpoint bounds; native coordinates /10 to mm; lengths from normalized raw commands /10; native JEF frame",
+              "raw_commands_artifact_id": "job_e17e40d8f94949e0884171d2ba2f3e1e_raw_commands_json",
+              "physical_trim_execution_verified": false
+            }
+          }
+        },
+        "revision": {
+          "schema_version": "0.1",
+          "revision_id": "rev_d9285ec30cc54ec9be4cd55e0c75c219",
+          "project_id": "project_125cc08080af45758852c0c21787f6c2",
+          "base_revision_id": "rev_56b164a802974ab0ab7cceacd7e199ef",
+          "reason": "size_variant",
+          "created_at": "2026-11-04T01:35:29.233962Z",
+          "kind": "size_variant",
+          "parent_job_id": "job_11bec629739444d0b9403ad4547699da",
+          "job_id": "job_e17e40d8f94949e0884171d2ba2f3e1e"
+        },
+        "artifact_hashes": {
+          "jef": "cd45dec0544dd94891d3d05e8bf17d3cda7bd6b9932db12ae2dec26983a50a96",
+          "editable_svg": "64f869f27bb0b76fd42e2f3640a8dc2990b087099d3b70dddf8428feab30fce1",
+          "inkstitch_svg": "64f869f27bb0b76fd42e2f3640a8dc2990b087099d3b70dddf8428feab30fce1",
+          "preview_png": "e55d464eebbd254ecfc65c63648ca5cc486712e495e34c1f41a1e9cb73c99f4a",
+          "validation_json": "204bbf01b8446cf5d7d16709485f4e424fca884f91e834cb12000198c7b44105",
+          "raw_commands_json": "9d0ea5882573d170fcf140ad4fcf4f4cc77300a98753c6d64ed7604a66fca139"
+        },
+        "worker_input_sha256": "64f869f27bb0b76fd42e2f3640a8dc2990b087099d3b70dddf8428feab30fce1"
+      }
+    },
+    "no_viewbox": {
+      "passed": true,
+      "http": 422,
+      "problem": {
+        "schema_version": "0.1",
+        "type": "urn:embroidery:problem:invalid-request",
+        "title": "Invalid Request",
+        "status": 422,
+        "detail": "No se puede cambiar el tama\u00f1o de este SVG: El SVG no declara viewBox: sin \u00e9l no se puede cambiar el tama\u00f1o del dibujo.",
+        "instance": "/api/v1/projects/project_4474a3b9d3fb497089e5819adcfb1cfa/revisions",
+        "code": "INVALID_REQUEST",
+        "request_id": "a26a8794-562a-456e-aeb1-402b1c54e93b",
+        "errors": []
+      },
+      "counts_before": {
+        "jobs": 1,
+        "revisions": 1
+      },
+      "counts_after": {
+        "jobs": 1,
+        "revisions": 1
+      },
+      "parent_real_worker_status": "needs_review"
+    },
+    "relative_dimensions": {
+      "passed": true,
+      "http": 422,
+      "problem": {
+        "schema_version": "0.1",
+        "type": "urn:embroidery:problem:invalid-request",
+        "title": "Invalid Request",
+        "status": 422,
+        "detail": "No se puede cambiar el tama\u00f1o de este SVG: El SVG no declara un \u00abwidth\u00bb absoluto (en mm, cm, in, pt, pc, px o sin unidad).",
+        "instance": "/api/v1/projects/project_b2c74b6acb9340cca99098ee1f237d2f/revisions",
+        "code": "INVALID_REQUEST",
+        "request_id": "77938bdf-bafc-418d-8190-7a1f6fbef902",
+        "errors": []
+      },
+      "counts_before": {
+        "jobs": 1,
+        "revisions": 1
+      },
+      "counts_after": {
+        "jobs": 1,
+        "revisions": 1
+      },
+      "parent_real_worker_status": "needs_review"
+    }
+  },
+  "supplied_regressions": {
+    "names": [
+      "test_a_prepared_svg_job_is_digitized_at_its_declared_size_and_the_target_is_only_a_limit",
+      "test_a_prepared_svg_larger_than_the_target_still_fails_with_the_dimensions_issue",
+      "test_a_variant_of_a_variant_is_fitted_from_the_original_asset_not_from_the_parents_fitted_svg",
+      "test_repeating_a_prepared_svg_variant_request_returns_the_same_body_and_does_not_fit_again"
+    ],
+    "tests_run": 4,
+    "failures": [],
+    "errors": []
+  },
+  "verdict": "GO for scoped roundB API delta e426456"
+}

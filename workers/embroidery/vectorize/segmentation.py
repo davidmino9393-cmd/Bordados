@@ -3,14 +3,13 @@ from array import array
 from collections import Counter
 from dataclasses import dataclass
 from itertools import compress
-from io import BytesIO
 import hashlib
 import math
-import warnings
 
-from PIL import Image, ImageChops, ImageFilter, ImageStat, UnidentifiedImageError, __version__ as PILLOW_VERSION
+from PIL import Image, ImageChops, ImageFilter, ImageStat, __version__ as PILLOW_VERSION
 
 from embroidery_contracts import IssueCode
+from .image_input import MAX_INPUT_BYTES, MAX_INPUT_PIXELS, decode_raster
 from .types import check_cancel, fail
 
 # Refinamiento k-means del MEDIANCUT: sin él, un fondo tonal casi blanco se queda con casi toda la paleta y los trazos
@@ -24,8 +23,6 @@ WHITE_DISTANCE_MAX = 3 * 255
 COVERAGE_MIN = 0.5
 COVERAGE_LEVEL = math.ceil(COVERAGE_MIN * 255)
 FRINGE_PASSES = 2  # anillos de píxeles que se pueden descartar desde el fondo hacia adentro
-MAX_INPUT_BYTES = 32 * 1024 * 1024
-MAX_INPUT_PIXELS = 4_000_000
 ALPHA_THRESHOLD = 128
 WHITE_THRESHOLD = 250
 WHITE_BORDER_CONSENSUS = 0.95
@@ -45,42 +42,12 @@ class Segmentation:
 
 
 def decode(image, media_type, asset, cancel):
-    check_cancel(cancel)
-    if media_type not in {"image/png", "image/jpeg"}:
-        fail(IssueCode.INPUT_UNSUPPORTED_FORMAT, "E1 acepta imágenes PNG o JPEG.", "unsupported_media_type", media_type=media_type)
-    if not isinstance(image, bytes) or not image:
-        fail(IssueCode.INPUT_UNREADABLE, "La imagen codificada está vacía o no son bytes.", "invalid_image_bytes")
-    if len(image) > MAX_INPUT_BYTES:
-        fail(IssueCode.INPUT_TOO_LARGE, "La imagen supera el límite de bytes de E1.", "byte_limit", limit=MAX_INPUT_BYTES)
-    if media_type != asset.media_type or hashlib.sha256(image).hexdigest() != asset.sha256:
+    normalized = decode_raster(image, media_type, cancel)
+    if media_type != asset.media_type or normalized.sha256 != asset.sha256:
         fail(IssueCode.INPUT_UNREADABLE, "La imagen no coincide con el asset original.", "asset_identity_mismatch")
-    try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", Image.DecompressionBombWarning)
-            with Image.open(BytesIO(image)) as decoded:
-                return _decode_checked(decoded, media_type, asset, cancel)
-    except (Image.DecompressionBombError, Image.DecompressionBombWarning):
-        fail(IssueCode.INPUT_TOO_LARGE, "La imagen supera el límite de píxeles.", "decoder_pixel_limit")
-    except (UnidentifiedImageError, OSError, ValueError) as exc:
-        fail(IssueCode.INPUT_UNREADABLE, "La imagen no pudo decodificarse.", "decode_failed", error_type=type(exc).__name__)
-
-
-def _decode_checked(decoded, media_type, asset, cancel):
-    expected_format = {"image/png": "PNG", "image/jpeg": "JPEG"}[media_type]
-    if decoded.format != expected_format:
-        fail(IssueCode.INPUT_UNREADABLE, "El formato real no coincide con el declarado.", "decoded_format_mismatch")
-    width, height = decoded.size
-    if width * height > MAX_INPUT_PIXELS:
-        fail(IssueCode.INPUT_TOO_LARGE, "La imagen supera el límite de píxeles de E1.", "pixel_limit", limit=MAX_INPUT_PIXELS)
-    if (width, height) != (asset.original_width_px, asset.original_height_px):
+    if normalized.size != (asset.original_width_px, asset.original_height_px):
         fail(IssueCode.INPUT_UNREADABLE, "Las dimensiones no coinciden con el asset.", "asset_dimensions_mismatch")
-    if getattr(decoded, "n_frames", 1) != 1:
-        fail(IssueCode.INPUT_UNREADABLE, "E1 no admite imágenes animadas.", "animated_input")
-    if decoded.getexif().get(274, 1) != 1:
-        fail(IssueCode.INPUT_UNREADABLE, "La orientación EXIF debe normalizarse antes de E1.", "exif_orientation_requires_normalization")
-    decoded.load()
-    check_cancel(cancel)
-    return decoded.convert("RGBA")
+    return normalized.rgba
 
 
 def _crop(rgba, asset):
@@ -207,8 +174,8 @@ def _median_member_palette(foreground, quantized, keep=None):
     """Color de cada grupo = su miembro mediano por distancia al blanco, en lugar del promedio.
 
     El promedio mezcla el color del diseño con los píxeles suavizados del borde (que son una mezcla con el fondo) y deja
-    todo más pálido: un azul 14285a salía 172a5c y una línea fina oscura, gris. La mediana toma el color que más se
-    repite en el cuerpo del grupo. Medido en las 14 imágenes: el error medio no empeora en ninguna y se reduce a la
+    todo más pálido: un azul 14285a salía 172a5c y una línea fina oscura, gris. Se elige la mediana ponderada por frecuencia
+    tras ordenar por distancia al blanco y RGB; no necesariamente el color más frecuente. En las 14 imágenes, el error medio se reduce a la
     mitad en los logos planos (tests/h2_eval/informes/). Es determinista: se ordena por (distancia, RGB).
     """
     pixels = foreground.tobytes()

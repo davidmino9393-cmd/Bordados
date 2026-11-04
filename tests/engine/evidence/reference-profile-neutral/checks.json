@@ -1,0 +1,53 @@
+{
+  "merge": "3e618c0a87b23940900c8fde8489a8e9ac724ef7",
+  "rename": "fcf74682921ea0aa3ca7c456791487e8e83541be",
+  "before_status": "failed",
+  "before_literals": [
+    {
+      "file": "workers\\embroidery\\vectorize\\inkstitch.py",
+      "literal": "Anime_Socks"
+    },
+    {
+      "file": "workers\\embroidery\\vectorize\\inkstitch.py",
+      "literal": "anime_socks"
+    }
+  ],
+  "after_status": "passed",
+  "after_literals": [],
+  "after_checks": {
+    "colors_within_limit": {
+      "passed": 14,
+      "of": 14
+    },
+    "deterministic": {
+      "passed": 14,
+      "of": 14
+    },
+    "document_valid": {
+      "passed": 14,
+      "of": 14
+    },
+    "geometry_kinds_allowed": {
+      "passed": 14,
+      "of": 14
+    },
+    "has_objects": {
+      "passed": 14,
+      "of": 14
+    },
+    "minimum_feature_reported_never_removed": {
+      "passed": 14,
+      "of": 14
+    },
+    "provisional_values_marked": {
+      "passed": 14,
+      "of": 14
+    },
+    "within_target_contain": {
+      "passed": 14,
+      "of": 14
+    }
+  },
+  "physical_parameters_changed": false,
+  "checker_changed": false
+}
