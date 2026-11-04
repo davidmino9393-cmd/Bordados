@@ -1,0 +1,179 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\review-25370ff\\source\\tests\\e2e\\node_modules\\playwright\\cli.js",
+      "test",
+      "-c",
+      "audit.playwright.config.ts"
+    ],
+    "configFile": "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\review-25370ff\\audit.playwright.config.ts",
+    "rootDir": "C:/dev/wt-motor/tests/engine/.tmp/review-25370ff",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/dev/wt-motor/tests/engine/.tmp/review-25370ff/playwright-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "C:/dev/wt-motor/tests/engine/.tmp/review-25370ff",
+        "testIgnore": [],
+        "testMatch": [
+          "detail.spec.ts"
+        ],
+        "timeout": 180000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\review-25370ff\\playwright-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "",
+        "testDir": "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\review-25370ff",
+        "snapshotDir": "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\review-25370ff",
+        "testIgnore": [],
+        "testMatch": "detail.spec.ts",
+        "timeout": 180000,
+        "use": {
+          "channel": "chrome",
+          "headless": true,
+          "baseURL": "http://localhost:5287",
+          "viewport": {
+            "width": 1280,
+            "height": 900
+          },
+          "httpCredentials": {
+            "username": "test",
+            "password": "test"
+          },
+          "trace": "on",
+          "screenshot": "on"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": ""
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": {
+      "command": "npm.cmd run dev -- --port 5287 --strictPort",
+      "cwd": "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\review-25370ff\\source\\apps\\web",
+      "url": "http://localhost:5287",
+      "reuseExistingServer": false,
+      "timeout": 60000,
+      "env": {
+        "VITE_USE_MOCKS": "false",
+        "API_PROXY_TARGET": "http://127.0.0.1:8387",
+        "API_PROXY_AUTHORIZATION": "Basic dGVzdDp0ZXN0"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "detail.spec.ts",
+      "file": "detail.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "422 real de variante muestra detail; 403/404 conservan mensaje por código",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8803,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-04T00:39:54.470Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\review-25370ff\\playwright-results\\detail-422-real-de-variant-1af6c-onservan-mensaje-por-código\\test-finished-1.png"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\review-25370ff\\playwright-results\\detail-422-real-de-variant-1af6c-onservan-mensaje-por-código\\trace.zip"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "40af1ad2a5a636e92738-31bfe22314fd4628180c",
+          "file": "detail.spec.ts",
+          "line": 4,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-04T00:39:53.051Z",
+    "duration": 11370.507,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

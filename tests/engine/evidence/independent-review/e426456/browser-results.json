@@ -1,0 +1,169 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\review-e426456\\source\\tests\\e2e\\node_modules\\playwright\\cli.js",
+      "test",
+      "-c",
+      "notice.config.ts"
+    ],
+    "configFile": "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\review-e426456\\notice.config.ts",
+    "rootDir": "C:/dev/wt-motor/tests/engine/.tmp/review-e426456",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/dev/wt-motor/tests/engine/.tmp/review-e426456/playwright-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "C:/dev/wt-motor/tests/engine/.tmp/review-e426456",
+        "testIgnore": [],
+        "testMatch": [
+          "notice.spec.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\review-e426456\\playwright-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "",
+        "testDir": "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\review-e426456",
+        "snapshotDir": "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\review-e426456",
+        "testIgnore": [],
+        "testMatch": "notice.spec.ts",
+        "timeout": 90000,
+        "use": {
+          "channel": "chrome",
+          "headless": true,
+          "baseURL": "http://localhost:5288",
+          "viewport": {
+            "width": 1280,
+            "height": 900
+          },
+          "trace": "on"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": ""
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": {
+      "command": "npm.cmd run dev -- --port 5288 --strictPort",
+      "cwd": "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\review-e426456\\source\\apps\\web",
+      "url": "http://localhost:5288",
+      "reuseExistingServer": false,
+      "timeout": 60000,
+      "env": {
+        "VITE_USE_MOCKS": "false",
+        "API_PROXY_TARGET": "http://127.0.0.1:8388",
+        "API_PROXY_AUTHORIZATION": "Basic dGVzdDp0ZXN0"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "notice.spec.ts",
+      "file": "notice.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "aviso solo SVG preparado, explica límite y no escala",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1417,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-04T01:34:42.330Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\review-e426456\\playwright-results\\notice-aviso-solo-SVG-preparado-explica-límite-y-no-escala\\trace.zip"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8c6265afb303bd3da17e-a4335a8f14fb7eb3f2ad",
+          "file": "notice.spec.ts",
+          "line": 3,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-04T01:34:39.930Z",
+    "duration": 4993.138,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

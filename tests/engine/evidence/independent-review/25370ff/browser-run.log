@@ -1,0 +1,10 @@
+[WebServer] (node:43560) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+(node:52796) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 detail.spec.ts:4:5 › 422 real de variante muestra detail; 403/404 conservan mensaje por código (8.8s)
+
+  1 passed (11.4s)

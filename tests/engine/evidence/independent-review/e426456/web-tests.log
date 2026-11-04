@@ -1,0 +1,12 @@
+
+> bordados-web@0.0.0 test
+> vitest run
+
+
+ RUN  v5.0.5 C:/dev/wt-motor/tests/engine/.tmp/review-e426456/source/apps/web
+
+
+ Test Files  12 passed (12)
+      Tests  163 passed (163)
+   Start at  22:34:51
+   Duration  10.40s (environment 61%, tests 16%, setup 12%, transform 8%, import 2%, worker 1%)
