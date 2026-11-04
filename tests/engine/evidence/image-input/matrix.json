@@ -3,7 +3,7 @@
   "fixture": "synthetic asymmetric decoded pixels; no AI",
   "pillow": "12.3.0",
   "max_bytes": 10485760,
-  "max_pixels": 4000000,
+  "max_pixels": 20000000,
   "orientations": [
     {
       "media_type": "image/png",

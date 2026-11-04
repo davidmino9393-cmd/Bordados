@@ -11,7 +11,7 @@ from embroidery_contracts import IssueCode
 from .types import check_cancel, fail
 
 MAX_INPUT_BYTES = 10 * 1024 * 1024
-MAX_INPUT_PIXELS = 4_000_000
+MAX_INPUT_PIXELS = 20_000_000
 FORMATS = {"image/png": "PNG", "image/jpeg": "JPEG"}
 EXIF_ORIENTATION_TAG = 274
 EXIF_TRANSFORMS = {

@@ -27,5 +27,4 @@ Claude mantiene API/web/F. Codex mantiene E/adaptador/pruebas. Correcciones de r
 - [Entrada orientada](IMAGE_INPUT.md) · [Reglas](ESTADO_Y_REGLAS.md) · [Coordinación](COORDINACION.md)
 - [Protocolo H3](../../../tests/calibration/h3/PROTOCOLO_H3.md)
 
-Control de ronda B: correr motor y F antes del renombre del perfil; F debe reproducir los dos literales preexistentes. Luego renombrar solo el id neutral y su expectativa, sin parámetros físicos ni checker. Límite actual 4 MP hasta aplicar la ampliación medida y autorizada a 20 MP.
-
+Ronda B verificada: merge autorizado 3e618c0; control F rojo por dos literales; renombre neutral fcf7468 y F verde (8 checks 14/14), sin cambiar parámetros ni checker. Límite actual 20 MP tras medición y autorización de David; bytes 10 MiB y guarda 500000 aristas intactos. La referencia ampliada a 20 MP se rechaza por complejidad de forma controlada.

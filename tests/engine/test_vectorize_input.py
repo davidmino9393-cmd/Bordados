@@ -15,7 +15,7 @@ from vectorize import segmentation
 from vectorize.image_input import MAX_INPUT_BYTES, MAX_INPUT_PIXELS, decode_raster
 
 MAX_BYTES = 10 * 1024 * 1024
-MAX_PIXELS = 4_000_000
+MAX_PIXELS = 20_000_000
 ORIENTATION_TRANSFORMS = {
     2: Image.Transpose.FLIP_LEFT_RIGHT,
     3: Image.Transpose.ROTATE_180,
@@ -77,12 +77,18 @@ class RasterInputTests(unittest.TestCase):
         self.assertEqual(caught.exception.issue.evidence["reason"], "byte_limit")
 
     def test_pixel_limit_is_inclusive_and_checked_before_expensive_vectorization(self):
-        data = png(Image.new("RGB", (2000, 2000), "blue"))
-        self.assertEqual(segmentation.decode(data, "image/png", asset(data), None).size, (2000, 2000))
-        data = png(Image.new("RGB", (2001, 2000), "blue"))
-        with self.assertRaises(VectorizeFailure) as caught:
-            segmentation.decode(data, "image/png", asset(data), None)
+        data = png(Image.new("RGB", (4000, 5000), "blue"))
+        self.assertEqual(segmentation.decode(data, "image/png", asset(data), None).size, (4000, 5000))
+        # A genuine one-bit PNG keeps this 20,000,001-pixel boundary fixture small in memory and on disk.
+        data = png(Image.new("1", (MAX_PIXELS + 1, 1), 1))
+        source = asset(data)
+        with patch("PIL.PngImagePlugin.PngImageFile.load", side_effect=AssertionError("pixels loaded before cap")) as loaded:
+            with self.assertRaises(VectorizeFailure) as caught:
+                segmentation.decode(data, "image/png", source, None)
+            loaded.assert_not_called()
         self.assertEqual(caught.exception.issue.code, IssueCode.INPUT_TOO_LARGE)
+        self.assertEqual(caught.exception.issue.evidence["reason"], "pixel_limit")
+        self.assertEqual(caught.exception.issue.evidence["limit"], MAX_PIXELS)
 
     def test_all_exif_orientations_preserve_decoded_pixels_without_a_lossy_roundtrip(self):
         for media_type in ("image/png", "image/jpeg"):
