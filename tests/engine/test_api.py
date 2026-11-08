@@ -21,6 +21,7 @@ sys.path.insert(0, str(ROOT / "workers" / "embroidery"))
 import uvicorn
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from test_input_convert import INKSCAPE, PLAIN_SVG, ILLUSTRATOR_SVG, needs_inkscape  # noqa: E402
 from test_store_backends import isolated_schema_url, postgres_test_url  # noqa: E402
 
 try:
@@ -44,7 +45,8 @@ FAKE_WORKER = ROOT / "tests" / "engine" / "fixtures" / "fake_worker.py"
 def svg(marker="", path_id="shape_1", root='width="10mm" height="10mm" viewBox="0 0 10 10"'):
     comment = f"<!-- {marker} -->" if marker else ""
     return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" {root}>'
+        f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkstitch="http://inkstitch.org/namespace" {root}>'
+        f'<metadata><inkstitch:inkstitch_svg_version>3</inkstitch:inkstitch_svg_version></metadata>'
         f'{comment}<path id="{path_id}" d="M 0 0 L 10 10"/></svg>'
     ).encode()
 
@@ -56,7 +58,7 @@ def header(headers, name):
 class ApiTests(unittest.TestCase):
     def config_extras(self):
         """Campos de configuración propios de cada variante de la suite (por ejemplo, la base de datos)."""
-        return {}
+        return {"inkscape_executable": INKSCAPE} if INKSCAPE else {}
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
@@ -438,6 +440,83 @@ class ApiTests(unittest.TestCase):
     def with_target(self, width, height):
         return {**SETTINGS, "target": {"width_mm": width, "height_mm": height, "fit": "contain"}}
 
+    def upload_as(self, project_id, content, filename, content_type, key=None):
+        boundary = "----conv" + uuid.uuid4().hex
+        body = (f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="{filename}"\r\n'
+                f"Content-Type: {content_type}\r\n\r\n").encode() + content + f"\r\n--{boundary}--\r\n".encode()
+        return self.json_request("POST", f"/api/v1/projects/{project_id}/assets", headers={
+            "Idempotency-Key": key or uuid.uuid4().hex, "Content-Type": f"multipart/form-data; boundary={boundary}"}, raw=body)
+
+    @needs_inkscape
+    def test_a_plain_svg_is_stored_as_a_png_asset_and_the_original_is_kept_next_to_it(self):
+        """Los SVG que se exportan de Illustrator o Inkscape no traen parámetros de Ink/Stitch: se dibujan a imagen al subir."""
+        _, _, project = self.post("/api/v1/projects", {"name": "Logos"})
+        pid = project["project_id"]
+        status, _, asset = self.upload_as(pid, PLAIN_SVG, "Logo Club.svg", "image/svg+xml", "clave-svg-comun")
+        self.assertEqual(status, 201, asset)
+        self.assertEqual((asset["media_type"], asset["original_filename"]), ("image/png", "Logo Club.png"))
+        self.assertEqual(asset["original_width_px"], 2000)  # el dibujo recortado: 200 x 100 se dibuja a 2000 x 1000
+        self.assertEqual(asset["original_height_px"], 1000)
+        status, _, converted = self.request("GET", urllib.parse.urlsplit(asset["original_download"]["url"]).path, auth=False)
+        self.assertEqual(status, 200)
+        self.assertEqual(hashlib.sha256(converted).hexdigest(), asset["sha256"])  # el SHA es el del PNG que ve el motor
+        self.assertEqual(converted[:8], b"\x89PNG\r\n\x1a\n")
+        assets = Path(self.tmp.name) / "data" / "assets"
+        self.assertEqual((assets / f"{asset['asset_id']}.original.svg").read_bytes(), PLAIN_SVG)  # lo subido queda guardado
+
+        status, _, again = self.upload_as(pid, PLAIN_SVG, "Logo Club.svg", "image/svg+xml", "clave-svg-comun")
+        self.assertEqual((status, again["asset_id"]), (201, asset["asset_id"]))  # la misma clave: el mismo asset
+        self.assertEqual(len(list(assets.glob("*.original.svg"))), 1)
+
+    @needs_inkscape
+    def test_an_illustrator_svg_and_a_prepared_svg_are_each_handled_by_what_they_are(self):
+        _, _, project = self.post("/api/v1/projects", {"name": "Dos SVG"})
+        pid = project["project_id"]
+        _, _, converted = self.upload_as(pid, ILLUSTRATOR_SVG, "illustrator.svg", "image/svg+xml")
+        _, _, prepared = self.upload_as(pid, svg(), "preparado.svg", "image/svg+xml")
+        self.assertEqual((converted["media_type"], prepared["media_type"]), ("image/png", "image/svg+xml"))
+        self.assertEqual(prepared["original_filename"], "preparado.svg")
+
+    @needs_inkscape
+    def test_an_svg_that_reaches_for_files_on_the_server_is_refused_and_nothing_is_stored(self):
+        _, _, project = self.post("/api/v1/projects", {"name": "Hostil"})
+        pid = project["project_id"]
+        hostile = (b'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 10 10">'
+                   b'<image xlink:href="file:///C:/Windows/win.ini" width="10" height="10"/></svg>')
+        status, _, problem = self.upload_as(pid, hostile, "hostil.svg", "image/svg+xml")
+        self.assertEqual((status, problem["code"]), (422, "INVALID_REQUEST"))
+        self.assertIn("externos", problem["detail"])
+        _, _, detail = self.json_request("GET", f"/api/v1/projects/{pid}")
+        self.assertEqual(detail["assets"], [])
+
+    def test_content_that_is_not_an_admitted_file_is_refused_with_the_reason(self):
+        _, _, project = self.post("/api/v1/projects", {"name": "Raro"})
+        pid = project["project_id"]
+        for content, declared, expected in (
+            (b"no soy una imagen", "image/png", (415, "UNSUPPORTED_MEDIA_TYPE")),
+            (b"RIFF\x00\x00\x00\x00WEBPVP8 \x00\x00\x00\x00", "image/webp", (415, "UNSUPPORTED_MEDIA_TYPE")),  # WebP todavía no está en el catálogo
+        ):
+            with self.subTest(declared=declared):
+                status, _, problem = self.upload_as(pid, content, "x.bin", declared)
+                self.assertEqual((status, problem["code"]), expected)
+
+    @needs_inkscape
+    def test_a_converted_svg_goes_through_the_image_pipeline_to_a_jef(self):
+        _, _, project = self.post("/api/v1/projects", {"name": "Logo a JEF"})
+        pid = project["project_id"]
+        settings = self.with_target(200.0, 200.0)
+        _, _, asset = self.upload_as(pid, PLAIN_SVG, "logo.svg", "image/svg+xml")
+        _, _, revision = self.post(f"/api/v1/projects/{pid}/revisions", {
+            "schema_version": "0.1", "base_revision_id": None, "reason": "Ajustes iniciales", "settings": settings, "document": None})
+        status, _, job = self.post(f"/api/v1/projects/{pid}/jobs", {
+            "schema_version": "0.1", "asset_id": asset["asset_id"], "revision_id": revision["revision_id"],
+            "input_kind": "raster_image", "settings": settings})
+        self.assertEqual(status, 202, job)
+        done = self.wait_job(pid, job["job_id"], {"needs_review", "failed"}, timeout=60)
+        self.assertEqual(done["status"], "needs_review", done.get("issues"))
+        _, _, manifest = self.artifacts(job["job_id"])
+        self.assertEqual(manifest["input_sha256"], asset["sha256"])  # la procedencia es el PNG que salió del SVG
+
     def test_a_project_admits_one_initial_revision_per_embroidery_each_with_its_own_settings(self):
         """Un proyecto reúne varios archivos: cada bordado nuevo parte de su propia revisión inicial y de sus ajustes."""
         first_settings, second_settings = self.with_target(160.0, 160.0), self.with_target(200.0, 170.0)
@@ -605,7 +684,7 @@ class ApiTestsOnPostgres(ApiTests):
     """La suite entera de la API, con los datos en PostgreSQL en vez de SQLite."""
 
     def config_extras(self):
-        return {"database_url": isolated_schema_url(self, postgres_test_url())}
+        return {**super().config_extras(), "database_url": isolated_schema_url(self, postgres_test_url())}
 
     def test_the_data_lives_in_postgresql_and_not_in_a_sqlite_file(self):
         self.setup_project(svg())

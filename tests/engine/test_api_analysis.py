@@ -50,6 +50,12 @@ def png(width=80, height=60, shape=False):
     return buffer.getvalue()
 
 
+# Un SVG preparado: trae los parámetros de Ink/Stitch (sin ellos la API lo trata como un SVG común y lo convierte a imagen).
+PREPARED_SVG = (b'<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkstitch="http://inkstitch.org/namespace" width="10mm" height="10mm">'
+                b'<metadata><inkstitch:inkstitch_svg_version>3</inkstitch:inkstitch_svg_version></metadata>'
+                b'<path id="a" d="M0 0L1 1"/></svg>')
+
+
 class FakeProvider(AnalysisProvider):
     def __init__(self, provider_id, regions=(INSIDE,), error=None):
         self.provider_id, self.model = provider_id, f"fake-{provider_id}"
@@ -166,7 +172,7 @@ class CatalogAndCreationTests(AnalysisApiTests):
         self.start({"openai": FakeProvider("openai")})
         _, project = self.call("POST", "/api/v1/projects", {"name": "H2"})
         pid = project["project_id"]
-        _, svg = self.upload(pid, b'<svg xmlns="http://www.w3.org/2000/svg" width="10mm" height="10mm"><path id="a" d="M0 0L1 1"/></svg>', "a.svg", "image/svg+xml")
+        _, svg = self.upload(pid, PREPARED_SVG, "a.svg", "image/svg+xml")
         _, image = self.upload(pid, png())
         _, revision = self.call("POST", f"/api/v1/projects/{pid}/revisions", {"schema_version": "0.1", "base_revision_id": None, "reason": "r", "settings": self.settings(), "document": None})
         for asset, kind in ((svg, "raster_image"), (image, "prepared_svg")):
@@ -279,7 +285,7 @@ class AnalysisFlowTests(AnalysisApiTests):
         self.assertEqual((status, design["purpose"], photo["purpose"]), (201, "design", "sewout_photo"))
         self.assertEqual({a["purpose"] for a in self.call("GET", f"/api/v1/projects/{pid}")[1]["assets"]}, {"design", "sewout_photo"})
         self.assertEqual(self.upload(pid, png(), "x.png", purpose="otra")[0], 422)
-        svg = b'<svg xmlns="http://www.w3.org/2000/svg" width="10mm" height="10mm"><path id="a" d="M0 0L1 1"/></svg>'
+        svg = PREPARED_SVG
         self.assertEqual(self.upload(pid, svg, "a.svg", "image/svg+xml", purpose="sewout_photo")[0], 422)
         _, revision = self.call("POST", f"/api/v1/projects/{pid}/revisions", {"schema_version": "0.1", "base_revision_id": None, "reason": "r", "settings": self.settings(), "document": None})
         job_body = {"schema_version": "0.1", "asset_id": photo["asset_id"], "revision_id": revision["revision_id"], "input_kind": "raster_image", "settings": self.settings()}
@@ -349,7 +355,7 @@ class AnalysisFlowTests(AnalysisApiTests):
         self.assertEqual(self.call("GET", "/api/v1/jobs/job_inexistente/analysis")[0], 404)
         _, project = self.call("POST", "/api/v1/projects", {"name": "SVG"})
         pid = project["project_id"]
-        svg = b'<svg xmlns="http://www.w3.org/2000/svg" width="10mm" height="10mm"><path id="a" d="M0 0L1 1"/></svg>'
+        svg = PREPARED_SVG
         _, asset = self.upload(pid, svg, "a.svg", "image/svg+xml")
         _, revision = self.call("POST", f"/api/v1/projects/{pid}/revisions", {"schema_version": "0.1", "base_revision_id": None, "reason": "r", "settings": SETTINGS, "document": None})
         status, job = self.call("POST", f"/api/v1/projects/{pid}/jobs", {"schema_version": "0.1", "asset_id": asset["asset_id"], "revision_id": revision["revision_id"], "input_kind": "prepared_svg", "settings": SETTINGS})
@@ -601,7 +607,7 @@ class LegibilityEndpointTests(AnalysisApiTests):
         self.assertEqual(detail["jobs"], [])
 
     def test_a_prepared_svg_a_sewout_photo_unknown_assets_and_bad_sizes_are_refused(self):
-        _, svg = self.upload(self.pid, b'<svg xmlns="http://www.w3.org/2000/svg" width="10mm" height="10mm"><path id="a" d="M0 0L1 1"/></svg>', "a.svg", "image/svg+xml")
+        _, svg = self.upload(self.pid, PREPARED_SVG, "a.svg", "image/svg+xml")
         _, photo = self.upload(self.pid, png(80, 60, shape=True), purpose="sewout_photo")
         _, image = self.upload(self.pid, png(80, 60, shape=True))
         for asset, query, expected in (

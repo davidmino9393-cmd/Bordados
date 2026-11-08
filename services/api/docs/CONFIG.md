@@ -30,7 +30,7 @@ Los nombres son exactos. `requerido` no tiene default.
 | `service_token` | string/null | `null` | Bearer opaco. |
 | `basic_username` | string/null | `null` | Basic auth; requiere también password. |
 | `basic_password` | string/null | `null` | Basic auth; requiere también username. |
-| `inkscape_executable` | string/null | `null` | Opcional; solo verifica versión. |
+| `inkscape_executable` | string/null | `null` | Verifica versión y dibuja a imagen, al subirlos, los SVG comunes (sin parámetros de Ink/Stitch, como los de Illustrator) y los PDF/AI. Sin él, esos archivos se rechazan con un motivo. Un SVG preparado para Ink/Stitch y las imágenes no lo usan. |
 | `principal_id` | string | `h0_user` | Propietario único de recursos en H0. |
 | `timeout_s` | number | `180` | Finito y > 0. |
 | `max_workers` | integer | `1` | >= 1. |

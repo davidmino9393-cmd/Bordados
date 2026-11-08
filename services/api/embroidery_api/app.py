@@ -16,6 +16,7 @@ from fastapi import APIRouter, Depends, FastAPI, File, Form, Header, Query, Requ
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from PIL import Image, UnidentifiedImageError
+from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from embroidery_contracts import (
@@ -32,6 +33,7 @@ from .analysis import configured_providers, provider_availability
 from .config import ApiConfig
 from .downloads import ASSET_SCOPE, DownloadSigner
 from .errors import ApiProblem
+from .input_convert import ORIGINAL_SUFFIX, ConversionRefused, normalize_upload
 from .legibility import check as check_legibility, prepare as prepare_legibility
 from .profiles import load_profiles, validate_settings
 from .runner import FIT_SVG_TO_TARGET, JobRunner, continuation_stages, initial_stages, raster_stages, unanalyzed_raster_stages
@@ -306,26 +308,44 @@ def create_app(config: ApiConfig, analysis_providers=None):
         owned("project", id)
         if purpose not in ASSET_PURPOSES:
             raise ApiProblem("INVALID_REQUEST", "purpose debe ser design o sewout_photo.")
-        data = await file.read()
-        content_type = (file.content_type or "").split(";", 1)[0].strip().lower()
-        digest, width, height, suffix = _validate_upload(data, content_type, catalog.upload_limits)
-        filename = _safe_filename(file.filename)
-        if purpose == "sewout_photo" and content_type == "image/svg+xml":
+        upload = await file.read()
+        declared = (file.content_type or "").split(";", 1)[0].strip().lower()
+        upload_name = _safe_filename(file.filename)
+        if len(upload) > catalog.upload_limits.max_bytes:
+            raise ApiProblem("PAYLOAD_TOO_LARGE", "El archivo supera el límite configurado.")
+        if purpose == "sewout_photo" and declared == "image/svg+xml":
             raise ApiProblem("INVALID_REQUEST", "Una foto de la muestra debe ser PNG o JPEG.")
-        logical = {"project_id": id, "sha256": digest, "filename": filename, "content_type": content_type, "purpose": purpose}
+        data, content_type, filename, original, conversion = upload, declared, upload_name, None, None
+        if purpose == "design":
+            # Un SVG común, un PDF o una imagen WebP/GIF/BMP/TIFF se convierten al subir; el asset es el convertido.
+            try:
+                normalized = await run_in_threadpool(
+                    normalize_upload, upload, declared, upload_name,
+                    accepted=frozenset(catalog.upload_limits.accepted_mime_types), inkscape=config.inkscape_executable,
+                )
+            except ConversionRefused as refused:
+                raise ApiProblem(refused.code, refused.detail) from None
+            data, content_type, filename = normalized.data, normalized.media_type, normalized.filename
+            original, conversion = normalized.original, normalized.conversion
+        digest, width, height, suffix = _validate_upload(data, content_type, catalog.upload_limits)
+        upload_sha256 = hashlib.sha256(upload).hexdigest()
+        logical = {"project_id": id, "sha256": upload_sha256, "filename": upload_name, "content_type": declared, "purpose": purpose}
 
         def action():
             asset_id = _new_id("asset")
             path = data_root / "assets" / f"{asset_id}{suffix}"
             path.write_bytes(data)
+            private = {"path": str(path), "sha256": digest, "media_type": content_type}
+            if original:  # lo que subió la persona queda guardado junto al convertido
+                original_path = data_root / "assets" / f"{asset_id}.original{ORIGINAL_SUFFIX[original['media_type']]}"
+                original_path.write_bytes(original["data"])
+                private["upload"] = {"path": str(original_path), "sha256": upload_sha256, "media_type": original["media_type"],
+                                     "filename": original["filename"], "conversion": conversion}
             body = SourceAsset(
                 asset_id=asset_id, project_id=id, sha256=digest, media_type=content_type,
                 original_filename=filename, original_width_px=width, original_height_px=height, purpose=purpose,
             )
-            store.create(
-                "asset", asset_id, owner, id, body.model_dump(mode="json"),
-                {"path": str(path), "sha256": digest, "media_type": content_type},
-            )
+            store.create("asset", asset_id, owner, id, body.model_dump(mode="json"), private)
             return 201, body.model_dump(mode="json")
 
         status, body = store.idempotent(f"uploadAsset:{owner}:{id}", idempotency_key, logical, action)
