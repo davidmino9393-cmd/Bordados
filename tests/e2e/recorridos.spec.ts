@@ -79,6 +79,23 @@ test('revisión localizada: corrige y regenera', async ({ page }) => {
   await expect(page.getByText('Listo para prueba (digital)').first()).toBeVisible({ timeout: RUN_TIMEOUT_MS });
 });
 
+// El destino de un SVG preparado es un límite, no una escala: el formulario lo dice antes de generar (una imagen sí se ajusta).
+const PREPARED_SVG_SIZE_NOTE = /se borda al tamaño con el que se preparó/;
+
+test('SVG preparado: el formulario avisa que las medidas son un límite y una imagen no', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Nombre del proyecto').fill('Prueba aviso de tamaño');
+  await page.getByRole('button', { name: 'Crear proyecto' }).click();
+  await page.getByLabel('Elegir archivo').setInputFiles({ name: 'cuadrado.svg', mimeType: 'image/svg+xml', buffer: SVG_VALIDO });
+  await expect(page.getByText(/cuadrado\.svg · /)).toBeVisible();
+  await expect(page.getByText(PREPARED_SVG_SIZE_NOTE)).toBeVisible();
+  await expectNoHorizontalScroll(page);
+  await page.screenshot({ path: 'test-results/prepared-svg-size-note.png', fullPage: true });
+  await page.getByLabel('Elegir archivo').setInputFiles({ name: 'logo.png', mimeType: 'image/png', buffer: PNG_1X1 });
+  await expect(page.getByText(/logo\.png · /)).toBeVisible();
+  await expect(page.getByText(PREPARED_SVG_SIZE_NOTE)).toHaveCount(0);
+});
+
 // --- Job completo (SIMULADO): SVG preparado en needs_review, con archivos y 14 incidencias de satén ---
 const SVG_VALIDO = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>');
 const SATIN_ISSUES = 14;

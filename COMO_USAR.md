@@ -33,6 +33,7 @@ La primera vez hace falta `cd apps\web` y `npm install`, y que existan Inkscape,
 | Colores | El límite es de hilos. Una capa casi blanca se toma como fondo y no gasta un hilo |
 | Qué se quita | Manchas de menos de 1 mm² y capas casi blancas. La página lo avisa con los números |
 | Técnica | Todo se borda como relleno: las líneas muy finas salen como relleno angosto, no como satin ni como puntada corrida |
+| SVG preparado | Se borda al tamaño con el que se preparó: el ancho y el alto que indicás son solo el límite (si el dibujo es más grande, el trabajo se rechaza). Para otro tamaño, usá «Variante de tamaño» en el resultado |
 | Bastidor | El perfil actual es SQ20b (200 × 200 mm); el JEF lleva ese código de bastidor |
 | Tiempo | Un logo simple, unos 10 s; Anime Socks, unos 2 min |
 

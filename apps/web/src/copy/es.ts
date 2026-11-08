@@ -161,6 +161,8 @@ export const es = {
       `El área indicada es mayor que el bastidor (${w} × ${h} mm). Podés continuar: el servidor confirmará el encaje.`,
     estimate: (w: string, h: string) =>
       `Tamaño estimado: ${w} × ${h} mm. El tamaño real se mide al releer el archivo generado.`,
+    preparedSvgSize:
+      'Un SVG preparado se borda al tamaño con el que se preparó: las medidas de arriba son solo el límite (si el dibujo es más grande, el trabajo se rechaza). Para otro tamaño, pedí una «Variante de tamaño» desde el resultado.',
     submit: 'Generar bordado',
     submitting: 'Enviando…',
     needAsset: 'Primero subí una imagen.',

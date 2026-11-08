@@ -95,6 +95,7 @@ export function SettingsForm({ catalog, asset, busy, onSubmit }: SettingsFormPro
           {estimate && (
             <Notice tone={NoticeTone.Info}>{text.estimate(formatMm(estimate.width_mm), formatMm(estimate.height_mm))}</Notice>
           )}
+          {preparedSvg && <Notice tone={NoticeTone.Info}>{text.preparedSvgSize}</Notice>}
           <div className="form-grid">
             <Field label={text.machine}>
               <select value={values.machine_profile} onChange={(e) => changeMachine(e.target.value)}>
