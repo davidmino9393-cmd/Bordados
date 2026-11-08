@@ -6,6 +6,7 @@ from embroidery_contracts import EmbroideryDocument, Issue, IssueCode
 from embroidery_contracts.issues import ISSUE_RULES
 
 from . import stitchable
+from . import reference_geometry
 from .types import VectorizeFailure, VectorizeResult
 
 SVG_NAMESPACE = "http://www.w3.org/2000/svg"
@@ -143,16 +144,19 @@ def reference_parameters():
         "profile_id": REFERENCE_PROFILE_ID, "row_spacing_mm": REFERENCE_ROW_SPACING_MM,
         "max_stitch_length_mm": REFERENCE_MAX_STITCH_LENGTH_MM, "pull_compensation_mm": REFERENCE_PULL_COMPENSATION_MM,
         "underlay": "none", "angles_deg": list(REFERENCE_ANGLES_DEG), "calibrated": False,
+        "pull_compensation_policy": "running=0; fill=min(0.2,0.25*ring_median_width_mm)",
+        "satin_limitation": reference_geometry.SATIN_LIMITATION,
     }
 
 
-def _reference_attributes(index):
+def _reference_attributes(index, spacing=REFERENCE_ROW_SPACING_MM, compensation=REFERENCE_PULL_COMPENSATION_MM):
     return {
-        "inkstitch:row_spacing_mm": str(REFERENCE_ROW_SPACING_MM),
+        "inkstitch:auto_fill": "true",
+        "inkstitch:row_spacing_mm": str(spacing),
         "inkstitch:angle": str(REFERENCE_ANGLES_DEG[index % len(REFERENCE_ANGLES_DEG)]),
         "inkstitch:max_stitch_length_mm": str(REFERENCE_MAX_STITCH_LENGTH_MM),
         "inkstitch:fill_underlay": "False",
-        "inkstitch:pull_compensation_mm": str(REFERENCE_PULL_COMPENSATION_MM),
+        "inkstitch:pull_compensation_mm": str(compensation),
         "inkstitch:trim_after": "True",
     }
 
@@ -165,24 +169,39 @@ def to_reference_inkstitch_svg(result: VectorizeResult) -> bytes:
     """
     document = result.document
     planned = stitchable.plan(document)
-    kept = [(obj, item) for obj, item in zip(document.objects, planned) if item.path_data_mm is not None]
+    rings_by_object = _reference_rings(document)
+    kept = [(obj, reference_geometry.groups(obj, rings_by_object[obj.object_id])) for obj in document.objects]
+    kept = [(obj, groups) for obj, groups in kept if groups]
     if not kept:
-        _reject(IssueCode.GEOMETRY_INVALID, "No queda geometría que se pueda bordar: todo es casi blanco o más chico que la mínima.",
-                (obj.object_id for obj in document.objects))
+        from .types import issue
+        raise VectorizeFailure(issue(
+            IssueCode.GEOMETRY_INVALID, "No queda geometría que se pueda bordar: todo es casi blanco o más chico que la mínima.",
+            {"reference_rings": {key: list(rings) for key, rings in rings_by_object.items()},
+             "minimum_reference_fill_area_mm2": reference_geometry.MIN_REFERENCE_FILL_AREA_MM2},
+            (obj.object_id for obj in document.objects)))
     root = _svg_root(document)
     metadata = ET.SubElement(root, "metadata")
     ET.SubElement(metadata, "inkstitch:inkstitch_svg_version").text = SCHEMA_VERSION
     ET.SubElement(metadata, "desc").text = json.dumps({
         "adapter": REFERENCE_ADAPTER, "parameters": reference_parameters(), "digital_readiness_evaluated": False,
         "physical_approval": "untested", "stitchable": stitchable.evidence(planned),
+        "technique_selection": rings_by_object,
+        "satin_limitation": reference_geometry.SATIN_LIMITATION,
         "source_issues": [issue.model_dump(mode="json") for issue in result.issues],
     }, ensure_ascii=False, sort_keys=True)
-    for index, (obj, item) in enumerate(kept):
-        ET.SubElement(root, "path", {
-            "id": obj.object_id, "d": item.path_data_mm,
-            "style": f"fill:{obj.work_color};fill-rule:evenodd;stroke:none",
-            **_reference_attributes(index),
-        })
+    for index, (obj, groups) in enumerate(kept):
+        for group_index, ((technique, spacing, compensation), path) in enumerate(groups):
+            running = technique == "running"
+            attributes = ({"inkstitch:stroke_method": "running_stitch",
+                           "inkstitch:running_stitch_length_mm": str(REFERENCE_MAX_STITCH_LENGTH_MM),
+                           "inkstitch:trim_after": "True"} if running else
+                          _reference_attributes(index, spacing, compensation))
+            ET.SubElement(root, "path", {
+                "id": obj.object_id if len(groups) == 1 else f"{obj.object_id}_technique_{group_index}", "d": path,
+                "data-source-object-id": obj.object_id, "data-technique": technique,
+                "style": (f"fill:none;stroke:{obj.work_color};stroke-width:0.2" if running else
+                          f"fill:{obj.work_color};fill-rule:evenodd;stroke:none"), **attributes,
+            })
     return ET.tostring(root, encoding="utf-8", xml_declaration=True)
 
 
@@ -210,4 +229,24 @@ def reference_issues(result: VectorizeResult):
             description=ADJUSTED_NOTICE, evidence={"stitchable": stitchable.evidence(planned)},
             suggested_correction=ADJUSTED_CORRECTION,
         ))
+    rings_by_object = _reference_rings(result.document)
+    for object_id, rings in rings_by_object.items():
+        omitted = [ring for ring in rings if ring["omitted"] in {
+            "reference_fill_below_2mm2", "reference_object_below_2mm2", "skeleton_has_no_stitch_segments"}]
+        if omitted:
+            rule = ISSUE_RULES[IssueCode.VISUAL_MISMATCH]
+            rewritten.append(Issue(
+                code=IssueCode.VISUAL_MISMATCH, severity=rule.severity, stage=rule.stage, object_ids=(object_id,),
+                description="Se omitieron anillos sin recorrido cosible o bajo el mínimo real de relleno de 2 mm².",
+                evidence={"reference_omitted_rings": omitted,
+                          "minimum_reference_fill_area_mm2": reference_geometry.MIN_REFERENCE_FILL_AREA_MM2},
+                suggested_correction=ADJUSTED_CORRECTION,
+            ))
     return tuple(rewritten)
+
+
+def _reference_rings(document):
+    affine = document.coordinates.source_px_to_mm
+    scale = abs(affine[0])
+    return {obj.object_id: obj.reference_rings or reference_geometry.measure_object(
+        obj, scale, stitchable.tolerance_for(document), grid_origin=(affine[4], affine[5]))[0] for obj in document.objects}

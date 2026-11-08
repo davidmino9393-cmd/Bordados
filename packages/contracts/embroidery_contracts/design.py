@@ -80,6 +80,9 @@ class EmbroideryObject(ContractModel):
     effective_technique: Technique
     parameters: StitchParameters
     satin: SatinRails | None = None
+    # Reference-only derivations. path_data_mm remains the registered E1 mask.
+    stitch_path_mm: str | None = None
+    reference_rings: tuple[dict[str, JsonValue], ...] = ()
 
     @model_validator(mode="after")
     def satin_data(self):

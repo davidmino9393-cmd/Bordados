@@ -15,6 +15,7 @@ from .contours import contours
 from .segmentation import decode, segment
 from .thin_features import measure as measure_thin_features
 from .types import VectorizeResult, check_cancel, fail, issue
+from . import reference_geometry
 
 METHOD_VERSION = "e1-pixel-mask-v4"
 TRANSFORM_VERSION = "raster-contain-v1"
@@ -41,9 +42,11 @@ def vectorize(image: bytes, media_type: str, asset: SourceAsset, analysis: Analy
     affine = _affine(segmented, settings)
     objects = tuple(_object(mask, affine, segmented, revision_id, cancel) for mask in traced)
     document = _document(objects, affine, asset, settings, job_id, revision_id)
+    document, widths = reference_geometry.apply(document, cancel)
     evidence = _evidence(segmented, traced, asset, analysis, settings, affine)
+    evidence["stroke_width"] = widths
     evidence["minimum_feature"] = measure_thin_features(segmented, traced, objects, abs(affine[0]), cancel)
-    issues = _issues(objects, segmented.evidence, evidence["minimum_feature"])
+    issues = _issues(objects, segmented.evidence, evidence["minimum_feature"]) + reference_geometry.legibility_issues(widths)
     check_cancel(cancel)
     svg = _editable_svg(document, evidence)
     check_cancel(cancel)
@@ -158,7 +161,7 @@ def _evidence(segmented, traced, asset, analysis, settings, affine):
         "text_handling": "annotation_only_no_font_substitution",
         "h3_validation_required": True,
         "provisional_fields": ["effective_technique", "proposed_technique", "parameters"],
-        "technique_selection": "fill_placeholder_not_a_physical_width_decision",
+        "technique_selection": "reference_per_ring_median_square_opening_running_below_0.9mm_scaled_fill_otherwise",
         "settings_sha256": hashlib.sha256(settings.model_dump_json().encode()).hexdigest(),
         "no_sewout_readiness_claim": True,
     }

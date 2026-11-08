@@ -53,6 +53,7 @@ class IssueCode(StrEnum):
     WORKER_TIMEOUT = "WORKER_TIMEOUT"
     JOB_CANCELLED = "JOB_CANCELLED"
     VISUAL_MISMATCH = "VISUAL_MISMATCH"
+    LEGIBILITY_RISK = "LEGIBILITY_RISK"
     PHYSICAL_ADJUSTMENT_REQUIRED = "PHYSICAL_ADJUSTMENT_REQUIRED"
 
 
@@ -96,5 +97,6 @@ ISSUE_RULES = {
     IssueCode.WORKER_TIMEOUT: IssueRule(ERROR, ValidationStage.WORKER, "Configured processing deadline exceeded"),
     IssueCode.JOB_CANCELLED: IssueRule(INFO, ValidationStage.WORKER, "Associated processes stopped after cancellation"),
     IssueCode.VISUAL_MISMATCH: IssueRule(REVIEW, ValidationStage.VISUAL, "Original/vector/JEF mismatch requires review"),
+    IssueCode.LEGIBILITY_RISK: IssueRule(REVIEW, ValidationStage.VISUAL, "Measured thin area may be illegible at the requested size"),
     IssueCode.PHYSICAL_ADJUSTMENT_REQUIRED: IssueRule(REVIEW, ValidationStage.SEWOUT, "Physical sample requires a new revision"),
 }
