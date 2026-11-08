@@ -385,8 +385,8 @@ def create_app(config: ApiConfig, analysis_providers=None):
         validate_settings(request.settings, catalog)
 
         def action():
-            if any(row["body"].get("kind") == "initial" for row in store.rows("revision", owner, id)):
-                raise ApiProblem("REVISION_CONFLICT", "El proyecto ya tiene una revisión inicial.")
+            # Un proyecto reúne varios archivos: cada bordado nuevo parte de su propia revisión inicial, con sus ajustes
+            # inmutables (el job los exige iguales). Antes se admitía una sola; David lo ratificó el 2026-11-08.
             revision_id = _new_id("rev")
             body = RevisionResponse(
                 revision_id=revision_id, project_id=id, base_revision_id=None,

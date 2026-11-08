@@ -384,6 +384,38 @@ class ApiTests(unittest.TestCase):
     def with_target(self, width, height):
         return {**SETTINGS, "target": {"width_mm": width, "height_mm": height, "fit": "contain"}}
 
+    def test_a_project_admits_one_initial_revision_per_embroidery_each_with_its_own_settings(self):
+        """Un proyecto reúne varios archivos: cada bordado nuevo parte de su propia revisión inicial y de sus ajustes."""
+        first_settings, second_settings = self.with_target(160.0, 160.0), self.with_target(200.0, 170.0)
+        project_id, first_asset, first_revision = self.setup_project(svg(), first_settings)
+        status, _, second_asset = self.upload(project_id, svg(path_id="shape_2"), "dos.svg")
+        self.assertEqual(status, 201, second_asset)
+        body = {"schema_version": "0.1", "base_revision_id": None, "reason": "Ajustes iniciales",
+                "settings": second_settings, "document": None}
+        path = f"/api/v1/projects/{project_id}/revisions"
+        status, _, second_revision = self.post(path, body, "clave-del-segundo-bordado")
+        self.assertEqual(status, 201, second_revision)  # antes: 409 «El proyecto ya tiene una revisión inicial»
+        self.assertNotEqual(second_revision["revision_id"], first_revision)
+        status, _, again = self.post(path, body, "clave-del-segundo-bordado")
+        self.assertEqual((status, again), (201, second_revision))  # la misma clave devuelve la misma revisión, no otra
+        _, _, listing = self.json_request("GET", path)
+        self.assertEqual([item["kind"] for item in listing["items"]], ["initial", "initial"])
+
+        done = {}
+        for label, asset_id, revision_id, settings in (
+            ("uno", first_asset, first_revision, first_settings),
+            ("dos", second_asset["asset_id"], second_revision["revision_id"], second_settings),
+        ):
+            status, job, _ = self.create_job(project_id, asset_id, revision_id, settings)
+            self.assertEqual(status, 202, job)
+            done[label] = self.wait_job(project_id, job["job_id"], {"needs_review"})
+        self.assertEqual((done["uno"]["asset_id"], done["uno"]["revision_id"]), (first_asset, first_revision))
+        self.assertEqual((done["dos"]["asset_id"], done["dos"]["revision_id"]), (second_asset["asset_id"], second_revision["revision_id"]))
+        self.assertEqual(done["uno"]["settings_snapshot"]["target"], first_settings["target"])
+        self.assertEqual(done["dos"]["settings_snapshot"]["target"], second_settings["target"])
+        status, problem, _ = self.create_job(project_id, second_asset["asset_id"], first_revision, second_settings)
+        self.assertEqual((status, problem["code"]), (409, "REVISION_CONFLICT"))  # los ajustes de una revisión siguen siendo inmutables
+
     def test_a_prepared_svg_job_is_digitized_at_its_declared_size_and_the_target_is_only_a_limit(self):
         """B2: el job base no escala el SVG preparado aunque el destino difiera; solo una variante cambia el tamaño."""
         cases = (

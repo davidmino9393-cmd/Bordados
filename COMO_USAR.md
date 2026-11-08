@@ -18,7 +18,7 @@ La primera vez hace falta `cd apps\web` y `npm install`, y que existan Inkscape,
 ## Usar la página
 | Paso | Qué hacer |
 |---|---|
-| 1 | «Crear proyecto» con cualquier nombre |
+| 1 | «Crear proyecto» con cualquier nombre. Un proyecto puede reunir varios archivos: se genera un bordado de cada uno, con sus propios ajustes, y los anteriores quedan en «Trabajos anteriores» |
 | 2 | Subir la imagen (PNG o JPG, fondo blanco o transparente) |
 | 3 | Ancho y alto máximos en mm (el bordado entra en ese cuadro, sin deformarse) y cantidad de hilos |
 | 4 | Dejar «Sin análisis de IA» (no hace falta OpenAI ni Ollama) |
