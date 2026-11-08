@@ -54,3 +54,12 @@ passed, `geometry/satin/routing/visual` not_run, `sewout_status: untested`.
 
 - Motor + API (`tests/engine`): 203 OK (13 nuevas en `test_palette_legibility.py`, 4 de endpoint en `test_api_analysis.py`).
 - Web: 179 OK (16 nuevas: `jefGate`, `JefHero`, `LegibilityNotice`); `npm run build` OK.
+
+## Corrida end-to-end (evidencia)
+
+Artefactos de `job_08ae86c7e9bd47df900ffbdcbb81c6c3` en `services/api/evidence/orden3/e2e/`: `validation.json`, `result.json`,
+`vectorized-evidence.json`, `input.svg`, `output.jef`, `preview.png`. En `result.json` las rutas absolutas de la máquina se
+reemplazaron por marcadores (`<inkscape>`, `<inkstitch>`, `<job>`); no hay otros cambios.
+
+- JEF: `services/api/evidence/orden3/e2e/output.jef` (16 844 bytes)
+- SHA256: `bed2c4e94eeae77962d3e7e05d816993142745d21823b168c694a013aade45f6`
