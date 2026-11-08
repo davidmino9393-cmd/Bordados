@@ -33,6 +33,8 @@ class ApiConfig:
     # Ink/Stitch corre dos veces el plan de puntadas (diagnóstico y exportación): un diseño con flores y letras tarda minutos.
     digitizing_timeout_s: float = 600
     # H2: proveedores de visión. Las claves solo viven en esta configuración privada.
+    # Sin `database_url` los datos van a SQLite dentro de `data_root`; con una URL `postgresql://` van a PostgreSQL. Es un secreto.
+    database_url: str | None = field(default=None, repr=False)
     openai_api_key: str | None = field(default=None, repr=False)
     openai_model: str | None = None
     openai_base_url: str = "https://api.openai.com"
@@ -64,6 +66,8 @@ class ApiConfig:
             raise ValueError("A private signing_key of at least 32 bytes is required")
         if not self.public_base_url.startswith(("http://", "https://")):
             raise ValueError("public_base_url must be an explicit HTTP(S) origin")
+        if self.database_url is not None and not self.database_url.startswith(("postgresql://", "postgres://")):
+            raise ValueError("database_url must be a postgresql:// URL")
         if not math.isfinite(self.timeout_s) or self.timeout_s <= 0 or self.max_workers < 1 or self.max_queued_jobs < 1:
             raise ValueError("Timeout and worker/queue bounds must be positive")
         if not math.isfinite(self.dimension_tolerance_mm) or self.dimension_tolerance_mm < 0:

@@ -36,7 +36,7 @@ from .legibility import check as check_legibility, prepare as prepare_legibility
 from .profiles import load_profiles, validate_settings
 from .runner import FIT_SVG_TO_TARGET, JobRunner, continuation_stages, initial_stages, raster_stages, unanalyzed_raster_stages
 from .svg_fit import fit_to_target
-from .store import Store
+from .store import open_store
 
 
 LOGGER = logging.getLogger(__name__)
@@ -192,7 +192,7 @@ def create_app(config: ApiConfig, analysis_providers=None):
     data_root = Path(config.data_root)
     for name in ("assets", "jobs", "runs"):
         (data_root / name).mkdir(parents=True, exist_ok=True)
-    store = Store(data_root)
+    store = open_store(data_root, config.database_url)
     signer = DownloadSigner(config.signing_key, config.public_base_url)
     runner = JobRunner(config, store, providers)
     owner = config.principal_id

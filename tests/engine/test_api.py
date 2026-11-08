@@ -20,6 +20,14 @@ sys.path.insert(0, str(ROOT / "workers" / "embroidery"))
 
 import uvicorn
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from test_store_backends import isolated_schema_url, postgres_test_url  # noqa: E402
+
+try:
+    import psycopg
+except ImportError:
+    psycopg = None
+
 import embroidery_api.app as api_app
 import embroidery_api.runner as api_runner
 from embroidery_api.app import create_app
@@ -46,10 +54,14 @@ def header(headers, name):
 
 
 class ApiTests(unittest.TestCase):
+    def config_extras(self):
+        """Campos de configuración propios de cada variante de la suite (por ejemplo, la base de datos)."""
+        return {}
+
     def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory()
+        self.tmp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
         self.addCleanup(self.tmp.cleanup)
-        config = ApiConfig(
+        self.config = ApiConfig(
             data_root=Path(self.tmp.name) / "data",
             profiles_path=ROOT / "services" / "api" / "profiles.json",
             python_executable=Path(sys.executable),
@@ -62,9 +74,14 @@ class ApiTests(unittest.TestCase):
             max_queued_jobs=8,
             timeout_s=20,
             worker_script=FAKE_WORKER,
+            **self.config_extras(),
         )
+        self.start_server()
+        self.addCleanup(self._stop)
+
+    def start_server(self):
         self.server = uvicorn.Server(uvicorn.Config(
-            create_app(config), host="127.0.0.1", port=0, log_level="critical",
+            create_app(self.config), host="127.0.0.1", port=0, log_level="critical",
         ))
         self.thread = threading.Thread(target=self.server.run, daemon=True)
         self.thread.start()
@@ -74,11 +91,15 @@ class ApiTests(unittest.TestCase):
         if not self.server.started:
             self.fail("uvicorn did not start")
         self.base_url = f"http://127.0.0.1:{self.server.servers[0].sockets[0].getsockname()[1]}"
-        self.addCleanup(self._stop)
 
     def _stop(self):
         self.server.should_exit = True
         self.thread.join(10)
+
+    def restart(self):
+        """Apaga la API y levanta otra con la misma configuración: lo que sigue ahí es lo que quedó guardado."""
+        self._stop()
+        self.start_server()
 
     def request(self, method, path, body=None, headers=None, auth=True, raw=None, content_type=None):
         values = {}
@@ -237,6 +258,39 @@ class ApiTests(unittest.TestCase):
         self.assertEqual({record["stage"]: record["outcome"] for record in final["stages"]}["digitizing"], "cancelled")
         status, _, problem = self.artifacts(job["job_id"])
         self.assertEqual((status, problem["code"]), (409, "ARTIFACTS_UNAVAILABLE"))
+
+    def test_projects_jobs_and_downloads_survive_an_api_restart(self):
+        """Lo que se guardó sigue ahí al reiniciar: el proyecto, el archivo, el trabajo y el JEF para volver a descargarlo."""
+        project_id, asset_id, revision_id = self.setup_project(svg())
+        status, _, second_asset = self.upload(project_id, svg(path_id="shape_2"), "dos.svg")
+        self.assertEqual(status, 201)
+        _, job, _ = self.create_job(project_id, asset_id, revision_id)
+        before = self.wait_job(project_id, job["job_id"], {"needs_review"})
+        _, _, manifest_before = self.artifacts(job["job_id"])
+        jef_before = next(item for item in manifest_before["artifacts"] if item["kind"] == "jef")
+        _, _, project_before = self.json_request("GET", f"/api/v1/projects/{project_id}")
+
+        self.restart()
+
+        status, _, project_after = self.json_request("GET", f"/api/v1/projects/{project_id}")
+        self.assertEqual(status, 200)
+        self.assertEqual(project_after["project"], project_before["project"])
+        self.assertEqual([a["asset_id"] for a in project_after["assets"]], [a["asset_id"] for a in project_before["assets"]])
+        self.assertEqual([a["sha256"] for a in project_after["assets"]], [a["sha256"] for a in project_before["assets"]])
+        self.assertIn(second_asset["asset_id"], [a["asset_id"] for a in project_after["assets"]])
+        _, _, after = self.json_request("GET", f"/api/v1/jobs/{job['job_id']}")
+        self.assertEqual(after, before)  # el trabajo, sus ajustes, etapas y avisos, tal como estaban
+        status, _, manifest_after = self.artifacts(job["job_id"])
+        self.assertEqual(status, 200, manifest_after)
+        jef_after = next(item for item in manifest_after["artifacts"] if item["kind"] == "jef")
+        self.assertEqual((jef_after["artifact_id"], jef_after["sha256"], jef_after["byte_size"]),
+                         (jef_before["artifact_id"], jef_before["sha256"], jef_before["byte_size"]))
+        status, _, payload = self.request("GET", urllib.parse.urlsplit(jef_after["download"]["url"]).path, auth=False)
+        self.assertEqual(status, 200)
+        self.assertEqual(hashlib.sha256(payload).hexdigest(), jef_before["sha256"])  # el mismo JEF, byte a byte
+        _, _, again = self.post(f"/api/v1/projects/{project_id}/jobs", {  # y se puede seguir trabajando en el mismo proyecto
+            "schema_version": "0.1", "asset_id": second_asset["asset_id"], "revision_id": revision_id, "input_kind": "prepared_svg", "settings": SETTINGS})
+        self.wait_job(project_id, again["job_id"], {"needs_review"})
 
     def test_a_cancel_after_the_result_was_saved_does_not_touch_it(self):
         project_id, asset_id, revision_id = self.setup_project(svg())
@@ -544,6 +598,21 @@ class ApiTests(unittest.TestCase):
         status, _, conflict = self.post("/api/v1/projects", {"name": "Different"}, key)
         self.assertEqual(status, 409)
         self.assertEqual(conflict["code"], "IDEMPOTENCY_CONFLICT")
+
+
+@unittest.skipUnless(postgres_test_url(), "No hay PostgreSQL de prueba (EMBROIDERY_TEST_DATABASE_URL o postgres-dev.json)")
+class ApiTestsOnPostgres(ApiTests):
+    """La suite entera de la API, con los datos en PostgreSQL en vez de SQLite."""
+
+    def config_extras(self):
+        return {"database_url": isolated_schema_url(self, postgres_test_url())}
+
+    def test_the_data_lives_in_postgresql_and_not_in_a_sqlite_file(self):
+        self.setup_project(svg())
+        self.assertFalse((Path(self.tmp.name) / "data" / "metadata.sqlite3").exists())
+        with psycopg.connect(self.config.database_url, autocommit=True) as db:
+            counts = dict(db.execute("SELECT kind, COUNT(*) FROM resources GROUP BY kind").fetchall())
+        self.assertEqual((counts["project"], counts["asset"], counts["revision"]), (1, 1, 1))
 
 
 if __name__ == "__main__":
