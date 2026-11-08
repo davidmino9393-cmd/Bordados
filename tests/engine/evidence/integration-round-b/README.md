@@ -1,6 +1,6 @@
-# Integración ronda B — árbol candidato verde, main pendiente
+# Integración ronda B — main real integrado
 
-Propósito: verificar la combinación propuesta sin mover main. Fecha: 2026-11-03.
+Propósito: verificar el merge de main en codex/motor. Fecha: 2026-11-08, ronda 4, intento 4.
 
 Contenido: [Identidad](#identidad), [Resultados](#resultados), [Límites](#límites), [Repro](#repro), [Referencias](#referencias).
 
@@ -8,45 +8,43 @@ Contenido: [Identidad](#identidad), [Resultados](#resultados), [Límites](#lími
 
 | Elemento | SHA |
 |---|---|
-| main observado, no modificado por Codex | `68d7ecdfef23f34e5becd9e5ccb0be9de65244bf` |
-| candidato posterior auditado | `e42645661d3c51c4ce3181c289e4871319d5e0c4` |
-| motor probado | `96695e47b74c564fe1b7e4969e66bd4a6869a48f` |
-| merge-tree / árbol archivado | **`8e57b556bcd2e198699283b80574329f90aa56ed`** |
+| main confirmado, no actualizado por Codex | `b1ce70ca06d06b81e35c8becfefecac5e40412c9` |
+| motor antes del merge | `66b943a38b24a08502e851795742eeb5eb12010d` |
+| merge probado en codex/motor | `fd39dbdf4cf7d68e63dbb9afa11c21af051ef6e1` |
+| árbol probado | `d14cf1ea8bdc8eb94a24a1dd4e4273b9add6adad` |
 
-Sin conflictos en este merge-tree. CONTINUAR.md conserva la resolución ya commiteada en el merge autorizado de main68 hacia motor: estructura y revisión Codex, con los hechos de main. No se efectuó otro merge en ramas ni se creó worktree.
-
-**GO técnico para este árbol candidato.** La Orden 5 no se declara cerrada contra el main posterior: sigue pendiente recibir/verificar ese hash. El pedido posterior de un buzón para mover main contradice la última instrucción directa de David («No tocar main»); Codex conservó la restricción. Si main pasa exactamente a e426456, el árbol de esta tabla es reproducible con ese hash; si pasa a otro hash, se debe preparar el nuevo delta antes de extender este GO.
+Merge real sin conflictos. Main posterior confirmado; main_updated_by_codex=false. Commit posterior separado: solamente estas tres evidencias.
 
 ## Resultados
 
-- Motor completo del archive: **186 pruebas sin fallos**, 4 omitidas, 54,702 s.
-- h2_eval: **16 sin fallos**, 1 omitida, 0,135 s.
-- F real: **passed / exit0**, 14 raster y 2 SVG omitidos, cero errores, cero per_logo_literals, ocho checks 14/14.
-- Repro API/JEF repetido sobre el archive: GO. Base 20×20 sin escalado con límites 20/40; límite10 falla controlado. Cadena A40→B10 desde el original: 40×39,6 mm/1388 STITCH y 10×10/135 STITCH. Orígenes inmutables, replay sin leer/ajustar y dos rechazos422 sin recursos nuevos.
+| Control sobre el merge | Medición fresca |
+|---|---|
+| Motor completo, exit 0 | 186 totales: 182 aprobadas, 4 omitidas; 0 fallos, 0 errores; 49,748 s |
+| F, passed / exit 0 | 16 imágenes: 14 raster medidos, 2 SVG omitidos; 0 errores; ocho checks 14/14; per_logo_literals=[] |
+| F tiempos | 28 ejecuciones; mediana 1262 ms, máximo 4352 ms |
+| F IoU | 14/14 medidos; mínimo 0.699623, mediana 0.9886705 |
 
-Los SHA completos del SVG visto por el worker, medidas y STITCH están en audit-api.json. Input original `99c8c4a1450ebc2441e28247e7b45fb64d528109fd44160608bcb90b7cfcd321`; A `64f869f27bb0b76fd42e2f3640a8dc2990b087099d3b70dddf8428feab30fce1`; B `8c552697b9ea4493046987e4402c64ab8780eaf91242359a85c3caa15008c4f9`.
+Resumen fresco y SHA256 del F local: [status.json](status.json). Informe completo: `tests/engine/.tmp/r4deps/F.json` (ignorado). F no mide holes_preserved_as_count, text_as_annotation ni background_assumption.
 
-JEF de base, A y B reabiertos otra vez con pyembroidery, verificando dimensiones y STITCH independientemente del JSON del worker: [hashes y medidas](jef-hashes.json). No se agregan los archivos JEF al repositorio.
+Los demás JSON/logs de esta carpeta son históricos del árbol `8e57b556bcd2e198699283b80574329f90aa56ed` (2026-11-03). Incluyen F.json, motor.log, h2_eval.log y auditorías API/JEF; no son nuevas mediciones sobre este merge.
 
 ## Límites
 
-Helper/E1 y catálogo API coinciden ahora en **20 MP**, bytes **10 MiB**. Consumo API del helper para EXIF/dimensiones visuales pendiente de Claude. El ejemplo de build_openapi.py aún anuncia 40 MP; se comunicó al dueño API. El presente GO no afirma que esa integración de consumo esté realizada ni que el ejemplo esté corregido.
-
-Las mediciones de 20 MP justifican tiempo/memoria observados; no garantizan cualquier imagen. La referencia ampliada excede 500000 aristas y se rechaza controladamente. La guarda y parámetros físicos se conservaron. Sin calibración física ni ready_for_sewout.
+`services/api/build_openapi.py:286` conserva `40000000`, sin editar. H3/calibración física pendiente con David; sin marcar ready_for_sewout. La integración de consumo del helper API/EXIF requiere seguimiento del dueño API; esta ronda no la certifica.
 
 ## Repro
 
+En el merge indicado, desde `C:\dev\wt-motor`:
+
 ```powershell
-git merge-tree --write-tree e42645661d3c51c4ce3181c289e4871319d5e0c4 96695e47b74c564fe1b7e4969e66bd4a6869a48f
-git archive --format=zip --output=<temporal>/source.zip 8e57b556bcd2e198699283b80574329f90aa56ed
+$py='C:\Users\david\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe'
+$env:PYTHONPATH='C:\dev\wt-motor\services\api;C:\dev\wt-motor\workers\embroidery;C:\dev\wt-motor\tests\engine\.tmp\r4deps\api;C:\dev\wt-motor\tests\engine\.tmp\r4deps\embroidery'
+& $py -B -m unittest discover -s tests/engine -p 'test_*.py' -q
+& $py -B tests/h2_eval/run_eval.py --worker-path workers/embroidery --out tests/engine/.tmp\r4deps\F.json
 ```
-
-Extraer dentro del workspace; Python empaquetado -B, PYTHONDONTWRITEBYTECODE=1 y PYTHONPATH a deps API/worker. Ejecutar unittest discover de source/tests/engine y source/tests/h2_eval. F: source/tests/h2_eval/run_eval.py --worker-path <source/workers/embroidery> --out F.json. El repro API local de e426 se repitió junto al nuevo source en .tmp/integration-round-b/audit_api.py; no modifica el candidato.
-
-Versionados solamente README/JSON/logs; JEF, SVG, PNG y archivos ZIP permanecen locales. Los JEF se releyeron con pyembroidery real; las cuatro regresiones incluidas en el repro usan su worker falso rotulado. La medición de base/cadena/422 usó Ink/Stitch real.
 
 ## Referencias
 
-- [Preparación](preparation.json) · [Estado de refs](status.json) · [F](F.json)
-- [Motor](motor.log) · [h2_eval](h2_eval.log) · [JEF/API](audit-api.json) · [Log](jef-audit.log)
+- [Preparación](preparation.json) · [Estado y resultados frescos](status.json)
+- Históricos: [F](F.json) · [Motor](motor.log) · [h2_eval](h2_eval.log) · [API](audit-api.json) · [JEF](jef-hashes.json)
 - [Medición20MP](../image-input/README.md) · [Control rojo/verde](../reference-profile-neutral/README.md)
