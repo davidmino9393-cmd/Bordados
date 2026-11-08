@@ -13,7 +13,9 @@
     "errors": 0,
     "duration_seconds": 78.024,
     "exit_code": 0,
-    "log_sha256": "5f3ab247284ceac7c978e02dda290636701e04e59bc2cc70e3dfe7f11930b1dc"
+    "log_sha256": "245a7b1e25b8ce0548d6b3b33515abb8aafc526482c828cce1b8675e57175419",
+    "log_capture": "PowerShell stderr redirection; original UTF-16LE capture normalized to UTF-8/LF, trailing whitespace trimmed; test text and counts preserved.",
+    "raw_capture_sha256": "d8d1e74441cb9037c73a3ab6cf3bf0211dacfc1fedb76e7ed5550ad69a5d1813"
   },
   "F": {
     "status": "passed",
