@@ -288,6 +288,38 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
         return view(job);
       });
     },
+    // Orden 3.2 (SIMULADO): sin medir píxeles; solo para recorrer la pantalla. El número real lo mide el servidor.
+    async getLegibility(_projectId, assetId, query) {
+      if (!assets.has(assetId)) throw problem(ErrorCode.NotFound);
+      const thin = Math.min(0.95, Math.max(0.02, 18 / Math.max(query.width_mm, 1)));
+      const minimum = 120;
+      return {
+        schema_version: '0.1-legibility',
+        requested_width_mm: query.width_mm,
+        requested_height_mm: query.height_mm,
+        ink_width_mm: query.width_mm * 0.9,
+        ink_height_mm: query.height_mm * 0.9,
+        thin_share_below_0_6_mm: thin,
+        thin_share_below_0_8_mm: Math.min(1, thin * 1.5),
+        ink_area_share_below_0_6_mm: thin / 2,
+        warn: thin > 0.3,
+        message: thin > 0.3
+          ? `El ${Math.round(thin * 100)}% del trazo mide menos de 0,6 mm; a ${Math.round(query.width_mm * 0.9)} mm las letras no van a quedar legibles. El tamaño mínimo para que el 80% del trazo supere 0,8 mm es de ~${minimum} x ${minimum} mm.`
+          : null,
+        minimum_size: {
+          already_legible: query.width_mm >= minimum,
+          scale_factor: minimum / (query.width_mm * 0.9),
+          ink_width_mm: minimum,
+          ink_height_mm: minimum,
+          fits_in_hoop: query.hoop_width_mm === undefined ? null : minimum <= query.hoop_width_mm,
+          message: `El tamaño mínimo para que el 80% del trazo supere 0,8 mm es de ~${minimum} x ${minimum} mm.`,
+        },
+        margin_option: null,
+        palette_cleaning_applied: true,
+        inks: ['#1f3a93'],
+        method: 'SIMULADO',
+      };
+    },
     // H2 (confirmado por OpenCode, aún fuera de OpenAPI v0.1): 200 si el job tiene un análisis asociado,
     // propio o el aprobado de su padre en un job de continuación; 404 en cualquier otro caso.
     async getAnalysis(jobId) {

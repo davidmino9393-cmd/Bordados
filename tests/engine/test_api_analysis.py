@@ -570,3 +570,54 @@ class DecisionTests(AnalysisApiTests):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LegibilityEndpointTests(AnalysisApiTests):
+    """Orden 3.2: el aviso de legibilidad se pide antes de generar; no crea jobs ni bloquea."""
+
+    def setUp(self):
+        self.start({})
+        _, project = self.call("POST", "/api/v1/projects", {"name": "L"})
+        self.pid = project["project_id"]
+
+    def url(self, asset_id, query):
+        return f"/api/v1/projects/{self.pid}/assets/{asset_id}/legibility?{query}"
+
+    def test_it_returns_the_measured_share_and_the_exact_warning_for_a_fine_drawing(self):
+        _, asset = self.upload(self.pid, png(400, 300, shape=True))
+        status, body = self.call("GET", self.url(asset["asset_id"], "width_mm=10&height_mm=8&hoop_width_mm=140&hoop_height_mm=140"))
+        self.assertEqual(status, 200, body)
+        self.assertTrue(body["warn"])
+        self.assertRegex(body["message"], r"^El \d+% del trazo mide menos de 0,6 mm; a \d+ mm las letras no van a quedar legibles\.")
+        self.assertGreater(body["thin_share_below_0_6_mm"], 0.30)
+        self.assertEqual(body["requested_width_mm"], 10)
+        self.assertIn("minimum_size", body)
+
+    def test_a_big_enough_size_does_not_warn_and_nothing_is_created(self):
+        _, asset = self.upload(self.pid, png(400, 300, shape=True))
+        status, body = self.call("GET", self.url(asset["asset_id"], "width_mm=130&height_mm=120"))
+        self.assertEqual((status, body["warn"], body["message"]), (200, False, None))
+        _, detail = self.call("GET", f"/api/v1/projects/{self.pid}")
+        self.assertEqual(detail["jobs"], [])
+
+    def test_a_prepared_svg_a_sewout_photo_unknown_assets_and_bad_sizes_are_refused(self):
+        _, svg = self.upload(self.pid, b'<svg xmlns="http://www.w3.org/2000/svg" width="10mm" height="10mm"><path id="a" d="M0 0L1 1"/></svg>', "a.svg", "image/svg+xml")
+        _, photo = self.upload(self.pid, png(80, 60, shape=True), purpose="sewout_photo")
+        _, image = self.upload(self.pid, png(80, 60, shape=True))
+        for asset, query, expected in (
+            (svg["asset_id"], "width_mm=10&height_mm=10", 422),
+            (photo["asset_id"], "width_mm=10&height_mm=10", 422),
+            ("asset_missing", "width_mm=10&height_mm=10", 404),
+            (image["asset_id"], "width_mm=0&height_mm=10", 422),
+            (image["asset_id"], "height_mm=10", 400),  # falta un parámetro: MALFORMED_REQUEST
+        ):
+            with self.subTest(asset=asset, query=query):
+                self.assertEqual(self.call("GET", self.url(asset, query))[0], expected)
+
+    def test_it_needs_authentication(self):
+        _, asset = self.upload(self.pid, png(80, 60, shape=True))
+        request = urllib.request.Request(self.base + self.url(asset["asset_id"], "width_mm=10&height_mm=10"), method="GET")
+        with self.assertRaises(urllib.error.HTTPError) as caught:
+            urllib.request.urlopen(request, timeout=10)
+        self.assertEqual(caught.exception.code, 401)
+        caught.exception.close()

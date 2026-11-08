@@ -121,6 +121,11 @@ export function createHttpApiClient(config: HttpClientConfig = {}): ApiClient {
     // job de imagen en needs_review por análisis, algo que el backend de H0-04 todavía no produce.
     getAnalysis: (jobId) => request('GET', `/jobs/${id(jobId)}/analysis`),
     decideAnalysis: (jobId, body, key) => request('POST', `/jobs/${id(jobId)}/analysis-decision`, { key, body }),
+    getLegibility: (projectId, assetId, query) => {
+      const params = new URLSearchParams();
+      for (const [name, value] of Object.entries(query)) if (value !== undefined) params.set(name, String(value));
+      return request('GET', `/projects/${id(projectId)}/assets/${id(assetId)}/legibility?${params}`);
+    },
     recordSewout: (projectId, body, key) => request('POST', `/projects/${id(projectId)}/sewouts`, { key, body }),
     createDerivedRevision: (projectId, body, key) =>
       request('POST', `/projects/${id(projectId)}/revisions`, { key, body }),

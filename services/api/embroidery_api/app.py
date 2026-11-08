@@ -8,6 +8,7 @@ import io
 import json
 import logging
 from pathlib import Path
+import threading
 import uuid
 import xml.etree.ElementTree as ET
 
@@ -25,11 +26,13 @@ from embroidery_contracts import (
 )
 from embroidery_contracts.http import ERROR_STATUS, FieldError, ProblemResponse
 from embroidery_contracts.job_views import SewoutProjection
+from vectorize import VectorizeFailure
 
 from .analysis import configured_providers, provider_availability
 from .config import ApiConfig
 from .downloads import ASSET_SCOPE, DownloadSigner
 from .errors import ApiProblem
+from .legibility import check as check_legibility, prepare as prepare_legibility
 from .profiles import load_profiles, validate_settings
 from .runner import FIT_SVG_TO_TARGET, JobRunner, continuation_stages, initial_stages, raster_stages, unanalyzed_raster_stages
 from .svg_fit import fit_to_target
@@ -327,6 +330,45 @@ def create_app(config: ApiConfig, analysis_providers=None):
 
         status, body = store.idempotent(f"uploadAsset:{owner}:{id}", idempotency_key, logical, action)
         return JSONResponse(with_original_download(body).model_dump(mode="json"), status_code=status)
+
+    legibility_cache, legibility_lock = {}, threading.Lock()
+
+    @api.get("/projects/{id}/assets/{asset_id}/legibility")
+    def get_asset_legibility(
+        id: str,
+        asset_id: str,
+        width_mm: float = Query(gt=0, le=2000),
+        height_mm: float = Query(gt=0, le=2000),
+        color_limit: int = Query(3, ge=1, le=256),
+        hoop_width_mm: float | None = Query(None, gt=0, le=2000),
+        hoop_height_mm: float | None = Query(None, gt=0, le=2000),
+    ):
+        """CAMBIO PROPUESTO (orden 3.2, fuera de OpenAPI v0.1): aviso de legibilidad con números, antes de generar.
+
+        No bloquea nada y no crea jobs: mide el ancho de trazo de la imagen al tamaño pedido. Solo PNG/JPEG.
+        """
+        owned("project", id)
+        asset = owned("asset", asset_id, id)
+        media_type = asset["body"].get("media_type")
+        if asset["body"].get("purpose", "design") != "design" or media_type not in ("image/png", "image/jpeg"):
+            raise ApiProblem("INVALID_REQUEST", "La medición de legibilidad aplica solo a un diseño PNG o JPEG.")
+        key = (asset["body"]["sha256"], color_limit)
+        with legibility_lock:
+            prepared = legibility_cache.get(key)
+        try:
+            if prepared is None:
+                prepared = prepare_legibility(Path(asset["private"]["path"]).read_bytes(), media_type, color_limit)
+                with legibility_lock:
+                    if len(legibility_cache) >= 8:
+                        legibility_cache.pop(next(iter(legibility_cache)))
+                    legibility_cache[key] = prepared
+            hoop = (hoop_width_mm, hoop_height_mm) if hoop_width_mm and hoop_height_mm else None
+            result = check_legibility(b"", media_type, width_mm, height_mm, color_limit, hoop_mm=hoop, prepared=prepared) if prepared else None
+        except VectorizeFailure as failure:
+            raise ApiProblem("INVALID_REQUEST", failure.issue.description) from failure
+        if result is None:
+            raise ApiProblem("INVALID_REQUEST", "La imagen no tiene tinta que medir.")
+        return JSONResponse(result.model_dump(mode="json"))
 
     @api.post("/projects/{id}/revisions")
     def create_revision(

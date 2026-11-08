@@ -19,6 +19,7 @@ from vectorize.inkstitch import REFERENCE_PULL_COMPENSATION_MM, reference_issues
 
 from .analysis import ProviderError, normalize, region_incoherent_issue
 from .errors import ApiProblem
+from .palette import clean_palette
 from .svg_fit import fit_to_target
 
 
@@ -41,7 +42,6 @@ FAILURE_DESCRIPTIONS = {
 }
 VECTORIZATION_REVIEW_UNLOCALIZED = "vectorization_review_unlocalized"
 DIGITIZING_BLOCKED = "Bloqueado hasta que H3 valide técnica y parámetros físicos"
-MAX_COLOR_LIMIT = 256  # el tope de `JobSettings.color_limit` en el contrato
 DEFAULT_JEF_STEM = "bordado"  # si el original no tiene nombre; el JEF descargado se llama como la imagen de origen
 NOTHING_STITCHABLE = "No queda geometría que se pueda bordar"
 REFERENCE_SVG_FILENAME = "reference-inkstitch.svg"
@@ -414,29 +414,42 @@ class JobRunner:
         """E1 para un bordado: el destino es el tamaño del bordado y el límite de colores es de hilos.
 
         La compensación de tracción engorda cada relleno `REFERENCE_PULL_COMPENSATION_MM` por lado, así que se vectoriza
-        dentro de un destino más chico para que lo bordado entre en el pedido. Una capa casi blanca (el resplandor del
-        fondo) no gasta un hilo: si E1 la produjo, se repite con una capa más.
+        dentro de un destino más chico para que lo bordado entre en el pedido.
+
+        Orden 3.1: antes de vectorizar se fusionan los halos de antialias con su tinta (`palette.clean_palette`), así el
+        límite de hilos se gasta en tintas y no en mezclas con el blanco. El límite NUNCA se infla con capas de fondo: un
+        límite de hilos es de hilos. El asset original (bytes, SHA, dimensiones) no cambia; el motor recibe un PNG limpio con
+        su propio SHA, que queda declarado en la evidencia junto con la regla, el umbral y los conteos.
         """
         settings = previous.settings_snapshot
         inset = 2 * REFERENCE_PULL_COMPENSATION_MM
         target = settings.target
         if min(target.width_mm, target.height_mm) > 2 * inset:
             target = target.model_copy(update={"width_mm": target.width_mm - inset, "height_mm": target.height_mm - inset})
-
-        def run(limit):
-            adjusted = settings.model_copy(update={"target": target, "color_limit": limit})
-            return vectorize(image, asset.media_type, asset, analysis, adjusted,
-                             job_id=previous.job_id, revision_id=previous.revision_id, cancel=event)
-
-        result, limit = run(settings.color_limit), settings.color_limit
-        background = sum(1 for item in stitchable.plan(result.document) if item.omitted == stitchable.OMITTED_NEAR_WHITE)
-        if background and settings.color_limit + background <= MAX_COLOR_LIMIT:
-            limit = settings.color_limit + background
-            result = run(limit)
+        cleaning = clean_palette(image, asset.media_type, settings.color_limit, event)
+        engine_image, engine_asset = image, asset
+        if cleaning.applied:
+            width, height = cleaning.size
+            engine_image = cleaning.png
+            engine_asset = asset.model_copy(update={
+                "sha256": cleaning.sha256, "media_type": "image/png", "original_width_px": width, "original_height_px": height,
+            })
+        # El cuantizador del motor recibe tantos lugares como tintas quedaron (más las capas casi blancas reales, que el motor
+        # omite y declara); nunca más hilos que el pedido.
+        quantizer_slots = cleaning.engine_colour_limit if cleaning.applied else settings.color_limit
+        adjusted = settings.model_copy(update={"target": target, "color_limit": quantizer_slots})
+        result = vectorize(engine_image, engine_asset.media_type, engine_asset, analysis, adjusted,
+                           job_id=previous.job_id, revision_id=previous.revision_id, cancel=event)
+        plan = stitchable.plan(result.document)
+        near_white = sum(1 for item in plan if item.omitted == stitchable.OMITTED_NEAR_WHITE)
         return result, {
             "target_requested_mm": [settings.target.width_mm, settings.target.height_mm],
             "target_vectorized_mm": [target.width_mm, target.height_mm], "pull_compensation_inset_mm": inset,
-            "colour_limit_requested": settings.color_limit, "colour_limit_used": limit,
+            "colour_limit_requested": settings.color_limit,
+            "colour_limit_used": sum(1 for item in plan if not item.omitted),  # hilos de verdad, nunca inflados con capas de fondo
+            "engine_quantizer_slots": quantizer_slots,
+            "near_white_layers_omitted": near_white,
+            "palette_cleaning": cleaning.report,
         }
 
     def _vectorization_manifest(self, previous, asset, files):

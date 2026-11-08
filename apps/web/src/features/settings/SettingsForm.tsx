@@ -7,6 +7,7 @@ import { Field } from '../../shared/components/Field';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { estimateContain } from '../../shared/utils/fit';
 import { formatMm } from '../../shared/utils/format';
+import { LegibilityNotice } from './LegibilityNotice';
 import { ProviderPicker } from './ProviderPicker';
 import {
   parseMm,
@@ -121,6 +122,16 @@ export function SettingsForm({ catalog, asset, busy, onSubmit }: SettingsFormPro
               <input type="number" min={1} max={machine.max_colors} value={values.color_limit} onChange={(e) => set('color_limit', e.target.value)} />
             </Field>
           </div>
+          {isImage && asset && (
+            <LegibilityNotice
+              projectId={asset.project_id}
+              assetId={asset.asset_id}
+              widthMm={width}
+              heightMm={height}
+              colorLimit={Number.parseInt(values.color_limit, 10) || 0}
+              hoop={hoop}
+            />
+          )}
           {outsideHoop && hoop && (
             <Notice tone={NoticeTone.Warning}>{text.outsideHoop(hoop.width_mm, hoop.height_mm)}</Notice>
           )}

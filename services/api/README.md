@@ -30,6 +30,7 @@ Contenido: [Generación](#generacion), [Operaciones](#operaciones), [Límites](#
 | GET /jobs/{id}/analysis | 200 `AnalysisSpec` del job o, en una continuación, el aprobado de su padre; 404 si no hay |
 | POST /jobs/{id}/analysis-decision | 202 `JobResponse` nuevo (`approve` o `change_provider`); 409 si el job no espera la decisión; 422 si no es válida |
 | POST /projects/{id}/sewouts | 201 SewoutResponse |
+| GET /projects/{id}/assets/{asset_id}/legibility?width_mm&height_mm&color_limit&hoop_width_mm&hoop_height_mm | 200 aviso de legibilidad con números (CAMBIO PROPUESTO, fuera de OpenAPI v0.1; no crea jobs ni bloquea; solo PNG/JPEG) |
 
 `GET /jobs/{id}/artifacts` vuelve a firmar URLs TTL 300 s. La regla de estados es deliberada: `queued`, `digitizing`, `validating`, `failed` y `cancelled` devuelven `ARTIFACTS_UNAVAILABLE` aunque exista un manifiesto antiguo.
 
@@ -42,6 +43,10 @@ Contenido: [Generación](#generacion), [Operaciones](#operaciones), [Límites](#
 - Cancelación 202 confirma petición, no parada. El runner detiene el árbol de procesos antes de `cancelled`; un job terminal conserva su estado.
 - `prepared_svg` y revisiones iniciales; la cola es de un proceso con SQLite. H1 aporta persistencia y concurrencia.
 - H2: una imagen PNG/JPEG (`raster_image`) se analiza con el proveedor configurado y queda en `needs_review` si hay una región incoherente; `approve` sigue en una continuación y `change_provider` crea una revisión `analysis_retry`. Un análisis sin dudas, o su continuación, ejecuta E1 (`workers/embroidery/vectorize`, imágenes planas PNG/JPEG): guarda documento, SVG editable y evidencia en el directorio privado del job y termina en `needs_review` con `DENSITY_REVIEW_REQUIRED` localizado (técnica y parámetros provisionales hasta H3); `digitizing` y `validating` quedan `skipped`. No se genera JEF ni `ready_for_sewout`. El job publica un `artifact_manifest` con un único artefacto, `editable_svg` (`derived_from: document`), y `reread_metrics: null`; es el SVG de la geometría de E1, descargable por `GET /jobs/{id}/artifacts` (URL de 300 s). Para eso `ArtifactManifest.reread_metrics` pasó a ser opcional en `claude/web` (relajación del contrato v0.1; `ready_for_sewout` sigue exigiendo JEF, relectura e informe, con prueba). Un fallo de E1 conserva su código si es bloqueante; una incidencia de revisión sin objeto ni región falla con `WORKER_EXPORT_FAILED` y guarda la original en la evidencia. Las regiones de la IA fuera del original no se pasan a E1. El original subido ahora trae `original_download` (enlace firmado de 300 s, `scope: asset`, servido como `attachment` con `nosniff`) en la subida y en `GET /projects/{id}`. `POST /projects/{id}/assets` acepta el campo de formulario `purpose` (`design` por defecto o `sewout_photo`, solo PNG/JPEG): una foto no puede ser el asset de un job y `photo_asset_ids` de una muestra solo admite fotos del mismo proyecto. El adaptador del modelo local (`OllamaProvider`, `/api/chat` con la imagen en base64, `format` con el esquema de regiones, `temperature` 0, sin streaming) está probado solo con transporte falso: falta un modelo de visión real. Sin pruebas contra un proveedor real.
+
+## Paleta y legibilidad (orden 3)
+
+Antes de vectorizar una imagen, `palette.py` fusiona los halos de antialias con su tinta (el límite de colores es de hilos y no se infla) y el motor recibe un PNG limpio; el asset original no cambia y la regla, el umbral y los conteos quedan en `evidence.stitching.palette_cleaning`. `legibility.py` mide el ancho de trazo al tamaño pedido. Medición: [evidence/orden3](evidence/orden3/README.md).
 
 ## Evidencia
 
