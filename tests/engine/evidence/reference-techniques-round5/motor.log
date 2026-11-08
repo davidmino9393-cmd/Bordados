@@ -1,0 +1,419 @@
+python.exe : test_an_image_sent_with_ai_none_may_skip_analysis_with_a_recorded_reason 
+(test_analysis_decision.AnalysisDecisionTests.test_an_image_sent_with_ai_none_may_skip_analysis_with_a_recorded_reason)
+En línea: 2 Carácter: 161
++ ... mbroidery"; & 'C:/Users/david/.cache/codex-runtimes/codex-primary-run ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (test_an_image_s...ecorded_reason):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+R5: la segunda v�a para saltar el an�lisis (sin padre) est� en states.md. ... ok
+test_analysis_retry_revision_needs_parent_base_and_job 
+(test_analysis_decision.AnalysisDecisionTests.test_analysis_retry_revision_needs_parent_base_and_job) ... ok
+test_approve_and_change_provider_validate 
+(test_analysis_decision.AnalysisDecisionTests.test_approve_and_change_provider_validate) ... ok
+test_continuation_after_approval_may_skip_analysis 
+(test_analysis_decision.AnalysisDecisionTests.test_continuation_after_approval_may_skip_analysis) ... ok
+test_openapi_documents_both_operations 
+(test_analysis_decision.AnalysisDecisionTests.test_openapi_documents_both_operations) ... ok
+test_other_jobs_still_cannot_skip_analysis 
+(test_analysis_decision.AnalysisDecisionTests.test_other_jobs_still_cannot_skip_analysis) ... ok
+test_rejects_client_state_unknown_provider_and_repeated_regions 
+(test_analysis_decision.AnalysisDecisionTests.test_rejects_client_state_unknown_provider_and_repeated_regions) ... ok
+test_the_no_ai_skip_has_its_own_conditions 
+(test_analysis_decision.AnalysisDecisionTests.test_the_no_ai_skip_has_its_own_conditions) ... ok
+test_availability_is_live_for_ollama_and_static_for_validation 
+(test_analysis_ollama.OllamaConfigurationTests.test_availability_is_live_for_ollama_and_static_for_validation) ... ok
+test_invalid_values_are_rejected (test_analysis_ollama.OllamaConfigurationTests.test_invalid_values_are_rejected) ... 
+ok
+test_the_local_model_is_configured_only_with_a_model 
+(test_analysis_ollama.OllamaConfigurationTests.test_the_local_model_is_configured_only_with_a_model) ... ok
+test_a_model_without_a_tag_means_latest 
+(test_analysis_ollama.OllamaProbeTests.test_a_model_without_a_tag_means_latest) ... ok
+test_the_probe_checks_server_and_model_and_is_cached_for_a_few_seconds 
+(test_analysis_ollama.OllamaProbeTests.test_the_probe_checks_server_and_model_and_is_cached_for_a_few_seconds) ... ok
+test_the_probe_reports_why_it_is_unavailable 
+(test_analysis_ollama.OllamaProbeTests.test_the_probe_reports_why_it_is_unavailable) ... ok
+test_every_failure_maps_to_a_catalogue_code 
+(test_analysis_ollama.OllamaProviderTests.test_every_failure_maps_to_a_catalogue_code) ... ok
+test_never_retries_with_another_provider_and_honours_cancellation 
+(test_analysis_ollama.OllamaProviderTests.test_never_retries_with_another_provider_and_honours_cancellation) ... ok
+test_requires_the_model_from_private_configuration 
+(test_analysis_ollama.OllamaProviderTests.test_requires_the_model_from_private_configuration) ... ok
+test_sends_the_image_as_plain_base64_with_a_schema_and_no_streaming 
+(test_analysis_ollama.OllamaProviderTests.test_sends_the_image_as_plain_base64_with_a_schema_and_no_streaming) ... ok
+test_availability_reflects_what_is_configured_and_never_a_fallback 
+(test_analysis_provider.ConfigurationTests.test_availability_reflects_what_is_configured_and_never_a_fallback) ... ok
+test_key_and_model_go_together_and_the_key_is_not_in_repr 
+(test_analysis_provider.ConfigurationTests.test_key_and_model_go_together_and_the_key_is_not_in_repr) ... ok
+test_a_box_outside_the_original_is_kept_and_flagged_as_incoherent 
+(test_analysis_provider.NormalizeTests.test_a_box_outside_the_original_is_kept_and_flagged_as_incoherent) ... ok
+test_assigns_stable_unique_region_ids_and_builds_a_valid_spec 
+(test_analysis_provider.NormalizeTests.test_assigns_stable_unique_region_ids_and_builds_a_valid_spec) ... ok
+test_impossible_values_invalidate_the_whole_response 
+(test_analysis_provider.NormalizeTests.test_impossible_values_invalidate_the_whole_response) ... ok
+test_every_failure_maps_to_a_catalogue_code_without_leaking_the_key 
+(test_analysis_provider.OpenAIProviderTests.test_every_failure_maps_to_a_catalogue_code_without_leaking_the_key) ... ok
+test_never_switches_provider_on_failure 
+(test_analysis_provider.OpenAIProviderTests.test_never_switches_provider_on_failure) ... ok
+test_requires_key_and_model_from_private_configuration 
+(test_analysis_provider.OpenAIProviderTests.test_requires_key_and_model_from_private_configuration) ... ok
+test_sends_image_and_strict_schema_and_reads_structured_output 
+(test_analysis_provider.OpenAIProviderTests.test_sends_image_and_strict_schema_and_reads_structured_output) ... ok
+test_a_cancel_accepted_while_the_worker_finishes_leaves_the_job_cancelled_without_artifacts 
+(test_api.ApiTests.test_a_cancel_accepted_while_the_worker_finishes_leaves_the_job_cancelled_without_artifacts)
+R1: el subproceso termin� y falta guardar el resultado; la cancelaci�n (202) llega justo en esa ventana. ... ok
+test_a_cancel_after_the_result_was_saved_does_not_touch_it 
+(test_api.ApiTests.test_a_cancel_after_the_result_was_saved_does_not_touch_it) ... ok
+test_a_prepared_svg_job_is_digitized_at_its_declared_size_and_the_target_is_only_a_limit 
+(test_api.ApiTests.test_a_prepared_svg_job_is_digitized_at_its_declared_size_and_the_target_is_only_a_limit)
+B2: el job base no escala el SVG preparado aunque el destino difiera; solo una variante cambia el tama�o. ... ok
+test_a_prepared_svg_larger_than_the_target_still_fails_with_the_dimensions_issue 
+(test_api.ApiTests.test_a_prepared_svg_larger_than_the_target_still_fails_with_the_dimensions_issue)
+El destino sigue siendo un l�mite: lo que no entra se rechaza con motivo, no se achica en silencio. ... ok
+test_a_size_variant_is_a_new_revision_and_a_new_job_and_the_origin_does_not_change 
+(test_api.ApiTests.test_a_size_variant_is_a_new_revision_and_a_new_job_and_the_origin_does_not_change) ... ok
+test_a_size_variant_is_refused_when_the_svg_cannot_change_size 
+(test_api.ApiTests.test_a_size_variant_is_refused_when_the_svg_cannot_change_size)
+Sin viewBox o sin tama�o absoluto el motor no escalar�a el dibujo: se dice por qu�, y no se crea nada. ... ok
+test_a_size_variant_of_a_prepared_svg_can_also_be_smaller 
+(test_api.ApiTests.test_a_size_variant_of_a_prepared_svg_can_also_be_smaller) ... ok
+test_a_size_variant_of_a_prepared_svg_reaches_the_worker_at_the_new_size_and_the_origin_keeps_its_bytes (test_api.ApiTe
+sts.test_a_size_variant_of_a_prepared_svg_reaches_the_worker_at_the_new_size_and_the_origin_keeps_its_bytes)
+V1: la variante de un SVG preparado cambia la geometr�a antes de digitalizar; no solo el destino. ... ok
+test_a_size_variant_request_is_idempotent (test_api.ApiTests.test_a_size_variant_request_is_idempotent) ... ok
+test_a_size_variant_waits_for_the_origin_and_checks_ownership_and_kind 
+(test_api.ApiTests.test_a_size_variant_waits_for_the_origin_and_checks_ownership_and_kind) ... ok
+test_a_variant_of_a_variant_is_fitted_from_the_original_asset_not_from_the_parents_fitted_svg 
+(test_api.ApiTests.test_a_variant_of_a_variant_is_fitted_from_the_original_asset_not_from_the_parents_fitted_svg)
+B3: la cadena base -> A -> B parte siempre del asset que subi� la persona. ... ok
+test_artifact_states_and_download (test_api.ApiTests.test_artifact_states_and_download) ... ok
+test_authentication_problem_and_no_store (test_api.ApiTests.test_authentication_problem_and_no_store) ... ok
+test_concurrent_cancellations_never_lose_an_accepted_request_or_revive_a_finished_job 
+(test_api.ApiTests.test_concurrent_cancellations_never_lose_an_accepted_request_or_revive_a_finished_job)
+Cancelar a distintos instantes del trabajo: la solicitud aceptada se cumple o el trabajo ya hab�a terminado. ... ok
+test_job_creation_does_not_wait_for_worker (test_api.ApiTests.test_job_creation_does_not_wait_for_worker) ... ok
+test_project_idempotency (test_api.ApiTests.test_project_idempotency) ... ok
+test_repeating_a_prepared_svg_variant_request_returns_the_same_body_and_does_not_fit_again 
+(test_api.ApiTests.test_repeating_a_prepared_svg_variant_request_returns_the_same_body_and_does_not_fit_again)
+B3: el replay con la misma clave no crea otra revisi�n ni vuelve a leer y ajustar el SVG. ... ok
+test_a_clean_analysis_does_not_pause_and_ends_in_needs_review_with_the_jef_and_the_reference_notice (test_api_analysis.
+AnalysisFlowTests.test_a_clean_analysis_does_not_pause_and_ends_in_needs_review_with_the_jef_and_the_reference_notice) 
+... ok
+test_a_down_local_model_fails_the_job_with_its_own_code_and_does_not_use_openai 
+(test_api_analysis.AnalysisFlowTests.test_a_down_local_model_fails_the_job_with_its_own_code_and_does_not_use_openai) 
+... ok
+test_a_job_runs_end_to_end_with_the_ollama_adapter_and_never_falls_back 
+(test_api_analysis.AnalysisFlowTests.test_a_job_runs_end_to_end_with_the_ollama_adapter_and_never_falls_back) ... ok
+test_an_empty_image_fails_with_the_original_vectorization_diagnostic_kept 
+(test_api_analysis.AnalysisFlowTests.test_an_empty_image_fails_with_the_original_vectorization_diagnostic_kept) ... ok
+test_incoherent_box_pauses_in_needs_review_with_a_localized_issue 
+(test_api_analysis.AnalysisFlowTests.test_incoherent_box_pauses_in_needs_review_with_a_localized_issue) ... ok
+test_prepared_svg_and_unknown_jobs_have_no_analysis 
+(test_api_analysis.AnalysisFlowTests.test_prepared_svg_and_unknown_jobs_have_no_analysis) ... ok
+test_provider_failures_end_the_job_with_the_catalogue_code 
+(test_api_analysis.AnalysisFlowTests.test_provider_failures_end_the_job_with_the_catalogue_code) ... ok
+test_sewout_photos_are_assets_with_their_own_purpose_that_never_become_designs 
+(test_api_analysis.AnalysisFlowTests.test_sewout_photos_are_assets_with_their_own_purpose_that_never_become_designs) 
+... ok
+test_the_local_model_is_probed_live_in_the_profile_catalogue 
+(test_api_analysis.AnalysisFlowTests.test_the_local_model_is_probed_live_in_the_profile_catalogue) ... ok
+test_the_uploaded_original_has_a_signed_download_that_serves_the_same_bytes 
+(test_api_analysis.AnalysisFlowTests.test_the_uploaded_original_has_a_signed_download_that_serves_the_same_bytes) ... 
+ok
+test_the_worker_receives_the_reference_svg_made_from_the_vectorized_geometry 
+(test_api_analysis.AnalysisFlowTests.test_the_worker_receives_the_reference_svg_made_from_the_vectorized_geometry) ... 
+ok
+test_an_svg_cannot_be_submitted_as_a_raster_image_nor_the_reverse 
+(test_api_analysis.CatalogAndCreationTests.test_an_svg_cannot_be_submitted_as_a_raster_image_nor_the_reverse) ... ok
+test_catalog_lists_only_configured_providers_with_a_reason_for_the_rest 
+(test_api_analysis.CatalogAndCreationTests.test_catalog_lists_only_configured_providers_with_a_reason_for_the_rest) 
+... ok
+test_without_configured_providers_an_image_job_is_rejected 
+(test_api_analysis.CatalogAndCreationTests.test_without_configured_providers_an_image_job_is_rejected) ... ok
+test_approve_creates_a_child_job_on_the_same_revision_and_leaves_the_original_untouched (test_api_analysis.DecisionTest
+s.test_approve_creates_a_child_job_on_the_same_revision_and_leaves_the_original_untouched) ... ok
+test_approve_rejects_regions_that_are_not_part_of_the_analysis 
+(test_api_analysis.DecisionTests.test_approve_rejects_regions_that_are_not_part_of_the_analysis) ... ok
+test_change_provider_creates_an_analysis_retry_revision_and_a_new_job 
+(test_api_analysis.DecisionTests.test_change_provider_creates_an_analysis_retry_revision_and_a_new_job) ... ok
+test_change_provider_rejects_the_same_or_an_unavailable_provider 
+(test_api_analysis.DecisionTests.test_change_provider_rejects_the_same_or_an_unavailable_provider) ... ok
+test_idempotency_replays_the_same_job_and_rejects_other_content 
+(test_api_analysis.DecisionTests.test_idempotency_replays_the_same_job_and_rejects_other_content) ... ok
+test_only_a_job_waiting_for_an_analysis_decision_accepts_one 
+(test_api_analysis.DecisionTests.test_only_a_job_waiting_for_an_analysis_decision_accepts_one) ... ok
+test_the_client_cannot_inject_state_or_unknown_fields 
+(test_api_analysis.DecisionTests.test_the_client_cannot_inject_state_or_unknown_fields) ... ok
+test_the_job_stops_at_the_vectorized_geometry_without_digitizing 
+(test_api_analysis.GeometryOnlyTests.test_the_job_stops_at_the_vectorized_geometry_without_digitizing) ... ok
+test_a_near_white_layer_does_not_use_up_a_thread_and_the_omission_is_reported 
+(test_api_analysis.JefFromImageTests.test_a_near_white_layer_does_not_use_up_a_thread_and_the_omission_is_reported) 
+... ok
+test_a_size_variant_of_an_image_regenerates_from_the_original_at_the_new_size_without_ai (test_api_analysis.JefFromImag
+eTests.test_a_size_variant_of_an_image_regenerates_from_the_original_at_the_new_size_without_ai) ... ok
+test_an_image_without_ai_analysis_goes_straight_to_vectorizing_and_the_jef 
+(test_api_analysis.JefFromImageTests.test_an_image_without_ai_analysis_goes_straight_to_vectorizing_and_the_jef) ... ok
+test_nothing_to_stitch_pauses_for_review_without_a_jef 
+(test_api_analysis.JefFromImageTests.test_nothing_to_stitch_pauses_for_review_without_a_jef) ... ok
+test_the_manifest_keeps_the_uploaded_image_apart_from_the_intermediate_svg 
+(test_api_analysis.JefFromImageTests.test_the_manifest_keeps_the_uploaded_image_apart_from_the_intermediate_svg)
+R2: input_sha256 es el PNG que subi� la persona; geometry_sha256, el SVG intermedio que recibi� el worker. ... ok
+test_the_vectorized_size_leaves_room_for_the_pull_compensation 
+(test_api_analysis.JefFromImageTests.test_the_vectorized_size_leaves_room_for_the_pull_compensation) ... ok
+test_initial_flow_auth_cancel_and_download_policy 
+(test_b2.B2ContractTests.test_initial_flow_auth_cancel_and_download_policy) ... ok
+test_profile_reads_history_and_typed_revisions 
+(test_b2.B2ContractTests.test_profile_reads_history_and_typed_revisions) ... ok
+test_server_views_hoop_and_artifact_guards (test_b2.B2ContractTests.test_server_views_hoop_and_artifact_guards) ... ok
+test_auth_and_signing_key_are_required (test_config.ConfigTests.test_auth_and_signing_key_are_required) ... ok
+test_from_env_reads_optional_inkscape (test_config.ConfigTests.test_from_env_reads_optional_inkscape) ... ok
+test_inkscape_is_optional_and_explicit_paths_are_resolved 
+(test_config.ConfigTests.test_inkscape_is_optional_and_explicit_paths_are_resolved) ... ok
+test_a_manifest_without_a_jef_reread_is_valid_but_never_enough_for_readiness 
+(test_contracts.ContractTests.test_a_manifest_without_a_jef_reread_is_valid_but_never_enough_for_readiness) ... ok
+test_invalid_size_and_client_assigned_states_are_rejected 
+(test_contracts.ContractTests.test_invalid_size_and_client_assigned_states_are_rejected) ... ok
+test_physical_approval_is_not_a_digital_state 
+(test_contracts.ContractTests.test_physical_approval_is_not_a_digital_state) ... ok
+test_ready_requires_coherent_digital_evidence_references 
+(test_contracts.ContractTests.test_ready_requires_coherent_digital_evidence_references) ... ok
+test_six_versioned_simulated_examples_validate 
+(test_contracts.ContractTests.test_six_versioned_simulated_examples_validate) ... ok
+test_transitions_reject_skip_and_terminal_restart 
+(test_contracts.ContractTests.test_transitions_reject_skip_and_terminal_restart) ... ok
+test_generation_is_deterministic_and_the_committed_svg_is_current 
+(test_h3_sample.SampleDefinitionTests.test_generation_is_deterministic_and_the_committed_svg_is_current) ... ok
+test_it_fits_the_hoop_and_every_element_stays_inside_the_frame 
+(test_h3_sample.SampleDefinitionTests.test_it_fits_the_hoop_and_every_element_stays_inside_the_frame) ... ok
+test_the_measurement_sheet_has_the_physical_columns_empty_and_the_digital_ones_filled (test_h3_sample.SampleDefinitionT
+ests.test_the_measurement_sheet_has_the_physical_columns_empty_and_the_digital_ones_filled) ... ok
+test_the_svg_is_well_formed_has_unique_ids_and_the_expected_elements 
+(test_h3_sample.SampleDefinitionTests.test_the_svg_is_well_formed_has_unique_ids_and_the_expected_elements) ... ok
+test_a_fresh_export_has_the_frame_size_no_diagnostics_and_the_committed_commands 
+(test_h3_sample.SampleExportTests.test_a_fresh_export_has_the_frame_size_no_diagnostics_and_the_committed_commands) 
+... skipped 'Ink/Stitch no est� disponible (EMBROIDERY_INKSTITCH_EXE o configuraci�n privada)'
+test_catalog_covers_enums_and_prevents_issue_downgrading 
+(test_openapi.OpenAPIContractTests.test_catalog_covers_enums_and_prevents_issue_downgrading) ... ok
+test_committed_schema_and_catalog_are_generated_from_models 
+(test_openapi.OpenAPIContractTests.test_committed_schema_and_catalog_are_generated_from_models) ... ok
+test_fourteen_operations_refs_and_examples_are_coherent 
+(test_openapi.OpenAPIContractTests.test_fourteen_operations_refs_and_examples_are_coherent) ... ok
+test_fixture_settings_match_catalog (test_profiles.ProfileTests.test_fixture_settings_match_catalog) ... ok
+test_hoop_snapshot_must_match_catalog (test_profiles.ProfileTests.test_hoop_snapshot_must_match_catalog) ... ok
+test_unknown_machine_is_rejected (test_profiles.ProfileTests.test_unknown_machine_is_rejected) ... ok
+test_version_mismatch_is_rejected (test_profiles.ProfileTests.test_version_mismatch_is_rejected) ... ok
+test_known_two_colour_mask_is_preserved_in_all_comparisons 
+(test_quantization_probe.QuantizationProbeTests.test_known_two_colour_mask_is_preserved_in_all_comparisons) ... ok
+test_a_fresh_export_never_claims_digital_or_physical_approval 
+(test_reexport_regression.ReexportRegressionTests.test_a_fresh_export_never_claims_digital_or_physical_approval) ... 
+skipped 'Ink/Stitch no est� disponible (EMBROIDERY_INKSTITCH_EXE o configuraci�n privada)'
+test_the_new_jef_has_exactly_the_commands_of_the_delivered_one 
+(test_reexport_regression.ReexportRegressionTests.test_the_new_jef_has_exactly_the_commands_of_the_delivered_one) ... 
+skipped 'Ink/Stitch no est� disponible (EMBROIDERY_INKSTITCH_EXE o configuraci�n privada)'
+test_the_worker_exports_again_and_reports_the_expected_metrics 
+(test_reexport_regression.ReexportRegressionTests.test_the_worker_exports_again_and_reports_the_expected_metrics) ... 
+skipped 'Ink/Stitch no est� disponible (EMBROIDERY_INKSTITCH_EXE o configuraci�n privada)'
+test_a_residual_one_point_two_five_mm2_colour_cannot_become_a_phantom_running_thread (test_reference_techniques.Referen
+ceTechniqueTests.test_a_residual_one_point_two_five_mm2_colour_cannot_become_a_phantom_running_thread) ... ok
+test_attested_h3_still_rejects_running_and_no_readiness_is_claimed 
+(test_reference_techniques.ReferenceTechniqueTests.test_attested_h3_still_rejects_running_and_no_readiness_is_claimed) 
+... ok
+test_boundaries_use_median_not_minimum_and_wide_fill_keeps_reference_parameters (test_reference_techniques.ReferenceTec
+hniqueTests.test_boundaries_use_median_not_minimum_and_wide_fill_keeps_reference_parameters) ... ok
+test_jef_reread_rejects_a_trailing_empty_colour_block 
+(test_reference_techniques.ReferenceTechniqueTests.test_jef_reread_rejects_a_trailing_empty_colour_block) ... ok
+test_legibility_issue_is_localized_measured_and_not_calibrated 
+(test_reference_techniques.ReferenceTechniqueTests.test_legibility_issue_is_localized_measured_and_not_calibrated) ... 
+ok
+test_mask_paths_checker_policy_and_thin_measurement_remain_unchanged (test_reference_techniques.ReferenceTechniqueTests
+.test_mask_paths_checker_policy_and_thin_measurement_remain_unchanged) ... ok
+test_mixed_widths_of_one_colour_are_selected_per_ring 
+(test_reference_techniques.ReferenceTechniqueTests.test_mixed_widths_of_one_colour_are_selected_per_ring) ... ok
+test_one_point_two_five_mm2_fill_is_omitted_with_measured_warning 
+(test_reference_techniques.ReferenceTechniqueTests.test_one_point_two_five_mm2_fill_is_omitted_with_measured_warning) 
+... ok
+test_skeleton_stays_in_mask_and_preserves_hole_as_a_cycle 
+(test_reference_techniques.ReferenceTechniqueTests.test_skeleton_stays_in_mask_and_preserves_hole_as_a_cycle) ... ok
+test_width_fixtures_select_real_techniques_and_scaled_parameters 
+(test_reference_techniques.ReferenceTechniqueTests.test_width_fixtures_select_real_techniques_and_scaled_parameters) 
+... ok
+test_large_variant_cli_main_final (test_regressions.RegressionTests.test_large_variant_cli_main_final) ... ok
+test_small_variant_cli_small_final (test_regressions.RegressionTests.test_small_variant_cli_small_final) ... ok
+test_a_comment_or_declaration_before_the_root_and_single_quotes_are_respected 
+(test_svg_fit.FitToTargetTests.test_a_comment_or_declaration_before_the_root_and_single_quotes_are_respected) ... ok
+test_a_larger_target_scales_the_sheet_and_keeps_the_viewbox_and_the_drawing 
+(test_svg_fit.FitToTargetTests.test_a_larger_target_scales_the_sheet_and_keeps_the_viewbox_and_the_drawing) ... ok
+test_a_smaller_target_scales_down (test_svg_fit.FitToTargetTests.test_a_smaller_target_scales_down) ... ok
+test_a_stroke_width_on_the_root_is_not_taken_for_the_sheet_width 
+(test_svg_fit.FitToTargetTests.test_a_stroke_width_on_the_root_is_not_taken_for_the_sheet_width) ... ok
+test_it_refuses_a_svg_whose_size_cannot_change_and_says_why 
+(test_svg_fit.FitToTargetTests.test_it_refuses_a_svg_whose_size_cannot_change_and_says_why) ... ok
+test_it_refuses_what_is_not_a_plain_svg (test_svg_fit.FitToTargetTests.test_it_refuses_what_is_not_a_plain_svg) ... ok
+test_other_units_are_measured_in_millimetres_and_keep_their_unit 
+(test_svg_fit.FitToTargetTests.test_other_units_are_measured_in_millimetres_and_keep_their_unit) ... ok
+test_the_aspect_ratio_is_kept_and_the_tighter_side_decides 
+(test_svg_fit.FitToTargetTests.test_the_aspect_ratio_is_kept_and_the_tighter_side_decides) ... ok
+test_cancel_before_and_during_work_is_cooperative_and_catalogued 
+(test_vectorize.VectorizeTests.test_cancel_before_and_during_work_is_cooperative_and_catalogued) ... ok
+test_color_limit_and_geometric_output_are_deterministic 
+(test_vectorize.VectorizeTests.test_color_limit_and_geometric_output_are_deterministic) ... ok
+test_crop_and_contain_use_original_pixel_coordinates_and_centered_mm 
+(test_vectorize.VectorizeTests.test_crop_and_contain_use_original_pixel_coordinates_and_centered_mm) ... ok
+test_diagonally_touching_pixels_do_not_gain_a_bridge 
+(test_vectorize.VectorizeTests.test_diagonally_touching_pixels_do_not_gain_a_bridge) ... ok
+test_estimated_analysis_cannot_replace_pixel_geometry_or_fonts 
+(test_vectorize.VectorizeTests.test_estimated_analysis_cannot_replace_pixel_geometry_or_fonts) ... ok
+test_flat_fixture_inputs_produce_real_geometry_and_reviewable_parameters 
+(test_vectorize.VectorizeTests.test_flat_fixture_inputs_produce_real_geometry_and_reviewable_parameters) ... ok
+test_invalid_input_and_metadata_are_catalogued 
+(test_vectorize.VectorizeTests.test_invalid_input_and_metadata_are_catalogued) ... ok
+test_out_of_bounds_analysis_issue_is_localized_to_actual_region 
+(test_vectorize.VectorizeTests.test_out_of_bounds_analysis_issue_is_localized_to_actual_region) ... ok
+test_pixel_mask_holes_survive_exactly_without_bbox_substitution 
+(test_vectorize.VectorizeTests.test_pixel_mask_holes_survive_exactly_without_bbox_substitution) ... ok
+test_quantization_measures_pastel_colour_changes_and_requests_visual_review 
+(test_vectorize.VectorizeTests.test_quantization_measures_pastel_colour_changes_and_requests_visual_review) ... ok
+test_tiny_valid_target_cannot_silently_collapse_output_paths 
+(test_vectorize.VectorizeTests.test_tiny_valid_target_cannot_silently_collapse_output_paths) ... ok
+test_an_anti_aliased_line_keeps_its_width_instead_of_growing_with_its_fringe (test_vectorize_complexity.ComplexityTests
+.test_an_anti_aliased_line_keeps_its_width_instead_of_growing_with_its_fringe) ... ok
+test_excessive_complexity_still_fails_without_simplifying_input 
+(test_vectorize_complexity.ComplexityTests.test_excessive_complexity_still_fails_without_simplifying_input) ... ok
+test_flat_colour_survives_anti_aliased_edges_exactly 
+(test_vectorize_complexity.ComplexityTests.test_flat_colour_survives_anti_aliased_edges_exactly) ... ok
+test_reference_can_be_traced_at_both_sizes_without_dropping_edges 
+(test_vectorize_complexity.ComplexityTests.test_reference_can_be_traced_at_both_sizes_without_dropping_edges) ... ok
+test_reference_keeps_its_dark_strokes_in_the_palette 
+(test_vectorize_complexity.ComplexityTests.test_reference_keeps_its_dark_strokes_in_the_palette) ... ok
+test_transparent_images_are_decided_by_alpha_not_by_coverage_over_white 
+(test_vectorize_complexity.ComplexityTests.test_transparent_images_are_decided_by_alpha_not_by_coverage_over_white) 
+... ok
+test_weak_pixels_inside_a_nearly_white_shape_are_kept_so_the_coverage_rule_opens_no_pinholes (test_vectorize_complexity
+.ComplexityTests.test_weak_pixels_inside_a_nearly_white_shape_are_kept_so_the_coverage_rule_opens_no_pinholes) ... ok
+test_adapter_does_not_convert_fill_masks_to_unverified_running_or_satin (test_vectorize_inkstitch.InkstitchAdapterTests
+.test_adapter_does_not_convert_fill_masks_to_unverified_running_or_satin) ... ok
+test_adapter_does_not_guess_missing_or_unsupported_parameters 
+(test_vectorize_inkstitch.InkstitchAdapterTests.test_adapter_does_not_guess_missing_or_unsupported_parameters) ... ok
+test_explicit_h3_handoff_preserves_mm_paths_holes_ids_and_parameters 
+(test_vectorize_inkstitch.InkstitchAdapterTests.test_explicit_h3_handoff_preserves_mm_paths_holes_ids_and_parameters) 
+... ok
+test_h3_cannot_replace_geometry_or_document_identity 
+(test_vectorize_inkstitch.InkstitchAdapterTests.test_h3_cannot_replace_geometry_or_document_identity) ... ok
+test_provisional_parameters_cannot_be_exported_silently 
+(test_vectorize_inkstitch.InkstitchAdapterTests.test_provisional_parameters_cannot_be_exported_silently) ... ok
+test_neighbouring_colours_get_different_angles 
+(test_vectorize_inkstitch.ReferenceAdapterTests.test_neighbouring_colours_get_different_angles) ... ok
+test_only_the_parameter_notice_is_rewritten_and_the_thin_feature_evidence_survives (test_vectorize_inkstitch.ReferenceA
+dapterTests.test_only_the_parameter_notice_is_rewritten_and_the_thin_feature_evidence_survives) ... ok
+test_the_original_result_is_not_modified 
+(test_vectorize_inkstitch.ReferenceAdapterTests.test_the_original_result_is_not_modified) ... ok
+test_the_reference_svg_keeps_ids_and_geometry_and_uses_the_reference_values (test_vectorize_inkstitch.ReferenceAdapterT
+ests.test_the_reference_svg_keeps_ids_and_geometry_and_uses_the_reference_values) ... ok
+test_the_svg_declares_that_nothing_is_calibrated_or_approved 
+(test_vectorize_inkstitch.ReferenceAdapterTests.test_the_svg_declares_that_nothing_is_calibrated_or_approved) ... ok
+test_a_design_with_nothing_to_remove_or_simplify_is_not_a_change 
+(test_vectorize_inkstitch.StitchablePlanTests.test_a_design_with_nothing_to_remove_or_simplify_is_not_a_change) ... ok
+test_a_fine_ring_is_simplified_keeping_every_original_point_within_the_tolerance (test_vectorize_inkstitch.StitchablePl
+anTests.test_a_fine_ring_is_simplified_keeping_every_original_point_within_the_tolerance) ... ok
+test_a_near_white_layer_is_taken_as_background_and_not_stitched 
+(test_vectorize_inkstitch.StitchablePlanTests.test_a_near_white_layer_is_taken_as_background_and_not_stitched) ... ok
+test_a_simplification_alone_is_a_change_reported_with_points_before_after_and_the_tolerance (test_vectorize_inkstitch.S
+titchablePlanTests.test_a_simplification_alone_is_a_change_reported_with_points_before_after_and_the_tolerance)
+R3: aunque no se quite nada, que el contorno cambie dentro de una tolerancia se avisa y se mide. ... ok
+test_a_square_and_a_triangle_are_not_changed_by_the_simplification 
+(test_vectorize_inkstitch.StitchablePlanTests.test_a_square_and_a_triangle_are_not_changed_by_the_simplification) ... 
+ok
+test_an_untouched_design_adds_no_removal_issue 
+(test_vectorize_inkstitch.StitchablePlanTests.test_an_untouched_design_adds_no_removal_issue) ... ok
+test_changes_are_reported_as_a_localized_review_issue_with_numbers 
+(test_vectorize_inkstitch.StitchablePlanTests.test_changes_are_reported_as_a_localized_review_issue_with_numbers) ... 
+ok
+test_nothing_stitchable_is_a_localized_review_failure_not_an_empty_embroidery (test_vectorize_inkstitch.StitchablePlanT
+ests.test_nothing_stitchable_is_a_localized_review_failure_not_an_empty_embroidery) ... ok
+test_specks_below_the_minimum_area_are_dropped_and_the_large_shape_is_kept (test_vectorize_inkstitch.StitchablePlanTest
+s.test_specks_below_the_minimum_area_are_dropped_and_the_large_shape_is_kept) ... ok
+test_the_distance_is_to_the_segment_not_to_the_infinite_line 
+(test_vectorize_inkstitch.StitchablePlanTests.test_the_distance_is_to_the_segment_not_to_the_infinite_line)
+R4: el punto (10, 0) est� sobre la recta de la cuerda (0,0)-(5,0) pero a 5 mm del segmento: no se puede perder. ... ok
+test_the_stair_edges_of_a_pixel_disc_lose_most_of_their_points 
+(test_vectorize_inkstitch.StitchablePlanTests.test_the_stair_edges_of_a_pixel_disc_lose_most_of_their_points) ... ok
+test_all_exif_orientations_preserve_decoded_pixels_without_a_lossy_roundtrip 
+(test_vectorize_input.RasterInputTests.test_all_exif_orientations_preserve_decoded_pixels_without_a_lossy_roundtrip) 
+... ok
+test_analysis_png_has_identical_oriented_pixels_and_no_orientation_tag 
+(test_vectorize_input.RasterInputTests.test_analysis_png_has_identical_oriented_pixels_and_no_orientation_tag) ... ok
+test_animation_and_mime_mismatch_remain_controlled 
+(test_vectorize_input.RasterInputTests.test_animation_and_mime_mismatch_remain_controlled) ... ok
+test_byte_limit_precedes_pillow_and_accepts_the_exact_boundary 
+(test_vectorize_input.RasterInputTests.test_byte_limit_precedes_pillow_and_accepts_the_exact_boundary) ... ok
+test_cancellation_precedes_normalization_and_retains_original_identity_checks 
+(test_vectorize_input.RasterInputTests.test_cancellation_precedes_normalization_and_retains_original_identity_checks) 
+... ok
+test_corrupt_exif_is_a_controlled_failure_in_both_formats 
+(test_vectorize_input.RasterInputTests.test_corrupt_exif_is_a_controlled_failure_in_both_formats) ... ok
+test_crop_coordinates_are_applied_after_exif_normalization 
+(test_vectorize_input.RasterInputTests.test_crop_coordinates_are_applied_after_exif_normalization) ... ok
+test_decoder_bomb_protection_is_not_disabled 
+(test_vectorize_input.RasterInputTests.test_decoder_bomb_protection_is_not_disabled) ... ok
+test_engine_imports_the_shared_helper_limits 
+(test_vectorize_input.RasterInputTests.test_engine_imports_the_shared_helper_limits) ... ok
+test_invalid_orientation_is_rejected_instead_of_guessing 
+(test_vectorize_input.RasterInputTests.test_invalid_orientation_is_rejected_instead_of_guessing) ... ok
+test_pixel_limit_is_inclusive_and_checked_before_expensive_vectorization 
+(test_vectorize_input.RasterInputTests.test_pixel_limit_is_inclusive_and_checked_before_expensive_vectorization) ... ok
+test_raw_dimensions_are_rejected_if_exif_swaps_the_visual_dimensions 
+(test_vectorize_input.RasterInputTests.test_raw_dimensions_are_rejected_if_exif_swaps_the_visual_dimensions) ... ok
+test_unsupported_types_including_webp_are_rejected_before_pillow 
+(test_vectorize_input.RasterInputTests.test_unsupported_types_including_webp_are_rejected_before_pillow) ... ok
+test_upload_one_byte_over_the_shared_limit_is_rejected_before_decoding 
+(test_vectorize_input.RasterInputTests.test_upload_one_byte_over_the_shared_limit_is_rejected_before_decoding) ... ok
+test_vectorization_uses_visual_frame_for_geometry_and_contain_after_exif 
+(test_vectorize_input.RasterInputTests.test_vectorization_uses_visual_frame_for_geometry_and_contain_after_exif) ... ok
+test_without_exif_defaults_to_identity_and_does_not_mutate_pixels 
+(test_vectorize_input.RasterInputTests.test_without_exif_defaults_to_identity_and_does_not_mutate_pixels) ... ok
+test_a_line_thinner_than_the_minimum_is_all_thin_and_a_wide_block_is_not 
+(test_vectorize_thin.ThinFeatureTests.test_a_line_thinner_than_the_minimum_is_all_thin_and_a_wide_block_is_not) ... ok
+test_a_resolution_too_coarse_to_measure_says_so_instead_of_guessing 
+(test_vectorize_thin.ThinFeatureTests.test_a_resolution_too_coarse_to_measure_says_so_instead_of_guessing) ... ok
+test_a_shape_smaller_than_the_kernel_is_all_thin_even_at_the_page_border 
+(test_vectorize_thin.ThinFeatureTests.test_a_shape_smaller_than_the_kernel_is_all_thin_even_at_the_page_border) ... ok
+test_even_width_at_the_threshold_is_not_reported_as_thinner 
+(test_vectorize_thin.ThinFeatureTests.test_even_width_at_the_threshold_is_not_reported_as_thinner) ... ok
+test_extremely_small_scale_is_measured_without_allocating_a_giant_kernel 
+(test_vectorize_thin.ThinFeatureTests.test_extremely_small_scale_is_measured_without_allocating_a_giant_kernel) ... ok
+test_nothing_is_removed_or_thickened_by_the_measurement 
+(test_vectorize_thin.ThinFeatureTests.test_nothing_is_removed_or_thickened_by_the_measurement) ... ok
+test_opening_handles_even_kernel_without_shifting_the_shape 
+(test_vectorize_thin.ThinFeatureTests.test_opening_handles_even_kernel_without_shifting_the_shape) ... ok
+test_opening_matches_independent_finite_mask_reference 
+(test_vectorize_thin.ThinFeatureTests.test_opening_matches_independent_finite_mask_reference) ... ok
+test_the_review_issue_carries_the_fractions_per_object 
+(test_vectorize_thin.ThinFeatureTests.test_the_review_issue_carries_the_fractions_per_object) ... ok
+test_threshold_product_prevents_division_roundoff_from_adding_a_pixel 
+(test_vectorize_thin.ThinFeatureTests.test_threshold_product_prevents_division_roundoff_from_adding_a_pixel) ... ok
+test_changed_command_reports_its_index 
+(test_verify_commands.VerifyCommandsTests.test_changed_command_reports_its_index) ... ok
+test_identical_commands_are_structural_match 
+(test_verify_commands.VerifyCommandsTests.test_identical_commands_are_structural_match) ... ok
+test_length_difference_reports_both_counts 
+(test_verify_commands.VerifyCommandsTests.test_length_difference_reports_both_counts) ... ok
+test_line_endings_do_not_change_verdict 
+(test_verify_commands.VerifyCommandsTests.test_line_endings_do_not_change_verdict) ... ok
+test_a_truncated_header_cannot_take_a_hoop_code 
+(test_worker.WorkerTests.test_a_truncated_header_cannot_take_a_hoop_code) ... ok
+test_exit_zero_with_no_payload_is_not_success (test_worker.WorkerTests.test_exit_zero_with_no_payload_is_not_success) 
+... ok
+test_invalid_svg_is_controlled_before_execution 
+(test_worker.WorkerTests.test_invalid_svg_is_controlled_before_execution) ... ok
+test_missing_binary_is_controlled_and_logged (test_worker.WorkerTests.test_missing_binary_is_controlled_and_logged) 
+... ok
+test_reader_cannot_hide_missing_or_invalid_end 
+(test_worker.WorkerTests.test_reader_cannot_hide_missing_or_invalid_end) ... ok
+test_the_header_hoop_code_follows_the_profile_and_nothing_else_in_the_file_changes 
+(test_worker.WorkerTests.test_the_header_hoop_code_follows_the_profile_and_nothing_else_in_the_file_changes) ... ok
+test_timeout_stops_real_process (test_worker.WorkerTests.test_timeout_stops_real_process) ... ok
+
+----------------------------------------------------------------------
+Ran 196 tests in 78.024s
+
+OK (skipped=4)
