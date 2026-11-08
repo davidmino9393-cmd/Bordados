@@ -13,12 +13,9 @@ import { toJobSettings, validateSettings, type SettingsFormValues } from './sett
 const catalog = catalogFixture.payload as ProfileCatalog;
 const machine = catalog.machines[0];
 const values: SettingsFormValues = {
-  width_mm: '130',
-  height_mm: '120',
   machine_profile: 'janome_mc550e',
   hoop_profile: 'sq20b',
   fabric_profile: 'gabardina_inicial',
-  thread_profile: 'embroidery_thread_initial',
   color_limit: '3',
   ai_provider: AiProvider.OpenAI,
 };
@@ -43,16 +40,16 @@ describe('summarizeProgress', () => {
 });
 
 describe('validateSettings / toJobSettings', () => {
-  it('acepta valores válidos con coma decimal', () => {
-    expect(validateSettings({ ...values, width_mm: '130,5' }, machine)).toEqual({});
+  it('acepta valores válidos', () => {
+    expect(validateSettings(values, machine)).toEqual({});
   });
-  it('rechaza tamaños y colores inválidos', () => {
-    const errors = validateSettings({ ...values, width_mm: '0', height_mm: 'abc', color_limit: '17' }, machine);
-    expect(errors).toEqual({ width_mm: 'positive', height_mm: 'positive', color_limit: 'range' });
+  it('rechaza cantidades de colores inválidas', () => {
+    expect(validateSettings({ ...values, color_limit: '17' }, machine)).toEqual({ color_limit: 'range' });
+    expect(validateSettings({ ...values, color_limit: '0' }, machine)).toEqual({ color_limit: 'range' });
   });
   it('arma las instantáneas de perfil desde el catálogo, sin valores fijos en la web', () => {
-    const settings = toJobSettings({ ...values, width_mm: '130,5' }, catalog);
-    expect(settings.target).toEqual({ width_mm: 130.5, height_mm: 120, fit: 'contain' });
+    const settings = toJobSettings(values, catalog);
+    expect(settings.target).toEqual({ width_mm: 200, height_mm: 200, fit: 'contain' });
     expect(settings.hoop).toEqual({
       profile_id: 'sq20b',
       profile_version: '0.1',

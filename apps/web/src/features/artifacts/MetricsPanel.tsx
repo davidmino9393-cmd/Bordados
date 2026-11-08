@@ -9,7 +9,6 @@ export function MetricsPanel({ metrics }: { metrics: RereadMetrics }) {
   const rows: [string, string][] = [
     [m.size, `${formatMm(b.max_x_mm - b.min_x_mm)} × ${formatMm(b.max_y_mm - b.min_y_mm)} mm`],
     [m.stitches, metrics.needle_stitches.toLocaleString('es-AR')],
-    [m.blocks, String(metrics.thread_blocks)],
     [m.colorChanges, String(metrics.color_changes)],
     [m.displacementJumps, String(metrics.displacement_jump_commands)],
     [m.trims, String(metrics.interpreted_trims)],

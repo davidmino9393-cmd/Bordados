@@ -6,18 +6,65 @@
       "profile_id": "janome_mc550e",
       "profile_version": "0.1",
       "label": "Janome MC 550E",
-      "hoop_profile_ids": ["sq20b"],
-      "max_colors": 3,
+      "hoop_profile_ids": [
+        "sq10b",
+        "sq14b",
+        "re20b",
+        "sq20b",
+        "re28b",
+        "re36b"
+      ],
+      "max_colors": 12,
       "calibration_status": "proposed"
     }
   ],
   "hoops": [
+    {
+      "profile_id": "sq10b",
+      "profile_version": "0.1",
+      "label": "SQ10b 100 x 100 mm",
+      "width_mm": 100.0,
+      "height_mm": 100.0,
+      "jef_hoop_code": 0
+    },
+    {
+      "profile_id": "sq14b",
+      "profile_version": "0.1",
+      "label": "SQ14b 140 x 140 mm",
+      "width_mm": 140.0,
+      "height_mm": 140.0,
+      "jef_hoop_code": 2
+    },
+    {
+      "profile_id": "re20b",
+      "profile_version": "0.1",
+      "label": "RE20b 140 x 200 mm",
+      "width_mm": 140.0,
+      "height_mm": 200.0,
+      "jef_hoop_code": 2
+    },
     {
       "profile_id": "sq20b",
       "profile_version": "0.1",
       "label": "SQ20b 200 x 200 mm",
       "width_mm": 200.0,
       "height_mm": 200.0,
+      "jef_hoop_code": 4
+    },
+    {
+      "profile_id": "re28b",
+      "profile_version": "0.1",
+      "label": "RE28b 200 x 280 mm",
+      "width_mm": 200.0,
+      "height_mm": 280.0,
+      "jef_hoop_code": 4
+    },
+    {
+      "profile_id": "re36b",
+      "profile_version": "0.1",
+      "label": "RE36b 200 x 360 mm",
+      "width_mm": 200.0,
+      "height_mm": 360.0,
       "jef_hoop_code": 4
     }
   ],
@@ -26,6 +73,42 @@
       "profile_id": "gabardina_inicial",
       "profile_version": "0.1",
       "label": "Gabardina inicial",
+      "calibration_status": "proposed"
+    },
+    {
+      "profile_id": "algodon",
+      "profile_version": "0.1",
+      "label": "Algodón",
+      "calibration_status": "proposed"
+    },
+    {
+      "profile_id": "gabardina",
+      "profile_version": "0.1",
+      "label": "Gabardina",
+      "calibration_status": "proposed"
+    },
+    {
+      "profile_id": "pique",
+      "profile_version": "0.1",
+      "label": "Piqué",
+      "calibration_status": "proposed"
+    },
+    {
+      "profile_id": "polar",
+      "profile_version": "0.1",
+      "label": "Polar",
+      "calibration_status": "proposed"
+    },
+    {
+      "profile_id": "jean",
+      "profile_version": "0.1",
+      "label": "Jean",
+      "calibration_status": "proposed"
+    },
+    {
+      "profile_id": "lino",
+      "profile_version": "0.1",
+      "label": "Lino",
       "calibration_status": "proposed"
     }
   ],
@@ -36,11 +119,15 @@
       "label": "Hilo de bordado inicial"
     }
   ],
-  "max_colors": 3,
+  "max_colors": 12,
   "providers": [],
   "upload_limits": {
     "max_bytes": 10485760,
     "max_decoded_pixels": 20000000,
-    "accepted_mime_types": ["image/png", "image/jpeg", "image/svg+xml"]
+    "accepted_mime_types": [
+      "image/png",
+      "image/jpeg",
+      "image/svg+xml"
+    ]
   }
 }

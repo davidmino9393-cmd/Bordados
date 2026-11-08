@@ -237,7 +237,7 @@ describe('recorrido principal (cliente SIMULADO)', () => {
     expect(clicked.at(-1)).not.toContain('vencido.invalid');
   });
 
-  it('valida el tamaño antes de enviar y no crea trabajos', async () => {
+  it('el límite sale del bastidor: no hay campos libres de ancho ni alto y el diseño no se escala al cambiarlo', async () => {
     const user = setupUser();
     const { client, count } = instrument();
     renderApp(client);
@@ -246,11 +246,14 @@ describe('recorrido principal (cliente SIMULADO)', () => {
     await user.upload(await screen.findByLabelText('Elegir archivo'), pngFile('logo.png'));
     await screen.findByAltText('Imagen original: logo.png');
 
-    const width = screen.getByLabelText('Ancho máximo (mm)');
-    await user.clear(width);
-    await user.type(width, '0');
+    expect(screen.queryByLabelText('Ancho máximo (mm)')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Alto máximo (mm)')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Hilo')).not.toBeInTheDocument();
+    expect(screen.getByText(/Área máxima del bastidor: 200 × 200 mm/)).toBeInTheDocument();
+    await user.clear(screen.getByLabelText('Cantidad de colores'));
+    await user.type(screen.getByLabelText('Cantidad de colores'), '99');
     await user.click(screen.getByRole('button', { name: 'Generar bordado' }));
-    expect(screen.getByText('Ingresá un número mayor que cero.')).toBeInTheDocument();
+    expect(screen.getByText('Elegí entre 1 y 16 colores.')).toBeInTheDocument(); // el máximo sale del catálogo
     expect(count('createInitialRevision')).toBe(0);
     expect(count('createJob')).toBe(0);
   });
@@ -265,11 +268,12 @@ describe('recorrido principal (cliente SIMULADO)', () => {
     await screen.findByAltText('Imagen original: logo.png');
 
     await user.selectOptions(screen.getByLabelText('Bastidor'), 'Bastidor chico (SIMULADO)');
-    expect(screen.getByText(/mayor que el bastidor \(126 × 110 mm\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Área máxima del bastidor: 126 × 110 mm/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Generar bordado' }));
     await screen.findByRole('heading', { name: 'Generación del bordado' });
     const settings = (calls.find((c) => c.method === 'createInitialRevision')!.args[1] as { settings: { hoop: object; hoop_profile: string } }).settings;
     expect(settings.hoop_profile).toBe('sim_small');
+    expect((settings as unknown as { target: object }).target).toMatchObject({ width_mm: 126, height_mm: 110 });
     expect(settings.hoop).toMatchObject({ profile_id: 'sim_small', width_mm: 126, height_mm: 110, jef_hoop_code: 1 });
   });
 

@@ -48,6 +48,10 @@ Contenido: [Generación](#generacion), [Operaciones](#operaciones), [Límites](#
 
 Antes de vectorizar una imagen, `palette.py` fusiona los halos de antialias con su tinta (el límite de colores es de hilos y no se infla) y el motor recibe un PNG limpio; el asset original no cambia y la regla, el umbral y los conteos quedan en `evidence.stitching.palette_cleaning`. `legibility.py` mide el ancho de trazo al tamaño pedido. Medición: [evidence/orden3](evidence/orden3/README.md).
 
+## Bastidores, telas y colores (orden 4)
+
+`profiles.json` trae los seis bastidores de la Janome MC 550E (SQ10b, SQ14b, RE20b, SQ20b, RE28b, RE36b), seis telas nuevas con `calibration_status: "proposed"` y `max_colors: 12`. El límite del trabajo sale del bastidor: `validate_settings` rechaza un destino mayor que el bastidor y un diseño que no entra termina en `HOOP_INCOMPATIBLE` con el bastidor y las medidas (no hay escala al cambiar de bastidor). El JEF solo codifica 5 tamaños: los bastidores mayores van con el código 4. Medición: [evidence/orden4](evidence/orden4/README.md).
+
 ## Evidencia
 
 La ejecución real con Ink/Stitch v3.2.2 está en [evidence/h0-04](evidence/h0-04/README.md): 202 en 7.65 ms, `needs_review` en 16.7 s, 6 artefactos con hash coincidente, 0 errores bloqueantes y 14 avisos.

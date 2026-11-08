@@ -149,13 +149,13 @@ export const es = {
   },
   settings: {
     title: '2. Ajustes del bordado',
+    limit: (w: string, h: string) =>
+      `Área máxima del bastidor: ${w} × ${h} mm. El límite lo fija el bastidor y el diseño no se escala al cambiarlo.`,
     width: 'Ancho máximo (mm)',
     height: 'Alto máximo (mm)',
-    keepProportions: 'Conservar proporciones dentro del área indicada',
     machine: 'Máquina',
     hoop: 'Bastidor',
     fabric: 'Tela',
-    thread: 'Hilo',
     colors: 'Cantidad de colores',
     provider: 'Análisis con',
     noFallback: 'No se usará otro proveedor en su lugar.',
@@ -169,11 +169,11 @@ export const es = {
     positive: 'Ingresá un número mayor que cero.',
     colorsRange: (max: number) => `Elegí entre 1 y ${max} colores.`,
     outsideHoop: (w: number, h: number) =>
-      `El área indicada es mayor que el bastidor (${w} × ${h} mm). Podés continuar: el servidor confirmará el encaje.`,
+      `El área indicada es mayor que el bastidor (${w} × ${h} mm). El servidor la va a rechazar.`,
     estimate: (w: string, h: string) =>
       `Tamaño estimado: ${w} × ${h} mm. El tamaño real se mide al releer el archivo generado.`,
     preparedSvgSize:
-      'Un SVG preparado se borda al tamaño con el que se preparó: las medidas de arriba son solo el límite (si el dibujo es más grande, el trabajo se rechaza). Para otro tamaño, pedí una «Variante de tamaño» desde el resultado.',
+      'Un SVG preparado se borda al tamaño con el que se preparó: el bastidor es solo el límite (si el dibujo es más grande, el trabajo se rechaza con «el diseño no es compatible con el bastidor»). Para otro tamaño, pedí una «Variante de tamaño» desde el resultado.',
     submit: 'Generar bordado',
     submitting: 'Enviando…',
     needAsset: 'Primero subí una imagen.',
@@ -230,7 +230,6 @@ export const es = {
   metrics: {
     size: 'Medida',
     stitches: 'Puntadas',
-    blocks: 'Bloques de hilo',
     colorChanges: 'Cambios de color',
     displacementJumps: 'Saltos de desplazamiento',
     trims: 'Cortes (interpretados)',

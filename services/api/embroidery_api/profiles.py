@@ -34,6 +34,13 @@ def validate_settings(settings, catalog):
     for name in ("width_mm", "height_mm", "jef_hoop_code"):
         if getattr(hoop, name) != getattr(settings.hoop, name):
             raise ApiProblem("INVALID_REQUEST", f"El snapshot del bastidor no coincide en {name}.")
+    # El límite del trabajo lo fija el bastidor: el destino nunca lo supera (la web lo deriva, no lo edita).
+    if settings.target.width_mm > hoop.width_mm or settings.target.height_mm > hoop.height_mm:
+        raise ApiProblem(
+            "INVALID_REQUEST",
+            f"El destino ({settings.target.width_mm:g} x {settings.target.height_mm:g} mm) supera el bastidor {hoop.label} "
+            f"({hoop.width_mm:g} x {hoop.height_mm:g} mm).",
+        )
     fabric = _entry(catalog.fabrics, settings.fabric_profile, "fabric_profile")
     if fabric.profile_version != settings.fabric_profile_version:
         raise ApiProblem("INVALID_REQUEST", "fabric_profile_version no coincide con el perfil configurado.")

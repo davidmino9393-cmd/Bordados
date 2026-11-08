@@ -411,6 +411,29 @@ class ApiTests(unittest.TestCase):
         self.assertIn("DIMENSIONS_EXCEEDED", [issue["code"] for issue in failed["issues"]])
         self.assertEqual(self.job_input(job["job_id"]), svg())
 
+    def hoop_settings(self, hoop_id, width, height, code):
+        hoop = {**SETTINGS["hoop"], "profile_id": hoop_id, "width_mm": width, "height_mm": height, "jef_hoop_code": code}
+        return {**SETTINGS, "hoop_profile": hoop_id, "hoop": hoop, "target": {"width_mm": width, "height_mm": height, "fit": "contain"}}
+
+    def test_a_design_that_does_not_fit_the_fixed_hoop_fails_with_hoop_incompatible_and_the_measures(self):
+        """El límite es el bastidor: pasarse no es DIMENSIONS_EXCEEDED sino HOOP_INCOMPATIBLE con bastidor y medidas."""
+        settings = self.hoop_settings("sq10b", 100.0, 100.0, 0)  # el worker de prueba entrega un JEF de 150 × 142,8 mm
+        project_id, asset_id, revision_id = self.setup_project(svg(), settings)
+        _, job, _ = self.create_job(project_id, asset_id, revision_id, settings)
+        failed = self.wait_job(project_id, job["job_id"], {"failed"})
+        codes = [issue["code"] for issue in failed["issues"]]
+        self.assertIn("HOOP_INCOMPATIBLE", codes)
+        self.assertNotIn("DIMENSIONS_EXCEEDED", codes)
+        issue = next(item for item in failed["issues"] if item["code"] == "HOOP_INCOMPATIBLE")
+        self.assertEqual((issue["evidence"]["hoop_profile"], issue["evidence"]["hoop_width_mm"], issue["evidence"]["hoop_height_mm"]), ("sq10b", 100.0, 100.0))
+        self.assertIn("100 x 100", issue["description"])
+
+    def test_a_job_target_larger_than_the_hoop_is_refused_before_any_job_exists(self):
+        settings = {**self.hoop_settings("sq10b", 100.0, 100.0, 0), "target": {"width_mm": 130.0, "height_mm": 120.0, "fit": "contain"}}
+        project_id, asset_id, revision_id = self.setup_project(svg(), self.with_target(10.0, 10.0))
+        status, problem, _ = self.create_job(project_id, asset_id, revision_id, settings)
+        self.assertEqual((status, problem["code"]), (422, "INVALID_REQUEST"))
+
     def test_a_variant_of_a_variant_is_fitted_from_the_original_asset_not_from_the_parents_fitted_svg(self):
         """B3: la cadena base -> A -> B parte siempre del asset que subió la persona."""
         original = svg()

@@ -80,10 +80,15 @@ def measured_checks(job, result, tolerance):
                                           ("hoop", hoop_ok, "reread dimensions and unmodified JEF code versus configured profile"))]
     checks += [ValidationCheck(kind=kind, outcome="not_run", method="not implemented in H0-04; no inferred approval") for kind in ("geometry", "satin", "routing", "visual")]
     issues = []
-    if not dimensions_ok:
+    target_is_hoop = target["width_mm"] == hoop["width_mm"] and target["height_mm"] == hoop["height_mm"]
+    # Si el límite del trabajo es el propio bastidor, pasarse es que el diseño no entra en él.
+    if not dimensions_ok and not target_is_hoop:
         issues.append(make_issue("DIMENSIONS_EXCEEDED", "Las medidas releídas superan el destino configurado.", {"width_mm": metrics["width_mm"], "height_mm": metrics["height_mm"], "tolerance_mm": tolerance}))
     if not hoop_ok:
-        issues.append(make_issue("HOOP_INCOMPATIBLE", "El tamaño o código JEF no corresponde al perfil de bastidor.", {"jef_hoop_code": metrics["hoop_code"], "expected_hoop_code": hoop["jef_hoop_code"]}))
+        detail = {"jef_hoop_code": metrics["hoop_code"], "expected_hoop_code": hoop["jef_hoop_code"], "hoop_profile": hoop["profile_id"],
+                  "hoop_width_mm": hoop["width_mm"], "hoop_height_mm": hoop["height_mm"],
+                  "design_width_mm": metrics["width_mm"], "design_height_mm": metrics["height_mm"]}
+        issues.append(make_issue("HOOP_INCOMPATIBLE", f"El diseño ({metrics['width_mm']:g} x {metrics['height_mm']:g} mm) no entra en el bastidor {hoop['profile_id']} ({hoop['width_mm']:g} x {hoop['height_mm']:g} mm).", detail))
     return checks, issues
 
 
