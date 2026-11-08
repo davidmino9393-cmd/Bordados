@@ -147,6 +147,14 @@ def _fmt(value):
     return f"{value:.1f}".replace(".", ",")
 
 
+RASTER_MAX_SIDE_MM = 130.0  # orden 5: el bastidor es un límite, no el destino de una imagen
+
+
+def raster_box(width_mm, height_mm):
+    """Cuadro destino de un raster: min(lado del bastidor, 130 mm) por lado. Nunca mayor que el bastidor."""
+    return min(width_mm, RASTER_MAX_SIDE_MM), min(height_mm, RASTER_MAX_SIDE_MM)
+
+
 def _pct(value):
     return f"{round(value * 100)}%"
 
@@ -156,6 +164,7 @@ def check(data, media_type, width_mm, height_mm, color_limit, hoop_mm=None, canc
     ink = prepared or prepare(data, media_type, color_limit, cancel)
     if ink is None:
         return None
+    width_mm, height_mm = raster_box(width_mm, height_mm)
     inset = 2 * REFERENCE_PULL_COMPENSATION_MM
     target_w = width_mm - inset if min(width_mm, height_mm) > 2 * inset else width_mm
     target_h = height_mm - inset if min(width_mm, height_mm) > 2 * inset else height_mm

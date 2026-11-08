@@ -19,6 +19,7 @@ from vectorize.inkstitch import REFERENCE_PULL_COMPENSATION_MM, reference_issues
 
 from .analysis import ProviderError, normalize, region_incoherent_issue
 from .errors import ApiProblem
+from .legibility import raster_box
 from .palette import clean_palette
 from .svg_fit import fit_to_target
 
@@ -424,6 +425,9 @@ class JobRunner:
         settings = previous.settings_snapshot
         inset = 2 * REFERENCE_PULL_COMPENSATION_MM
         target = settings.target
+        if getattr(previous, "parent_job_id", None) is None:  # una variante de tamaño es un pedido explícito: no se acota
+            box_w, box_h = raster_box(target.width_mm, target.height_mm)
+            target = target.model_copy(update={"width_mm": box_w, "height_mm": box_h})
         if min(target.width_mm, target.height_mm) > 2 * inset:
             target = target.model_copy(update={"width_mm": target.width_mm - inset, "height_mm": target.height_mm - inset})
         cleaning = clean_palette(image, asset.media_type, settings.color_limit, event)

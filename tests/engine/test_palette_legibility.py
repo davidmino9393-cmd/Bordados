@@ -204,5 +204,23 @@ class LegibilityTests(unittest.TestCase):
         self.assertIsNone(legibility.check(solid, "image/png", 100, 75, 3).margin_option)
 
 
+class RasterTargetBoxTests(unittest.TestCase):
+    """Orden 5: el bastidor es un límite, no el destino de una imagen."""
+
+    def test_the_box_is_capped_at_130_mm_per_side_and_never_above_the_hoop(self):
+        self.assertEqual(legibility.raster_box(200, 200), (130, 130))
+        self.assertEqual(legibility.raster_box(140, 200), (130, 130))
+        self.assertEqual(legibility.raster_box(100, 100), (100, 100))
+        self.assertEqual(legibility.raster_box(200, 100), (130, 100))
+
+    def test_a_square_logo_in_a_big_hoop_is_vectorized_inside_130_mm_minus_the_pull_inset(self):
+        data = one_ink_logo()
+        previous = SimpleNamespace(settings_snapshot=settings(3, 200.0, 200.0), job_id="job_x", revision_id="rev_x")
+        _result, stitching = JobRunner._vectorize_for_stitching(None, data, asset_for(data, (400, 300)), None, previous, None)
+        self.assertEqual(stitching["target_requested_mm"], [200.0, 200.0])
+        inset = stitching["pull_compensation_inset_mm"]
+        self.assertEqual(stitching["target_vectorized_mm"], [130.0 - inset, 130.0 - inset])
+
+
 if __name__ == "__main__":
     unittest.main()

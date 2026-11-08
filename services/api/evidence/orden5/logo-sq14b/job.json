@@ -1,0 +1,585 @@
+{
+  "schema_version": "0.1",
+  "job_id": "job_917dd22d63b84abdbd52abf6fc5c115b",
+  "project_id": "project_a9c848e22ba649c0a7c70ac6a42be673",
+  "revision_id": "rev_03c9be20f6034358acb62fea2782c828",
+  "asset_id": "asset_98e05f36af1c45b9bf1f0503780d36d0",
+  "input_kind": "raster_image",
+  "settings_snapshot": {
+    "schema_version": "0.1",
+    "target": {
+      "width_mm": 140.0,
+      "height_mm": 140.0,
+      "fit": "contain"
+    },
+    "machine_profile": "janome_mc550e",
+    "machine_profile_version": "0.1",
+    "hoop_profile": "sq14b",
+    "hoop": {
+      "profile_id": "sq14b",
+      "profile_version": "0.1",
+      "width_mm": 140.0,
+      "height_mm": 140.0,
+      "jef_hoop_code": 2
+    },
+    "fabric_profile": "algodon",
+    "fabric_profile_version": "0.1",
+    "thread_profile": "embroidery_thread_initial",
+    "color_limit": 12,
+    "ai_provider": "none",
+    "ai_model": null
+  },
+  "status": "needs_review",
+  "stages": [
+    {
+      "stage": "analyzing",
+      "outcome": "skipped",
+      "reason": "Sin análisis de IA: la persona eligió continuar sin él",
+      "measured_duration_ms": null
+    },
+    {
+      "stage": "vectorizing",
+      "outcome": "completed",
+      "reason": null,
+      "measured_duration_ms": 1954
+    },
+    {
+      "stage": "digitizing",
+      "outcome": "completed",
+      "reason": null,
+      "measured_duration_ms": 414054
+    },
+    {
+      "stage": "validating",
+      "outcome": "completed",
+      "reason": null,
+      "measured_duration_ms": 414054
+    }
+  ],
+  "parent_job_id": null,
+  "estimated_remaining_s": null,
+  "sewout_status": "untested",
+  "sewout_record": null,
+  "failure": null,
+  "review": {
+    "cause": "Los parámetros de puntada son los de referencia de Anime Socks (gabardina, estabilizador grueso, 400 ppm), no una calibración para esta tela.",
+    "issues": [
+      {
+        "code": "DENSITY_REVIEW_REQUIRED",
+        "severity": "review_required",
+        "stage": "routing",
+        "object_ids": [
+          "mask_7be67c96e4591d6422d62946"
+        ],
+        "region_ids": [],
+        "description": "Los parámetros de puntada son los de referencia de Anime Socks (gabardina, estabilizador grueso, 400 ppm), no una calibración para esta tela.",
+        "evidence": {
+          "h3_validation_required": true,
+          "minimum_feature_is_calibrated": false,
+          "minimum_feature_mm": 0.4,
+          "parameter_source": "gabardina_400ppm_referencia",
+          "parameters_calibrated": false,
+          "provisional_spacing_mm": 0.4,
+          "provisional_stitch_length_mm": 2.5,
+          "reference_parameters": {
+            "angles_deg": [
+              45,
+              135,
+              0,
+              90
+            ],
+            "calibrated": false,
+            "max_stitch_length_mm": 2.5,
+            "profile_id": "gabardina_400ppm_referencia",
+            "pull_compensation_mm": 0.2,
+            "row_spacing_mm": 0.45,
+            "underlay": "none"
+          },
+          "thin_feature_fraction_by_object": {
+            "mask_7be67c96e4591d6422d62946": 0.014124
+          }
+        },
+        "suggested_correction": "Coser una prueba en un retazo de la misma tela y estabilizador a 400 ppm antes de bordar; si el relleno se ve ralo o fruncido, ajustar la separación y crear otra revisión."
+      },
+      {
+        "code": "GEOMETRY_REPAIR_AMBIGUOUS",
+        "severity": "review_required",
+        "stage": "geometry",
+        "object_ids": [
+          "mask_7be67c96e4591d6422d62946"
+        ],
+        "region_ids": [],
+        "description": "La interpretación del fondo opaco es una regla explícita, no una máscara semántica confirmada.",
+        "evidence": {
+          "background_method": "white_border_consensus",
+          "white_removed_globally": true
+        },
+        "suggested_correction": "Revisar la entrada y la evidencia antes de continuar."
+      },
+      {
+        "code": "VISUAL_MISMATCH",
+        "severity": "review_required",
+        "stage": "visual",
+        "object_ids": [
+          "mask_7be67c96e4591d6422d62946"
+        ],
+        "region_ids": [],
+        "description": "Se ajustó la geometría para poder bordarla: se quitó lo que ninguna aguja puede formar (capas casi blancas, que se toman como fondo, y manchas de menos de 1 mm²) y se simplificaron los contornos dentro de la tolerancia indicada.",
+        "evidence": {
+          "stitchable": {
+            "min_stitchable_area_mm2": 1.0,
+            "near_white_min_channel": 240,
+            "objects": {
+              "mask_7be67c96e4591d6422d62946": {
+                "kept_points": 4489,
+                "kept_points_before_simplification": 25178,
+                "loops": 119,
+                "omitted": null,
+                "points": 25392,
+                "removed_area_mm2": 5.49,
+                "removed_loops": 8,
+                "simplified": true,
+                "simplify_tolerance_mm": 0.1,
+                "total_area_mm2": 27664.14
+              }
+            },
+            "simplify_tolerance_mm": 0.1
+          }
+        },
+        "suggested_correction": "Comparar el bordado con la imagen original. Si una capa casi blanca es parte del diseño, o hace falta un detalle más chico, usar otra imagen o un tamaño mayor."
+      },
+      {
+        "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+        "severity": "review_required",
+        "stage": "geometry",
+        "object_ids": [
+          "mask_7be67c96e4591d6422d62946"
+        ],
+        "region_ids": [],
+        "description": "Border crosses itself",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Border crosses itself",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      }
+    ],
+    "object_ids": [
+      "mask_7be67c96e4591d6422d62946"
+    ],
+    "region_ids": []
+  },
+  "diagnostics": [
+    {
+      "code": "DENSITY_REVIEW_REQUIRED",
+      "severity": "review_required",
+      "stage": "routing",
+      "object_ids": [
+        "mask_7be67c96e4591d6422d62946"
+      ],
+      "region_ids": [],
+      "description": "Los parámetros de puntada son los de referencia de Anime Socks (gabardina, estabilizador grueso, 400 ppm), no una calibración para esta tela.",
+      "evidence": {
+        "h3_validation_required": true,
+        "minimum_feature_is_calibrated": false,
+        "minimum_feature_mm": 0.4,
+        "parameter_source": "gabardina_400ppm_referencia",
+        "parameters_calibrated": false,
+        "provisional_spacing_mm": 0.4,
+        "provisional_stitch_length_mm": 2.5,
+        "reference_parameters": {
+          "angles_deg": [
+            45,
+            135,
+            0,
+            90
+          ],
+          "calibrated": false,
+          "max_stitch_length_mm": 2.5,
+          "profile_id": "gabardina_400ppm_referencia",
+          "pull_compensation_mm": 0.2,
+          "row_spacing_mm": 0.45,
+          "underlay": "none"
+        },
+        "thin_feature_fraction_by_object": {
+          "mask_7be67c96e4591d6422d62946": 0.014124
+        }
+      },
+      "suggested_correction": "Coser una prueba en un retazo de la misma tela y estabilizador a 400 ppm antes de bordar; si el relleno se ve ralo o fruncido, ajustar la separación y crear otra revisión."
+    },
+    {
+      "code": "GEOMETRY_REPAIR_AMBIGUOUS",
+      "severity": "review_required",
+      "stage": "geometry",
+      "object_ids": [
+        "mask_7be67c96e4591d6422d62946"
+      ],
+      "region_ids": [],
+      "description": "La interpretación del fondo opaco es una regla explícita, no una máscara semántica confirmada.",
+      "evidence": {
+        "background_method": "white_border_consensus",
+        "white_removed_globally": true
+      },
+      "suggested_correction": "Revisar la entrada y la evidencia antes de continuar."
+    },
+    {
+      "code": "VISUAL_MISMATCH",
+      "severity": "review_required",
+      "stage": "visual",
+      "object_ids": [
+        "mask_7be67c96e4591d6422d62946"
+      ],
+      "region_ids": [],
+      "description": "Se ajustó la geometría para poder bordarla: se quitó lo que ninguna aguja puede formar (capas casi blancas, que se toman como fondo, y manchas de menos de 1 mm²) y se simplificaron los contornos dentro de la tolerancia indicada.",
+      "evidence": {
+        "stitchable": {
+          "min_stitchable_area_mm2": 1.0,
+          "near_white_min_channel": 240,
+          "objects": {
+            "mask_7be67c96e4591d6422d62946": {
+              "kept_points": 4489,
+              "kept_points_before_simplification": 25178,
+              "loops": 119,
+              "omitted": null,
+              "points": 25392,
+              "removed_area_mm2": 5.49,
+              "removed_loops": 8,
+              "simplified": true,
+              "simplify_tolerance_mm": 0.1,
+              "total_area_mm2": 27664.14
+            }
+          },
+          "simplify_tolerance_mm": 0.1
+        }
+      },
+      "suggested_correction": "Comparar el bordado con la imagen original. Si una capa casi blanca es parte del diseño, o hace falta un detalle más chico, usar otra imagen o un tamaño mayor."
+    },
+    {
+      "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+      "severity": "review_required",
+      "stage": "geometry",
+      "object_ids": [
+        "mask_7be67c96e4591d6422d62946"
+      ],
+      "region_ids": [],
+      "description": "Border crosses itself",
+      "evidence": {
+        "localization": "candidate columns, native warning unmapped",
+        "native_diagnostic_id": null,
+        "native_text": "Border crosses itself",
+        "source_object_mapping_verified": false
+      },
+      "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+    }
+  ],
+  "cancellation_requested": false,
+  "issues": [
+    {
+      "code": "DENSITY_REVIEW_REQUIRED",
+      "severity": "review_required",
+      "stage": "routing",
+      "object_ids": [
+        "mask_7be67c96e4591d6422d62946"
+      ],
+      "region_ids": [],
+      "description": "Los parámetros de puntada son los de referencia de Anime Socks (gabardina, estabilizador grueso, 400 ppm), no una calibración para esta tela.",
+      "evidence": {
+        "h3_validation_required": true,
+        "minimum_feature_is_calibrated": false,
+        "minimum_feature_mm": 0.4,
+        "parameter_source": "gabardina_400ppm_referencia",
+        "parameters_calibrated": false,
+        "provisional_spacing_mm": 0.4,
+        "provisional_stitch_length_mm": 2.5,
+        "reference_parameters": {
+          "angles_deg": [
+            45,
+            135,
+            0,
+            90
+          ],
+          "calibrated": false,
+          "max_stitch_length_mm": 2.5,
+          "profile_id": "gabardina_400ppm_referencia",
+          "pull_compensation_mm": 0.2,
+          "row_spacing_mm": 0.45,
+          "underlay": "none"
+        },
+        "thin_feature_fraction_by_object": {
+          "mask_7be67c96e4591d6422d62946": 0.014124
+        }
+      },
+      "suggested_correction": "Coser una prueba en un retazo de la misma tela y estabilizador a 400 ppm antes de bordar; si el relleno se ve ralo o fruncido, ajustar la separación y crear otra revisión."
+    },
+    {
+      "code": "GEOMETRY_REPAIR_AMBIGUOUS",
+      "severity": "review_required",
+      "stage": "geometry",
+      "object_ids": [
+        "mask_7be67c96e4591d6422d62946"
+      ],
+      "region_ids": [],
+      "description": "La interpretación del fondo opaco es una regla explícita, no una máscara semántica confirmada.",
+      "evidence": {
+        "background_method": "white_border_consensus",
+        "white_removed_globally": true
+      },
+      "suggested_correction": "Revisar la entrada y la evidencia antes de continuar."
+    },
+    {
+      "code": "VISUAL_MISMATCH",
+      "severity": "review_required",
+      "stage": "visual",
+      "object_ids": [
+        "mask_7be67c96e4591d6422d62946"
+      ],
+      "region_ids": [],
+      "description": "Se ajustó la geometría para poder bordarla: se quitó lo que ninguna aguja puede formar (capas casi blancas, que se toman como fondo, y manchas de menos de 1 mm²) y se simplificaron los contornos dentro de la tolerancia indicada.",
+      "evidence": {
+        "stitchable": {
+          "min_stitchable_area_mm2": 1.0,
+          "near_white_min_channel": 240,
+          "objects": {
+            "mask_7be67c96e4591d6422d62946": {
+              "kept_points": 4489,
+              "kept_points_before_simplification": 25178,
+              "loops": 119,
+              "omitted": null,
+              "points": 25392,
+              "removed_area_mm2": 5.49,
+              "removed_loops": 8,
+              "simplified": true,
+              "simplify_tolerance_mm": 0.1,
+              "total_area_mm2": 27664.14
+            }
+          },
+          "simplify_tolerance_mm": 0.1
+        }
+      },
+      "suggested_correction": "Comparar el bordado con la imagen original. Si una capa casi blanca es parte del diseño, o hace falta un detalle más chico, usar otra imagen o un tamaño mayor."
+    },
+    {
+      "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+      "severity": "review_required",
+      "stage": "geometry",
+      "object_ids": [
+        "mask_7be67c96e4591d6422d62946"
+      ],
+      "region_ids": [],
+      "description": "Border crosses itself",
+      "evidence": {
+        "localization": "candidate columns, native warning unmapped",
+        "native_diagnostic_id": null,
+        "native_text": "Border crosses itself",
+        "source_object_mapping_verified": false
+      },
+      "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+    }
+  ],
+  "validation_report": {
+    "schema_version": "0.1",
+    "report_id": "job_917dd22d63b84abdbd52abf6fc5c115b_report",
+    "job_id": "job_917dd22d63b84abdbd52abf6fc5c115b",
+    "revision_id": "rev_03c9be20f6034358acb62fea2782c828",
+    "provenance": {
+      "simulated": false,
+      "method": "standalone Ink/Stitch CLI; independent binary audit and JEF reread",
+      "engine_version": "v3.2.2",
+      "parser_version": "1.5.1"
+    },
+    "checks": [
+      {
+        "kind": "file",
+        "outcome": "passed",
+        "method": "independent JEF binary parser and pyembroidery reread"
+      },
+      {
+        "kind": "dimensions",
+        "outcome": "passed",
+        "method": "reread bounds within target; tolerance 0.2 mm; no resizing"
+      },
+      {
+        "kind": "hoop",
+        "outcome": "passed",
+        "method": "reread dimensions and unmodified JEF code versus configured profile"
+      },
+      {
+        "kind": "geometry",
+        "outcome": "not_run",
+        "method": "not implemented in H0-04; no inferred approval"
+      },
+      {
+        "kind": "satin",
+        "outcome": "not_run",
+        "method": "not implemented in H0-04; no inferred approval"
+      },
+      {
+        "kind": "routing",
+        "outcome": "not_run",
+        "method": "not implemented in H0-04; no inferred approval"
+      },
+      {
+        "kind": "visual",
+        "outcome": "not_run",
+        "method": "not implemented in H0-04; no inferred approval"
+      }
+    ],
+    "issues": [
+      {
+        "code": "ENGINE_DIAGNOSTIC_UNCLASSIFIED",
+        "severity": "review_required",
+        "stage": "geometry",
+        "object_ids": [
+          "mask_7be67c96e4591d6422d62946"
+        ],
+        "region_ids": [],
+        "description": "Border crosses itself",
+        "evidence": {
+          "localization": "candidate columns, native warning unmapped",
+          "native_diagnostic_id": null,
+          "native_text": "Border crosses itself",
+          "source_object_mapping_verified": false
+        },
+        "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+      }
+    ],
+    "digital_checks_passed": false,
+    "metrics": {
+      "stitch_bounds_mm": {
+        "min_x_mm": -60.2,
+        "min_y_mm": -60.5,
+        "max_x_mm": 60.2,
+        "max_y_mm": 60.5
+      },
+      "needle_stitches": 8871,
+      "thread_blocks": 1,
+      "color_changes": 0,
+      "raw_jump_commands": 212,
+      "displacement_jump_commands": 209,
+      "interpreted_trims": 32,
+      "max_stitch_length_mm": 2.6870057685088806,
+      "jump_travel_mm": 2394.7090547772277,
+      "processing_duration_ms": 414054,
+      "count_method": "pyembroidery 1.5.1: trims=True,trim_at=3,trim_distance=None,clipping=True; STITCH endpoint bounds; native coordinates /10 to mm; lengths from normalized raw commands /10; native JEF frame",
+      "raw_commands_artifact_id": "job_917dd22d63b84abdbd52abf6fc5c115b_raw_commands_json",
+      "physical_trim_execution_verified": false
+    }
+  },
+  "artifact_manifest": {
+    "schema_version": "0.1",
+    "manifest_id": "job_917dd22d63b84abdbd52abf6fc5c115b_manifest",
+    "job_id": "job_917dd22d63b84abdbd52abf6fc5c115b",
+    "revision_id": "rev_03c9be20f6034358acb62fea2782c828",
+    "provenance": {
+      "simulated": false,
+      "method": "standalone Ink/Stitch CLI; independent binary audit and JEF reread",
+      "engine_version": "v3.2.2",
+      "parser_version": "1.5.1"
+    },
+    "input_sha256": "3ba1cfc1f560fa4dfa47d23b3fe2f5be986b9714f9ad1124bce8cb0bb746f6c8",
+    "settings_sha256": "1ff56141350d04efe4c0b7b0473cf754b622204cf0e68e51f7805379349ce21d",
+    "geometry_sha256": "9e4a445c0c2c415bcca509d6b9f81f0a5b5a378ba32e34f26b7b723b129c357f",
+    "artifacts": [
+      {
+        "artifact_id": "job_917dd22d63b84abdbd52abf6fc5c115b_jef",
+        "job_id": "job_917dd22d63b84abdbd52abf6fc5c115b",
+        "kind": "jef",
+        "filename": "logo.jef",
+        "media_type": "application/octet-stream",
+        "sha256": "e13500b681f7fb84f5c987593dbce4c872c50158b113c3a2f33f8d041c0382c8",
+        "byte_size": 18716,
+        "derived_from": "export",
+        "download": null,
+        "download_url": null,
+        "expires_at": null
+      },
+      {
+        "artifact_id": "job_917dd22d63b84abdbd52abf6fc5c115b_editable_svg",
+        "job_id": "job_917dd22d63b84abdbd52abf6fc5c115b",
+        "kind": "editable_svg",
+        "filename": "editable.svg",
+        "media_type": "image/svg+xml",
+        "sha256": "9e4a445c0c2c415bcca509d6b9f81f0a5b5a378ba32e34f26b7b723b129c357f",
+        "byte_size": 70490,
+        "derived_from": "document",
+        "download": null,
+        "download_url": null,
+        "expires_at": null
+      },
+      {
+        "artifact_id": "job_917dd22d63b84abdbd52abf6fc5c115b_inkstitch_svg",
+        "job_id": "job_917dd22d63b84abdbd52abf6fc5c115b",
+        "kind": "inkstitch_svg",
+        "filename": "inkstitch.svg",
+        "media_type": "image/svg+xml",
+        "sha256": "9e4a445c0c2c415bcca509d6b9f81f0a5b5a378ba32e34f26b7b723b129c357f",
+        "byte_size": 70490,
+        "derived_from": "document",
+        "download": null,
+        "download_url": null,
+        "expires_at": null
+      },
+      {
+        "artifact_id": "job_917dd22d63b84abdbd52abf6fc5c115b_preview_png",
+        "job_id": "job_917dd22d63b84abdbd52abf6fc5c115b",
+        "kind": "preview_png",
+        "filename": "preview.png",
+        "media_type": "image/png",
+        "sha256": "9f1ec994360c88c97aff4d262d30512f91739598be3d15a7c4585b67206afd21",
+        "byte_size": 104406,
+        "derived_from": "jef_reread",
+        "download": null,
+        "download_url": null,
+        "expires_at": null
+      },
+      {
+        "artifact_id": "job_917dd22d63b84abdbd52abf6fc5c115b_validation_json",
+        "job_id": "job_917dd22d63b84abdbd52abf6fc5c115b",
+        "kind": "validation_json",
+        "filename": "validation.json",
+        "media_type": "application/json",
+        "sha256": "17bcd3e5c83dbb9af763af7e5d2ba9c101b8cccde256267537d80d71331b804b",
+        "byte_size": 2917,
+        "derived_from": "validation",
+        "download": null,
+        "download_url": null,
+        "expires_at": null
+      },
+      {
+        "artifact_id": "job_917dd22d63b84abdbd52abf6fc5c115b_raw_commands_json",
+        "job_id": "job_917dd22d63b84abdbd52abf6fc5c115b",
+        "kind": "raw_commands_json",
+        "filename": "raw-commands.json",
+        "media_type": "application/json",
+        "sha256": "dcdf97fed6cdfd3df285350a1697bf796458168166b745eb4a7c91210a834123",
+        "byte_size": 177280,
+        "derived_from": "jef_reread",
+        "download": null,
+        "download_url": null,
+        "expires_at": null
+      }
+    ],
+    "reread_metrics": {
+      "stitch_bounds_mm": {
+        "min_x_mm": -60.2,
+        "min_y_mm": -60.5,
+        "max_x_mm": 60.2,
+        "max_y_mm": 60.5
+      },
+      "needle_stitches": 8871,
+      "thread_blocks": 1,
+      "color_changes": 0,
+      "raw_jump_commands": 212,
+      "displacement_jump_commands": 209,
+      "interpreted_trims": 32,
+      "max_stitch_length_mm": 2.6870057685088806,
+      "jump_travel_mm": 2394.7090547772277,
+      "processing_duration_ms": 414054,
+      "count_method": "pyembroidery 1.5.1: trims=True,trim_at=3,trim_distance=None,clipping=True; STITCH endpoint bounds; native coordinates /10 to mm; lengths from normalized raw commands /10; native JEF frame",
+      "raw_commands_artifact_id": "job_917dd22d63b84abdbd52abf6fc5c115b_raw_commands_json",
+      "physical_trim_execution_verified": false
+    }
+  }
+}

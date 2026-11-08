@@ -455,15 +455,15 @@ class JefFromImageTests(AnalysisApiTests):
         self.assertEqual(self.stages(final), {"analyzing": "skipped", "vectorizing": "completed", "digitizing": "completed", "validating": "completed"})
         self.assertEqual(final["settings_snapshot"]["target"], {"width_mm": 160.0, "height_mm": 160.0, "fit": "contain"})
         self.assertTrue(self.artifact(variant, "jef"))
-        # Se vuelve a generar desde los píxeles: el SVG de la variante crece en la proporción de los destinos (149,6 -> 159,6).
+        # Se vuelve a generar desde los píxeles: el SVG de la variante crece en la proporción de los destinos (orden 5: 129,6 del trabajo inicial, acotado a 130 -> 159,6 de la variante explícita).
         extent = lambda item: self.x_extent(self.artifact(item, "inkstitch_svg").decode("utf-8").split("<path", 1)[1])  # noqa: E731
-        self.assertAlmostEqual(extent(variant) / extent(job), 159.6 / 149.6, delta=0.01)
+        self.assertAlmostEqual(extent(variant) / extent(job), 159.6 / 129.6, delta=0.01)
         self.assertEqual(self.call("GET", f"/api/v1/jobs/{job['job_id']}")[1]["status"], "needs_review")  # el origen no cambió
 
     def test_the_vectorized_size_leaves_room_for_the_pull_compensation(self):
         job, _ = self.run_without_ai(Image_bytes((80, 60), DARK_BLUE))
         extent = self.x_extent(self.artifact(job, "inkstitch_svg").decode("utf-8").split("<path", 1)[1])
-        self.assertAlmostEqual(extent, 150.0 - 0.4, delta=0.02)  # el destino pedido es 150 mm; la compensación suma 0,2 por lado
+        self.assertAlmostEqual(extent, 130.0 - 0.4, delta=0.02)  # orden 5: el bastidor (150) es el límite; el destino de una imagen es <= 130 mm; la compensación suma 0,2 por lado
 
 
 def Image_bytes(size, colour):
