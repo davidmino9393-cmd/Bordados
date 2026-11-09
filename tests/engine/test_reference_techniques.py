@@ -5,7 +5,7 @@ from xml.etree import ElementTree as ET
 
 from PIL import Image, ImageDraw
 
-from test_vectorize import png, result_for, settings, inside_path, path_polygons
+from test_vectorize import ROOT, png, result_for, settings, inside_path, path_polygons
 from test_vectorize_inkstitch import INKSTITCH, SVG, h3_handoff
 from embroidery_contracts import IssueCode
 from vectorize import VectorizeFailure, stitchable
@@ -54,6 +54,20 @@ class ReferenceTechniqueTests(unittest.TestCase):
         value = result_for(png(image), configuration=config)
         self.assertTrue(all(r["pull_compensation_mm"] == .35 for r in value.document.objects[0].reference_rings
                             if r["technique"] == "satin"))
+
+    def test_the_catalog_fabrics_get_the_compensation_the_guide_gives_them(self):
+        """Los ids reales del catálogo: piqué y polar son de elasticidad media (0,35 mm); el resto, estables (0,25 mm)."""
+        catalog = json.loads((ROOT / "services" / "api" / "profiles.json").read_text(encoding="utf-8"))
+        expected = {"pique": .35, "polar": .35}
+        image = Image.new("RGBA", (240, 100))
+        ImageDraw.Draw(image).rectangle((20, 40, 219, 69), fill=(20, 40, 90))
+        for fabric in catalog["fabrics"]:
+            with self.subTest(fabric=fabric["profile_id"]):
+                config = settings(12, 5, 1).model_copy(update={"fabric_profile": fabric["profile_id"]})
+                rings = result_for(png(image), configuration=config).document.objects[0].reference_rings
+                satin = [r["pull_compensation_mm"] for r in rings if r["technique"] == "satin"]
+                self.assertTrue(satin)
+                self.assertEqual(set(satin), {expected.get(fabric["profile_id"], .25)})
 
     def test_width_fixtures_select_real_techniques_and_guide_parameters(self):
         for width, technique in ((.3, "running"), (.5, "running"), (.8, "running"), (1.5, "satin"), (3., "satin")):

@@ -395,14 +395,24 @@ def measure_object(obj, scale, tolerance, cancel=None, grid_origin=(0, 0), elast
     return tuple(json.loads(json.dumps(rings))), _statistics(measured, scale)
 
 
+# Telas del catálogo con elasticidad media según la guía (6.1: piqué, franela, toalla -> 0,30-0,40 mm): compensación 0,35.
+# Las estables (gabardina, jean, lino, algodón plano) quedan en 0,25. Un id desconocido se trata como estable.
+ELASTIC_FABRIC_PROFILES = frozenset({"pique", "polar"})
+ELASTIC_KEYWORDS = ("elastic", "knit", "punto", "jersey", "lycra", "licra", "toalla", "felpa", "franela")
+
+
+def is_elastic(fabric_profile):
+    name = str(fabric_profile or "").lower()
+    return name in ELASTIC_FABRIC_PROFILES or any(word in name for word in ELASTIC_KEYWORDS)
+
+
 def apply(document, cancel=None, settings=None):
     """Publish per-ring decisions on objects while retaining E1 paths and bounds."""
     affine = document.coordinates.source_px_to_mm
     scale = abs(affine[0])
     objects, evidence = [], {}
     for obj in document.objects:
-        fabric = getattr(settings, "fabric_profile", None)
-        elastic = "elastic" in str(fabric).lower() or "knit" in str(fabric).lower()
+        elastic = is_elastic(getattr(settings, "fabric_profile", None))
         rings, stats = measure_object(obj, scale, stitchable.tolerance_for(document), cancel, (affine[4], affine[5]), elastic)
         kept = [r for r in rings if not r["omitted"]]
         techniques = {r["technique"] for r in kept}
