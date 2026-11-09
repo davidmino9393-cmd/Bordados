@@ -42,6 +42,10 @@ FAILURE_DESCRIPTIONS = {
     IssueCode.LOCAL_MODEL_UNAVAILABLE: "El modelo local no está disponible.",
 }
 VECTORIZATION_REVIEW_UNLOCALIZED = "vectorization_review_unlocalized"
+UNLOCALIZED_DESCRIPTIONS = {
+    "boundary_edge_limit": "La imagen es demasiado compleja para bordarla: parece una foto, un degradado con ruido o una textura. "
+                           "Usá un dibujo de colores planos (logo, ilustración) o simplificá la imagen antes de subirla.",
+}
 DIGITIZING_BLOCKED = "Bloqueado hasta que H3 valide técnica y parámetros físicos"
 DEFAULT_JEF_STEM = "bordado"  # si el original no tiene nombre; el JEF descargado se llama como la imagen de origen
 NOTHING_STITCHABLE = "No queda geometría que se pueda bordar"
@@ -488,8 +492,10 @@ class JobRunner:
         else:
             # Una incidencia de revisión sin objeto ni región no puede pausar el job ni declararlo fallido por sí sola:
             # falla con el código genérico y conserva el original.
+            # La persona tiene que saber por qué: se conserva el motivo de E1 y, si la imagen es demasiado compleja, qué hacer.
+            reason = (issue.evidence or {}).get("reason")
             unlocalized = make_issue(
-                IssueCode.WORKER_EXPORT_FAILED, FAILURE_DESCRIPTIONS[IssueCode.WORKER_EXPORT_FAILED],
+                IssueCode.WORKER_EXPORT_FAILED, UNLOCALIZED_DESCRIPTIONS.get(reason) or issue.description,
                 {"reason": VECTORIZATION_REVIEW_UNLOCALIZED, "original_code": issue.code.value,
                  "original_severity": issue.severity.value, "original_evidence": issue.evidence},
             )

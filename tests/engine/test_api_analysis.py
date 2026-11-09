@@ -467,6 +467,18 @@ class JefFromImageTests(AnalysisApiTests):
         self.assertAlmostEqual(extent(variant) / extent(job), 159.6 / 129.6, delta=0.01)
         self.assertEqual(self.call("GET", f"/api/v1/jobs/{job['job_id']}")[1]["status"], "needs_review")  # el origen no cambió
 
+    def test_an_image_too_complex_to_stitch_fails_saying_why_and_what_to_do(self):
+        """Una foto o una textura con ruido supera el límite de complejidad de E1: el aviso lo dice, no «falló la exportación»."""
+        noise = Image.effect_noise((700, 700), 90).convert("RGB")
+        buffer = io.BytesIO()
+        noise.save(buffer, "PNG")
+        job, done = self.run_without_ai(buffer.getvalue())
+        self.assertEqual((done["status"], done["failure"]["stage"]), ("failed", "vectorizing"))
+        issue = done["issues"][0]
+        self.assertEqual(issue["evidence"]["original_evidence"]["reason"], "boundary_edge_limit")
+        self.assertIn("demasiado compleja", issue["description"])
+        self.assertIn("colores planos", issue["description"])
+
     def test_the_vectorized_size_leaves_room_for_the_pull_compensation(self):
         job, _ = self.run_without_ai(Image_bytes((80, 60), DARK_BLUE))
         extent = self.x_extent(self.artifact(job, "inkstitch_svg").decode("utf-8").split("<path", 1)[1])
