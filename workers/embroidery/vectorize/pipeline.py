@@ -42,7 +42,7 @@ def vectorize(image: bytes, media_type: str, asset: SourceAsset, analysis: Analy
     affine = _affine(segmented, settings)
     objects = tuple(_object(mask, affine, segmented, revision_id, cancel) for mask in traced)
     document = _document(objects, affine, asset, settings, job_id, revision_id)
-    document, widths = reference_geometry.apply(document, cancel)
+    document, widths = reference_geometry.apply(document, cancel, settings)
     evidence = _evidence(segmented, traced, asset, analysis, settings, affine)
     evidence["stroke_width"] = widths
     evidence["minimum_feature"] = measure_thin_features(segmented, traced, objects, abs(affine[0]), cancel)
@@ -161,7 +161,7 @@ def _evidence(segmented, traced, asset, analysis, settings, affine):
         "text_handling": "annotation_only_no_font_substitution",
         "h3_validation_required": True,
         "provisional_fields": ["effective_technique", "proposed_technique", "parameters"],
-        "technique_selection": "reference_per_ring_median_square_opening_running_below_0.9mm_scaled_fill_otherwise",
+        "technique_selection": "reference_local_stroke_width_running_below_1mm_verified_satin_1_to_4mm_tatami_over_4mm",
         "settings_sha256": hashlib.sha256(settings.model_dump_json().encode()).hexdigest(),
         "no_sewout_readiness_claim": True,
     }

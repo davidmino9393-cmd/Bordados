@@ -1,34 +1,45 @@
 # Técnicas del camino de referencia
 
-Propósito: seleccionar puntadas por ancho medido sin sustituir la máscara registrada de E1 ni habilitar H3.
+Propósito: derivar puntadas por ancho local sin modificar `path_data_mm`, identidad ni coordenadas E1.
 
-Contenido: [Medición](#medición), [Selección](#selección), [Límites](#límites), [Referencias](#referencias).
+Contenido: [Medición](#medición), [Parámetros](#parámetros), [Rutas](#rutas), [Límites](#límites), [Documentos relacionados](#documentos-relacionados).
 
 ## Medición
 
-- Por anillo exterior con sus huecos: máscara en los centros de píxel y escala de E1; apertura cuadrada de `thin_features._opening` con exterior cero.
-- Distribución de área que sobrevive cada apertura: min/p10/p20/mediana/p90 y fracción bajo 0,4/0,6/0,8/1,0 mm. Aperturas y cuantiles usan anchos enteros de píxel; orientación diagonal puede sesgar hasta √2.
-- `minimum_feature` y su política no cambian. `LEGIBILITY_RISK`: más del 30% del área del objeto bajo el supuesto provisional de 0,4 mm. Incluye técnica y tamaño mínimo para que el 80% alcance 0,8 mm, calculado con p20; no garantiza lectura ni aprobación física.
+- Máscara derivada en centros de píxel, registrada con la transformación E1; nunca se repara el original.
+- Esqueleto Zhang-Suen: cadenas entre extremos/ramas; normales locales intersectan ambos bordes del trazo. Rieles y segmentos se verifican dentro de la máscara. No se decide por el ancho total del objeto.
+- `reference_rings`: unidades locales con `ring_index` original, ancho local mínimo/mediano/máximo, técnica, rieles, guías, microdetalle y derivación.
+- Apertura cuadrada: cuantiles y riesgos de legibilidad históricos; sesgo diagonal hasta √2. La selección local usa normales, no esos cuantiles.
+- Contornos derivados: separar contactos repetidos y simplificar solo si conservan topología; conservar todos los huecos, incluso menores a 1 mm².
 
-## Selección
+## Parámetros
 
-| Mediana por anillo | Técnica de referencia | Compensación por lado | Filas |
-|---|---|---|---|
-| <0,9 mm | Corrida por esqueleto Zhang–Suen | 0; atributo ausente | Sin relleno |
-| 0,9–<2 mm | Relleno alternativo; satén pendiente | min(0,2; 0,25×mediana) mm | 0,35 mm |
-| ≥2 mm | Relleno | min(0,2; 0,25×mediana) mm | 0,45 mm |
+| Ancho local | Técnica | Parámetros |
+|---|---|---|
+| <1 mm | Corrido central | Recto 2,5 mm; curvo 1,25 mm; compensación 0 |
+| 1-4 mm | Satín real | 2 rieles y 1 guía de 2 nodos, en un único path |
+| >4-<7 mm | Tatami conservador | Evita puntadas de satín largas y flotantes; requiere revisión |
+| ≥7 mm | Tatami | Filas 0,35 mm; puntada máxima 5 mm |
 
-- `reference_rings` publica técnica, anchos, parámetros, omisión y derivación por anillo; `stitch_path_mm` contiene la línea central derivada. Un objeto de color puede producir grupos de técnicas distintos, con `data-source-object-id`.
-- `path_data_mm` conserva exactamente la máscara de E1; fidelidad contra esa máscara. La corrida no recorre el contorno cerrado: recorre segmentos y ciclos del esqueleto.
-- `stitchable.plan`, su mínimo de 1 mm² y su tolerancia permanecen intactos. Después se omiten rellenos con área neta <2 mm² y capas de color cuya área retenida total sea <2 mm². Cada nueva omisión lleva aviso localizado y área medida.
-- La relectura binaria del JEF rechaza bloques de hilo sin puntadas, incluidos bloques finales y discrepancias entre tabla y cambios de color. Un export inválido no se entrega como exitoso.
+- Satín: sin relleno; ancho de trazo medido; zigzag 0,40 mm; recorte 0,15; máximo 7 mm; corrido central inferior activo.
+- Micro satín: altura original <5 mm o trazo <1,5 mm; zigzag 0,55 mm; todos los refuerzos desactivados.
+- Compensación por lado: 0,25 mm estable; 0,35 mm si `fabric_profile` identifica elasticidad o punto.
+- Tatami: refuerzo abierto, filas 5 mm, inset 1,5 mm, puntada máxima 5 mm, ángulo perpendicular al superior. Solape objetivo 1,5 mm bajo satines vecinos, limitado a píxeles E1.
+- Islas <1 mm², rellenos netos <2 mm² y capas retenidas <2 mm² mantienen omisión informada. Los huecos nunca son ruido descartable.
+
+## Rutas
+
+- Componente: anillos E1 cuyas máscaras se tocan tras dilatar 0,30 mm (compensación 0,25 + redondeo JEF 0,05). Orden por vecino más próximo; cada componente se entra y se termina una vez.
+- Dentro del componente: rellenos primero, en cadena; hueco ≤3 mm verificado dentro de la máscara → `ending_point`/`starting_point` sin corte; si no, corte. `autoroute_start` en el trazo más cercano al último relleno.
+- Puentes corridos ≤3 mm, de un extremo a la línea central de otra pieza, solo si todo el segmento cae dentro de la máscara dilatada. `auto_satin` (o `auto_run` sin satín) por componente; Ink/Stitch 3.2.2 une ≤0,7 mm y corta a 1,0 mm ([prueba](../../../tests/engine/test_piece_bridges.py)).
+- Corte siempre a la salida de cada componente y en cambios de color. Medición: cruces sobre tela vacía, todos cortados; ninguno queda flotante.
 
 ## Límites
 
-Satén: Ink/Stitch 3.2.2 lo admite, pero faltan rieles/correspondencias verificados; se entrega el fallback autorizado. Trazos, rutas y puntadas todavía requieren revisión. No se cambia `_fill_attributes`: H3 atestiguado sigue rechazando corrida/satén no implementados. `digital_readiness_evaluated=false`, `physical_approval=untested`; David mide H3.
+Sin calibración ni aprobación física: `digital_readiness_evaluated=false`, `physical_approval=untested`, revisión pendiente. El adaptador H3 conserva su validación explícita independiente.
 
-## Referencias
+## Documentos relacionados
 
 - [Pruebas](../../../tests/engine/test_reference_techniques.py)
-- [Reproducción del job local](../../../tests/engine/round5_evidence.py)
+- [Evidencia reproducible](../../../tests/engine/round6_evidence.py)
 - [Entrada y reglas](CONTINUAR.md)
