@@ -12,7 +12,7 @@ from embroidery_contracts.issues import Severity
 from embroidery_contracts.base import Provenance
 from embroidery_contracts.results import Artifact
 from embroidery_contracts.jobs import StageRecord
-from api_adapter import make_issue, result_documents
+from api_adapter import HOOP_MARGIN_MM, make_issue, result_documents
 from process_runner import WorkerFailure, run_logged
 from vectorize import VectorizeFailure, stitchable, vectorize
 from vectorize.inkstitch import REFERENCE_PULL_COMPENSATION_MM, reference_issues, to_reference_inkstitch_svg
@@ -432,6 +432,13 @@ class JobRunner:
         if getattr(previous, "parent_job_id", None) is None:  # una variante de tamaño es un pedido explícito: no se acota
             box_w, box_h = raster_box(target.width_mm, target.height_mm)
             target = target.model_copy(update={"width_mm": box_w, "height_mm": box_h})
+        # Guía 1.1 y comprobación del bastidor: lo bordado queda HOOP_MARGIN_MM por lado dentro del bastidor. Sin esto, un
+        # destino igual al bastidor (el caso normal en los chicos) terminaba siempre en HOOP_INCOMPATIBLE.
+        hoop = settings.hoop
+        target = target.model_copy(update={
+            "width_mm": min(target.width_mm, hoop.width_mm - 2 * HOOP_MARGIN_MM),
+            "height_mm": min(target.height_mm, hoop.height_mm - 2 * HOOP_MARGIN_MM),
+        })
         if min(target.width_mm, target.height_mm) > 2 * inset:
             target = target.model_copy(update={"width_mm": target.width_mm - inset, "height_mm": target.height_mm - inset})
         cleaning = clean_palette(image, asset.media_type, settings.color_limit, event)

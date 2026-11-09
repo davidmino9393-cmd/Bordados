@@ -31,6 +31,7 @@ from embroidery_api.analysis import AnalysisProvider, OllamaProvider, ProviderEr
 from embroidery_api.app import create_app
 from embroidery_api.config import ApiConfig
 from embroidery_contracts import IssueCode
+from api_adapter import HOOP_MARGIN_MM
 from vectorize.inkstitch import REFERENCE_ADAPTER, REFERENCE_PULL_COMPENSATION_MM
 
 TOKEN = "test-token"
@@ -466,6 +467,17 @@ class JefFromImageTests(AnalysisApiTests):
         extent = lambda item: self.x_extent(self.artifact(item, "inkstitch_svg").decode("utf-8").split("<path", 1)[1])  # noqa: E731
         self.assertAlmostEqual(extent(variant) / extent(job), 159.6 / 129.6, delta=0.01)
         self.assertEqual(self.call("GET", f"/api/v1/jobs/{job['job_id']}")[1]["status"], "needs_review")  # el origen no cambió
+
+    def test_an_image_on_a_small_hoop_leaves_the_two_mm_safety_margin_on_each_side(self):
+        """Guía 1.1: el diseño queda 2 mm por lado dentro del bastidor. Con SQ10b (100 mm) el motor recibe 96 mm menos la compensación."""
+        hoop = {**SETTINGS["hoop"], "profile_id": "sq10b", "width_mm": 100.0, "height_mm": 100.0, "jef_hoop_code": 0}
+        small = {"hoop_profile": "sq10b", "hoop": hoop, "target": {"width_mm": 100.0, "height_mm": 100.0, "fit": "contain"}}
+        self.start({})
+        _, job = self.raster_job("none", image=Image_bytes((80, 80), DARK_BLUE), settings=dict(self.settings("none"), **small))
+        self.wait(job["job_id"])
+        svg = (Path(self.tmp.name) / "data" / "jobs" / job["job_id"] / "reference-inkstitch.svg").read_text(encoding="utf-8")
+        extent = self.x_extent(svg.split("<path", 1)[1])
+        self.assertAlmostEqual(extent, 100.0 - 2 * HOOP_MARGIN_MM - 2 * REFERENCE_PULL_COMPENSATION_MM, delta=0.02)
 
     def test_an_image_too_complex_to_stitch_fails_saying_why_and_what_to_do(self):
         """Una foto o una textura con ruido supera el límite de complejidad de E1: el aviso lo dice, no «falló la exportación»."""
