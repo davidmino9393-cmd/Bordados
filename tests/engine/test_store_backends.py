@@ -31,15 +31,31 @@ except ImportError:  # sin psycopg solo se prueba SQLite
 DEV_URL_FILE = ROOT / "services" / "api" / ".runtime" / "postgres-dev.json"
 
 
+CONNECT_TIMEOUT_S = 3
+_reachable_url = []  # caché de una sola consulta: [url o None]
+
+
 def postgres_test_url():
+    """URL de la base de pruebas, solo si responde. Con el servidor caído (Docker apagado) cada conexión tardaría minutos
+    en fallar: se comprueba una vez, con plazo corto, y si no responde las pruebas de PostgreSQL se omiten."""
+    if not _reachable_url:
+        _reachable_url.append(_probe())
+    return _reachable_url[0]
+
+
+def _probe():
     if psycopg is None:
         return None
     url = os.environ.get("EMBROIDERY_TEST_DATABASE_URL")
-    if url:
-        return url
-    if DEV_URL_FILE.exists():
-        return json.loads(DEV_URL_FILE.read_text(encoding="utf-8")).get("database_url")
-    return None
+    if not url and DEV_URL_FILE.exists():
+        url = json.loads(DEV_URL_FILE.read_text(encoding="utf-8")).get("database_url")
+    if not url:
+        return None
+    try:
+        psycopg.connect(url, connect_timeout=CONNECT_TIMEOUT_S).close()
+    except psycopg.Error:
+        return None
+    return url
 
 
 def isolated_schema_url(case, base_url):
