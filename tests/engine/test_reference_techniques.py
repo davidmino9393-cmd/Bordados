@@ -21,33 +21,77 @@ def stroke(width):
 
 
 class ReferenceTechniqueTests(unittest.TestCase):
-    def test_width_fixtures_select_real_techniques_and_scaled_parameters(self):
-        for width, technique in ((.3, "running"), (.5, "running"), (.8, "running"), (1.5, "fill"), (3., "fill")):
+    def test_standard_micro_and_wide_vertical_strokes_use_the_guide(self):
+        for width in (1.2, 3, 5, 7):
+            with self.subTest(width=width):
+                image = Image.new("RGBA", (240, 300))
+                ImageDraw.Draw(image).rectangle((30, 20, 30 + round(width / .05) - 1, 279), fill=(20, 40, 90))
+                value = result_for(png(image), configuration=settings(12, 15, 1))
+                nodes = [p for p in ET.fromstring(to_reference_inkstitch_svg(value)).iter(SVG + "path")
+                         if p.get("data-technique")]
+                self.assertTrue(nodes)
+                for node in nodes:
+                    if width <= 4:
+                        self.assertEqual(node.get(INKSTITCH + "satin_column"), "true")
+                        spacing = .55 if width < 1.5 else .4
+                        self.assertEqual(float(node.get(INKSTITCH + "zigzag_spacing_mm")), spacing)
+                        self.assertEqual(node.get(INKSTITCH + "center_walk_underlay"), "false" if width < 1.5 else "true")
+                        self.assertEqual(node.get(INKSTITCH + "contour_underlay"), "false")
+                        self.assertEqual(node.get(INKSTITCH + "zigzag_underlay"), "false")
+                    else:
+                        self.assertEqual(node.get(INKSTITCH + "auto_fill"), "true")
+                        self.assertEqual(float(node.get(INKSTITCH + "row_spacing_mm")), .35)
+                        self.assertEqual(node.get(INKSTITCH + "fill_underlay"), "true")
+                        self.assertEqual(float(node.get(INKSTITCH + "fill_underlay_inset_mm")), 1.5)
+                        self.assertEqual(float(node.get(INKSTITCH + "fill_underlay_max_stitch_length_mm")), 5)
+                        self.assertEqual((float(node.get(INKSTITCH + "fill_underlay_angle")) -
+                                          float(node.get(INKSTITCH + "angle"))) % 180, 90)
+
+    def test_elastic_fabric_reaches_reference_derivation_without_api_changes(self):
+        image = Image.new("RGBA", (240, 100))
+        ImageDraw.Draw(image).rectangle((20, 40, 219, 69), fill=(20, 40, 90))
+        config = settings(12, 5, 1).model_copy(update={"fabric_profile": "elastico"})
+        value = result_for(png(image), configuration=config)
+        self.assertTrue(all(r["pull_compensation_mm"] == .35 for r in value.document.objects[0].reference_rings
+                            if r["technique"] == "satin"))
+
+    def test_width_fixtures_select_real_techniques_and_guide_parameters(self):
+        for width, technique in ((.3, "running"), (.5, "running"), (.8, "running"), (1.5, "satin"), (3., "satin")):
             with self.subTest(width=width):
                 value = stroke(width)
                 obj = value.document.objects[0]
-                ring, = obj.reference_rings
-                self.assertAlmostEqual(ring["width"]["median_mm"], width)
-                self.assertEqual(ring["technique"], technique)
+                rings = [r for r in obj.reference_rings if not r["omitted"]]
+                self.assertTrue(rings)
+                self.assertAlmostEqual(rings[0]["width"]["median_mm"], width)
+                self.assertEqual({r["technique"] for r in rings}, {technique})
                 self.assertEqual(obj.effective_technique, technique)
-                node, = ET.fromstring(to_reference_inkstitch_svg(value)).iter(SVG + "path")
+                nodes = [p for p in ET.fromstring(to_reference_inkstitch_svg(value)).iter(SVG + "path")
+                         if p.get("data-technique") == technique]
+                self.assertTrue(nodes)
                 if technique == "running":
-                    self.assertNotIn(INKSTITCH + "auto_fill", node.attrib)
-                    self.assertNotIn(INKSTITCH + "pull_compensation_mm", node.attrib)
-                    self.assertEqual(ring["pull_compensation_mm"], 0)
-                    self.assertEqual(node.get("d"), obj.stitch_path_mm)
+                    for node in nodes:
+                        self.assertNotIn(INKSTITCH + "auto_fill", node.attrib)
+                        self.assertNotIn(INKSTITCH + "pull_compensation_mm", node.attrib)
+                    self.assertTrue(all(r["pull_compensation_mm"] == 0 for r in rings))
                     self.assertNotIn("Z", obj.stitch_path_mm)
                     self.assertNotEqual(obj.stitch_path_mm, obj.path_data_mm)
                 else:
-                    self.assertEqual(node.get(INKSTITCH + "auto_fill"), "true")
-                    self.assertEqual(float(node.get(INKSTITCH + "pull_compensation_mm")), min(.2, .25 * width))
-                    self.assertEqual(float(node.get(INKSTITCH + "row_spacing_mm")), .35 if width < 2 else .45)
-                    self.assertEqual(bool(ring["satin_limitation"]), width < 2)
+                    for node in nodes:
+                        self.assertEqual(node.get(INKSTITCH + "satin_column"), "true")
+                        self.assertEqual(float(node.get(INKSTITCH + "pull_compensation_mm")), .25)
+                        self.assertEqual(float(node.get(INKSTITCH + "zigzag_spacing_mm")), .55)
+                        self.assertEqual(node.get(INKSTITCH + "center_walk_underlay"), "false")
+                        self.assertEqual(float(node.get(INKSTITCH + "short_stitch_inset")), .15)
+                        self.assertEqual(float(node.get(INKSTITCH + "max_stitch_length_mm")), 7)
+                        self.assertTrue(node.get("d").count("M") == 3 or node.get("d").count("M") >= 5)
 
-    def test_boundaries_use_median_not_minimum_and_wide_fill_keeps_reference_parameters(self):
-        for width, technique, spacing in ((.9, "fill", .35), (2., "fill", .45), (3., "fill", .45)):
-            ring, = stroke(width).document.objects[0].reference_rings
-            self.assertEqual((ring["technique"], ring["row_spacing_mm"]), (technique, spacing))
+    def test_thresholds_distinguish_running_satin_and_wide_fill(self):
+        for width, technique in ((.9, "running"), (1., "satin"), (2., "satin"), (4., "satin")):
+            rings = stroke(width).document.objects[0].reference_rings
+            self.assertTrue(rings)
+            self.assertEqual({r["technique"] for r in rings if not r["omitted"]}, {technique})
+        self.assertEqual(geometry.RUNNING_BELOW_MM, 1)
+        self.assertEqual(geometry.WIDE_FILL_FROM_MM, 7)
 
     def test_mixed_widths_of_one_colour_are_selected_per_ring(self):
         image = Image.new("RGBA", (300, 120))
@@ -56,9 +100,9 @@ class ReferenceTechniqueTests(unittest.TestCase):
         draw.rectangle((10, 40, 209, 99), fill=(20, 40, 90))
         value = result_for(png(image), configuration=settings(15, 6, 1))
         obj, = value.document.objects
-        self.assertEqual({r["technique"] for r in obj.reference_rings}, {"running", "fill"})
+        self.assertEqual({r["technique"] for r in obj.reference_rings}, {"running", "satin"})
         nodes = list(ET.fromstring(to_reference_inkstitch_svg(value)).iter(SVG + "path"))
-        self.assertEqual({n.get("data-technique") for n in nodes}, {"running", "fill"})
+        self.assertTrue({"running", "satin"}.issubset({n.get("data-technique") for n in nodes}))
         self.assertTrue(all(n.get("data-source-object-id") == obj.object_id for n in nodes))
 
     def test_mask_paths_checker_policy_and_thin_measurement_remain_unchanged(self):
@@ -71,7 +115,7 @@ class ReferenceTechniqueTests(unittest.TestCase):
         self.assertEqual(value.evidence["minimum_feature"]["policy"], "measure_and_report_never_remove_or_thicken")
         self.assertEqual(value.evidence["minimum_feature"]["objects"][value.document.objects[0].object_id]["thin_fraction"], 1)
 
-    def test_skeleton_stays_in_mask_and_preserves_hole_as_a_cycle(self):
+    def test_local_paths_stay_in_mask_and_preserve_the_design_hole(self):
         image = Image.new("RGBA", (160, 160))
         draw = ImageDraw.Draw(image)
         draw.rectangle((20, 20, 139, 139), fill=(20, 40, 90))
@@ -79,9 +123,10 @@ class ReferenceTechniqueTests(unittest.TestCase):
         value = result_for(png(image), configuration=settings(8, 8, 1))
         obj, = value.document.objects
         points = stitchable._points(obj.stitch_path_mm)
-        self.assertEqual(points[0], points[-1])
         self.assertTrue(all(inside_path(p, path_polygons(obj.path_data_mm)) for p in points))
-        self.assertEqual(len(points), len(set(points)) + 1)
+        self.assertFalse(inside_path((4, 4), path_polygons(obj.path_data_mm)))
+        self.assertTrue(obj.reference_rings)
+        self.assertTrue(all(not r["fill_path_mm"] for r in obj.reference_rings if not r["omitted"]))
 
     def test_legibility_issue_is_localized_measured_and_not_calibrated(self):
         value = stroke(.3)

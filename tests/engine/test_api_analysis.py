@@ -31,6 +31,7 @@ from embroidery_api.analysis import AnalysisProvider, OllamaProvider, ProviderEr
 from embroidery_api.app import create_app
 from embroidery_api.config import ApiConfig
 from embroidery_contracts import IssueCode
+from vectorize.inkstitch import REFERENCE_ADAPTER, REFERENCE_PULL_COMPENSATION_MM
 
 TOKEN = "test-token"
 SETTINGS = json.loads((ROOT / "packages" / "contracts" / "fixtures" / "generation-from-svg.json").read_text(encoding="utf-8"))["payload"]["settings"]
@@ -221,7 +222,7 @@ class AnalysisFlowTests(AnalysisApiTests):
                 payload = response.read()
             self.assertEqual((len(payload), hashlib.sha256(payload).hexdigest()), (artifact["byte_size"], artifact["sha256"]))
         self.assertIn(b"<svg", payload[:400])
-        self.assertIn(b"e1-reference-fill-v1", payload)  # el SVG que se bordó es el de referencia, no la entrada cruda
+        self.assertIn(REFERENCE_ADAPTER.encode(), payload)  # el SVG que se bordó es el de referencia, no la entrada cruda
 
     def test_the_worker_receives_the_reference_svg_made_from_the_vectorized_geometry(self):
         self.start({"openai": FakeProvider("openai", [INSIDE])})
@@ -463,7 +464,8 @@ class JefFromImageTests(AnalysisApiTests):
     def test_the_vectorized_size_leaves_room_for_the_pull_compensation(self):
         job, _ = self.run_without_ai(Image_bytes((80, 60), DARK_BLUE))
         extent = self.x_extent(self.artifact(job, "inkstitch_svg").decode("utf-8").split("<path", 1)[1])
-        self.assertAlmostEqual(extent, 150.0 - 0.4, delta=0.02)  # el destino pedido es 150 mm; la compensación suma 0,2 por lado
+        # El destino pedido es 150 mm; el runner descuenta la compensación de ambos lados.
+        self.assertAlmostEqual(extent, 150.0 - 2 * REFERENCE_PULL_COMPENSATION_MM, delta=0.02)
 
 
 def Image_bytes(size, colour):
