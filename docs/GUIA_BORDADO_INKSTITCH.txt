@@ -1,0 +1,185 @@
+﻿Guía Completa de Digitalización de Bordados en Ink/Stitch: Texturas, Relieve 3D y Optimización Integral de Producción
+La digitalización de matrices de bordado representa la convergencia exacta entre el diseño vectorial y la mecánica aplicada de los polímeros textiles. Mientras que en una pantalla un gráfico vectorial es una composición abstracta de líneas y nodos infinitamente maleables, en una máquina bordadora comercial o doméstica esa misma figura se traduce en perforaciones físicas de aguja, tensiones dinámicas de hilo de poliéster y deformaciones estructurales sobre un tejido elástico. Mediante el entorno integrado de Inkscape y la extensión de código abierto Ink/Stitch, es posible producir matrices de bordado de calidad industrial comparables a las desarrolladas en suites comerciales de alto costo como Wilcom Embroidery Studio, siempre y cuando el digitalizador domine las variables críticas del comportamiento de las puntadas: la densidad volumétrica, la orientación angular, las fuerzas de contracción física y la secuenciación matemática de los recorridos de aguja.
+Esta guía técnica proporciona los procedimientos metodológicos, los parámetros probados en taller y las estrategias de optimización necesarias para estructurar bordados con riqueza táctil, contrastes tridimensionales y una eficiencia en máquina que erradique los saltos de hilo y los cortes innecesarios.
+1. Fundamentos de Arquitectura, Formatos y Jerarquía de Capas en Ink/Stitch
+Para operar de forma predecible en Ink/Stitch, es indispensable comprender la relación entre los objetos vectoriales de Inkscape y la forma en que el motor de la extensión los convierte en instrucciones electromecánicas de puntada.
+1.1 El Archivo Nativo SVG frente a los Formatos de Máquina (DST, PES, JEF)
+A diferencia de los entornos propietarios que almacenan la lógica paramétrica en formatos binarios cerrados (como el archivo .EMB en Wilcom), Ink/Stitch utiliza el archivo estándar vectorial .SVG de Inkscape como su formato nativo e infinitamente editable.
+El archivo .SVG almacena tanto las curvas vectoriales puras como los metadatos de costura configurados en el panel de parámetros de Ink/Stitch. Si un diseño se guarda o exporta únicamente en un formato de máquina como .PES (Brother / Babylock), .DST (Tajima / industriales) o .JEF (Janome), el archivo se transforma en un mapa estático de coordenadas puntada a puntada. Abrir un archivo .PES o .DST en un editor elimina los parámetros algorítmicos originales (densidades paramétricas, refuerzos dinámicos y compensaciones de tracción automáticas), impidiendo modificaciones limpias de escala o ajustes de densidad. Por tanto, el protocolo estándar de taller exige conservar siempre la copia maestra en .SVG y exportar a formato de máquina únicamente mediante la función de guardar copia al finalizar la digitalización.
+Al configurar el lienzo de trabajo, es imperativo establecer las dimensiones físicas en milímetros antes de trazar el primer nodo. Un factor crítico para evitar que las máquinas bordadoras domésticas rechacen el archivo por exceder el área de costura consiste en aplicar un margen de seguridad de al menos 2 mm por debajo del límite del bastidor. Por ejemplo, en un bastidor estándar de 100 mm × 100 mm (o 4 × 4 pulgadas), el diseño debe escalarse a un máximo de 98 mm de ancho o alto para que el sensor del aro no bloquee la ejecución de la matriz.
+1.2 La Regla de Secuencia Invertida en el Panel de Capas
+Uno de los contrastes más marcados al migrar de programas comerciales a Ink/Stitch radica en la lectura del orden cronológico de costura. En Wilcom y otros sistemas tradicionales, la máquina borda de arriba hacia abajo en la lista de objetos. En Ink/Stitch ocurre exactamente lo opuesto:
+Principio de apilamiento en Ink/Stitch : El bordado se ejecuta estrictamente de abajo hacia arriba en el panel de Capas y Objetos (Capas y Objetos). El objeto ubicado en la posición más baja de la lista dentro de una capa es el primero en ser bordado por la máquina; el elemento colocado en la cúspide de la pila es el remate final.
+Comprender esta secuencia ascendente es crucial al estructurar el orden de colores y las capas de soporte. Los rellenos de fondo y las bases de fijación deben residir físicamente en las capas y posiciones inferiores de la jerarquía, mientras que los cordones de satín, los detalles finos y los textos deben apilarse secuencialmente en las posiciones superiores.
+1.3 Módulo Integrado de Letras (Lettering) y Gestión de Cortes
+Ink/Stitch incorpora una herramienta tipográfica especializada en Extensiones > Ink/Stitch > Letras (Lettering). A diferencia de las fuentes vectoriales convertidas a mano, estas tipografías ya integran rieles de satín y trayectorias calibradas para bordado.
+El cuadro de diálogo permite controlar el comportamiento de los cortes de hilo mediante el parámetro  Añadir cortes  (Adds trims):
+* Corte tras cada palabra (  After each word  ) : La opción recomendada para mantener la productividad. Permite que las letras individuales de una misma palabra se enlacen sin interrupción y corta el hilo únicamente al saltar al siguiente vocablo.
+* Corte tras cada letra (  After each letter  ) : Fuerza un ciclo de corte y remate entre cada carácter, útil solo en textos monumentales o letras muy separadas donde un puente de hilo arruinaría la estética.
+* Sin cortes (  Never  ) : Mantiene la aguja cosiendo de forma continua, generando puentes de hilo superficiales entre palabras que deben ser retirados manualmente con tijera pulidora.
+Asimismo, la extensión ofrece la función de adaptar letras a trayectos curvos (Lettering along path), lo que permite ceñir lemas y textos circulares sobre escudos y orlas manteniendo la perpendicularidad exacta de las columnas de satín sobre la línea directriz.
+2. Anatomía de Puntadas y Creación de Texturas Tridimensionales
+La calidad y sofisticación visual de un bordado profesional proviene del contraste entre puntadas planas, cordones de realce y líneas de definición. El hilo de poliéster refleja la luz de acuerdo con la dirección en la que queda tendido; manipular este reflejo mediante la densidad y la angulación permite crear ilusiones ópticas de sombra, volumen y dinamismo táctil.
+2.1 Puntada de Corrido (Running Stitch) y Pespunte Triple (Frijol)
+La puntada de corrido consiste en un trazado lineal continuo que replica la costura recta convencional. En Ink/Stitch se genera a partir de un trazo vectorial abierto sin relleno:
+* Corrido simple : Se utiliza como conector de traslado entre objetos y como estructura base de enlace. Su separación de puntada estándar oscila entre 2.0 mm y 2.5 mm. En trazados de curvas cerradas complejas, reducir la longitud de puntada a 1.0 mm–1.5 mm evita que el hilo trace cuerdas secantes que deformen la curvatura original.
+* Pespunte triple o de frijol (Bean Stitch) : Configurado en los parámetros de trazo con un número de repeticiones igual a 1 o 2 (lo que genera 3 o 5 pasadas de aguja sobre la misma línea). Proporciona un delineado grueso, nítido y rústico sin la rigidez de un satín, ideal para detalles de contorno en personajes, nervaduras de hojas o delimitaciones de bajo peso estructural.
+2.2 Columnas de Satín (Plumetis o Columnas de Raso)
+El satín es la puntada técnica fundamental del bordado: aporta un volumen sobresaliente, bordes pulidos y el brillo característico del filamento textil. Se compone de puntadas continuas en zigzag que oscilan de un extremo a otro entre dos rieles guía.
+Estructura anatómica de una columna de satín:
+Riel 1 (Trazo A):  O=======================================O
+                           \       |       /       /
+Líneas de dirección:        \      |      /       /    (Trazo lápiz + Shift)
+                             \     |     /       /
+Riel 2 (Trazo B):  O=======================================O
+
+
+Existen cuatro métodos operativos para generar columnas de satín en Ink/Stitch:
+* Método de dos rieles combinados con guías (  Ctrl + K  ) : Se trazan dos líneas vectoriales abiertas que delimitan los márgenes del cordón con la herramienta Bézier (B). Se seleccionan ambas y se combinan en un único trayecto con el comando Ctrl + K. Posteriormente, con la herramienta lápiz (P) y manteniendo presionada la tecla Shift, se trazan líneas que atraviesen perpendicularmente ambos rieles para definir la dirección de la puntada.
+* Regla crítica de las líneas de dirección : Se debe trazar una sola línea de dirección, o bien tres o más líneas.  Jamás se deben trazar exactamente dos líneas de dirección , ya que el algoritmo de Ink/Stitch confunde la segunda línea con un riel adicional y genera un error fatal en el renderizado de la columna.
+* Conversión automática de trazo a satín (  Stroke to Satin  ) : Para elementos de contorno con grosor homogéneo, se dibuja una única línea central, se le asigna el grosor deseado en milímetros en el panel de  Relleno y Borde  (por ejemplo, 1.2 mm o 2.0 mm) y se ejecuta la función Extensiones > Ink/Stitch > Herramientas: Satín > Trazo a Satín (Stroke to Satin). El sistema genera de forma automática los dos rieles paralelos y los peldaños de dirección.
+* Conversión de zigzag a satín (  Zigzag line to satin  ) : Transforma una línea con patrón en zigzag en una columna estructurada.
+* Conversión de relleno a satín (  Relleno a Satín  ) : Permite transformar una superficie cerrada en cordón de satín delimitado mediante líneas transversales de orientación.
+Limitación de Ancho Máximo y División Automática
+Las máquinas bordadoras no pueden ejecutar puntadas de satín con longitudes arbitrarias. Si una columna de satín supera los 7.0 mm a 9.0 mm de ancho (y de forma crítica por encima de los 12.0 mm–15.0 mm), la aguja realiza un salto en vacío o el hilo queda flojo y susceptible a enganches que destruyen la prenda con el roce. Para satines anchos, es obligatorio configurar en los parámetros la  Longitud máxima de puntada  (fijada habitualmente en 7.0 mm) para forzar una división estructurada, o bien reemplazar la sección por una puntada de relleno tatami.
+Acortamiento en Curvas Cerradas (Short Stitch Inset)
+En curvas pronunciadas de satín, las puntadas convergen en el radio interior y divergen en el exterior. Esta concentración interna amontona hilo, crea bordes toscos y quiebra agujas. En la pestaña de satín, el parámetro  Short stitch inset  (recorte de puntada corta) debe configurarse entre un  15% y un 20% . Esta función retrae de forma escalonada una fracción de las puntadas interiores hacia el centro de la columna, manteniendo el borde exterior limpio y evitando nudos internos.
+2.3 Relleno Plano Tatami (Auto-fill) y Calibración de Densidad
+El relleno tatami se genera sobre cualquier trazado vectorial cerrado que posea color de relleno activo en Inkscape. En lugar de atravesar el objeto de lado a lado en un solo salto, el tatami deposita filas paralelas de puntadas cortas entrelazadas, conformando una base textil firme y uniforme.
+Un aspecto técnico vital es la calibración de la densidad relativa:
+* En suites como Wilcom, un espaciado entre filas de 0.40 mm produce una cobertura densa y cerrada.
+* En Ink/Stitch, un valor de 0.40 mm resulta visiblemente bajo de puntadas ( bajo de puntada ), dejando traslucir el tejido base entre las filas.
+* Parámetro óptimo en Ink/Stitch : El espaciado entre filas en tatami debe calibrarse entre  0.30 mm y 0.35 mm  para alcanzar una cobertura profesional uniforme sin transparencias.
+2.4 Esculpido de Texturas por Angulación de Puntada
+Para que dos zonas adyacentes del mismo color no se fundan en una masa visual plana, se debe variar el ángulo de la puntada en los parámetros de relleno:
+* Ángulo de 0° (Horizontal) : Produce una superficie plana convencional que absorbe la luz frontalmente.
+* Ángulo de 90° (Vertical) : Refleja la luz en sentido perpendicular, destacando elementos rígidos como columnas o nervaduras.
+* Ángulo de 45° o 135° (Diagonal) : Otorga dinamismo visual. Por ejemplo, al digitalizar una figura orgánica, estructurar el cuerpo en tatami a 0°, la lengua a 45° diagonal y los dientes a 90° vertical genera tres texturas táctiles y visuales totalmente diferenciadas utilizando exactamente el mismo carrete de hilo.
+3. Ingeniería del Bordado 3D en Alto Relieve con Foami / Goma EVA
+El bordado 3D consiste en encapsular una placa de material espumado debajo de una cubierta ultra densa de puntadas de satín, logrando que el diseño sobresalga físicamente de la prenda entre 2 y 3 milímetros con una textura gomosa y aristas marcadas.
+Corte transversal de un bordado 3D:
+===================== Cubierta de Satín Ultra Denso (0.18-0.20 mm) =====================
+                     [  Foami / Goma EVA encapsulado  ]
+------------------- Corrido perimetral de sellado (Underlay) -------------------
+~~~~~~~~~~~~~~~~~~~~~~~~ Tejido Base (Lienzo / Dril / Gorra) ~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~ Entretela Estabilizadora (Tear-away) ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+3.1 Materiales y Selección Cromática
+* Tipo de Foami : El foami específico de bordado de alta densidad se quiebra de forma limpia al contacto con la perforación de la aguja. No obstante, al trabajar con foami comercial de papelería, este presenta mayor elasticidad y resistencia al corte. Por ello, en máquinas industriales se deben emplear como máximo tres láminas delgadas, mientras que en máquinas domésticas de línea hogar  no se deben utilizar más de dos capas de foami . Utilizar cuatro capas genera sobrecargas acústicas severas, descalibra los tensores y puede bloquear el mecanismo del garfio rotativo.
+* Regla cromática del relieve : La espuma de foami debe coincidir obligatoriamente con el color exacto del hilo superior. Si el bordado se abre una fracción de milímetro en una curva pronunciada, el foami del mismo tono camufla la separación; si se utiliza foami blanco con hilo rojo o negro, cualquier microapertura arruina el trabajo.
+3.2 Trazado Geométrico: Terminaciones Obligatorias
+El principio físico fundamental del bordado 3D radica en que  la aguja cumple la función dual de coser el hilo y troquelar (cortar) el foami . Si una columna de satín termina en una forma recta o cuadrada abierta, las agujas no perforan el extremo exterior del foami, provocando que la espuma quede atrapada y sobresalga deshilachada en las puntas.
+* Todas las columnas destinadas a relieve 3D deben rematar en extremos cerrados, ya sea en puntas afiladas triangulares o redondeadas suaves.
+* En letras de palo seco con esquinas cuadradas (como una letra E o T), se deben trazar remates perpendiculares en satín que sellen y corten el extremo antes de continuar el trazado principal.
+3.3 Calibración de Parámetros de Costura para 3D
+La densidad estándar de costura es completamente inútil para bordado en relieve. Si se borda con un espaciado regular de 0.40 mm, la aguja no perforará el foami con suficiente proximidad y el hilo dejará ver toda la estructura interior.
+* Pespunte de fijación (Corrido perimetral previo) : Antes de comenzar la cubierta de satín, se programa un corrido simple que trace todo el contorno de la figura sobre el foami. Este pespunte cumple dos funciones mecánicas: inmoviliza la placa de foami contra el tejido base evitando desplazamientos y realiza una primera línea de microcorte perimetral.
+* Duplicación de la densidad de satín : En la pestaña de  Columnas de Raso , el parámetro de  Espaciado en zigzag pico a pico  se reduce de su valor estándar de 0.40 mm a  0.20 mm o 0.18 mm .
+* Impacto numérico : En un objeto promedio, reducir el espaciado de 0.40 mm a 0.20 mm eleva el recuento de puntadas de 539 a 1067 puntadas. Este incremento del 100% en la concentración de hilo es el que garantiza la fuerza de corte por cizallamiento y la cobertura total del bulto.
+* Refuerzo inferior (Underlay) : En el satín 3D se debe desactivar el refuerzo tradicional en zigzag o en celosía densa para no perforar prematuramente el núcleo del foami ni generar una masa excesiva de hilo que quiebre las agujas. Basta con el corrido perimetral previo.
+3.4 Protocolo Operativo en Máquina y Limpieza Térmica
+1. Se monta en el bastidor la tela rígida con entretela rasgable a mano ( tear-away ).
+2. Se bordan todas las capas planas (tatamis y satines convencionales de fondo).
+3. La máquina se detiene antes del bloque 3D. Se posiciona el foami sobre la zona y se sujeta manualmente durante las primeras puntadas del corrido de fijación. Se recomienda reducir la velocidad de la máquina a un régimen intermedio para compensar la densidad de penetración.
+4. Finalizado el bloque de satín denso, se desmonta el bastidor sin retirar la tela.
+5. Desprendimiento manual : Se tira del sobrante de foami hacia afuera con un ángulo rasante firme. Gracias a la perforación a 0.20 mm, el foami exterior se desprende limpiamente como un troquelado de papel.
+6. Se extraen los restos pequeños atrapados en cavidades internas utilizando una pinza de precisión o un descosedor.
+7. Sellado térmico final : Siempre quedan micropartículas de foami asomando entre los hilos. Se pasa rápidamente la llama de un encendedor o una pistola de calor a distancia prudencial sobre el bordado. La espuma reacciona al calor retrayéndose y encogiéndose hacia el interior del cordón de hilo de forma instantánea, dejando una pieza pulida, uniforme y con aristas limpias.
+4. Protocolo Técnico para Tejidos Afelpados y Toallas
+Bordar sobre toallas de baño, batas de microfibra o felpa plantea el problema opuesto al bordado 3D: el fenómeno de hundimiento ( sinking ), en el que la felpilla natural de la tela devora las puntadas, haciendo desaparecer textos, delineados y bordes.
+4.1 La Barrera Hidrosoluble (Solvy) frente al Film Plástico
+Para impedir que las puntadas queden sepultadas bajo el pelo de la toalla, es imprescindible crear una plataforma flotante:
+* Película Hidrosoluble (Solvy / Film disoluble en agua) : Es el material idóneo de grado profesional. Se coloca una lámina tensada directamente sobre la cara superior de la toalla dentro del bastidor. La aguja cose a través del film; al terminar, los sobrantes se arrancan en seco y los microrestos atrapados en las puntadas se desvanecen por completo al contacto con un rocío de agua o en el primer lavado.
+* Film de celofán o polietileno transparente : Solución de contingencia cuando no se cuenta con Solvy. La aguja microperfora el plástico facilitando su retirada mecánica, pero exige retirar manualmente con pinzas cada fragmento interno visible, ya que no se disuelve con agua.
+4.2 Calibración de Parámetros Específicos para Toalla
+1. Densidad de satín aumentada : El espaciado estándar de 0.40 mm permite que las fibras de la toalla escapen entre las pasadas de hilo. Se debe calibrar el  Espaciado en zigzag pico a pico  a  0.30 mm  (o 0.35 mm en zonas menos críticas).
+2. Compensación de tracción reforzada : La naturaleza blanda y móvil de la felpa comprime severamente el ancho visual de las columnas. Se debe aplicar una  Compensación de tracción  (Pull compensation) obligatoria de  0.30 mm a 0.50 mm .
+3. Refuerzo de corrido central (Center Walk Underlay) : Imprescindible en todas las columnas de texto y motivos ornamentales. Este pespunte previo crea una quilla o cordón espinal en el centro del trazo que aplasta la felpa y soporta la cubierta de satín superior.
+4. Prohibición de pespuntes delgados : Cualquier línea trazada en pespunte simple de contorno se hunde irremediablemente en la toalla. Los tallos, orlas y líneas deben estructurarse siempre como columnas de satín de al menos 1.5 mm a 2.0 mm de ancho, o como pespuntes triples compactos.
+4.3 Manejo Operativo de Bastidores y Orientación de Toalla
+Las toallas de baño poseen una banda tejida lisa sin felpa denominada  cenefa . Se debe evitar bordar directamente sobre la cenefa a menos que el diseño lo exija específicamente, orientando el bastidor en el área afelpada principal y cortando la etiqueta de fábrica si interfiere con el reverso.
+Dado el gran volumen de las toallas, estas suelen introducirse en la bordadora orientadas de manera inversa (con el cuerpo de la toalla cayendo hacia el frente de la máquina). Por tanto, en el menú de la bordadora es imprescindible rotar el diseño 180° (invirtiendo el icono orientativo de la letra P) para que el bordado quede al derecho respecto a la prenda terminada. Asimismo, se debe verificar que la toalla cuelgue libremente y no quede aprisionada bajo la mesa o el pantógrafo, lo que provocaría pliegues fatales en el tejido. Para estos soportes, una aguja estándar para bordado calibre 75/11 o #10 es óptima.
+5. Estrategias de Optimización Avanzada: Secuenciación, Conectores Ocultos y Erradicación de Cortes
+En la producción de bordado comercial, el tiempo en máquina equivale directamente al margen de beneficio. Una máquina de bordar que ejecuta cortes de hilo constantemente sufre un castigo mecánico y una merma severa de productividad:
+1. La aguja se detiene por completo.
+2. El mecanismo inferior engancha y corta el hilo superior y de bobina.
+3. El pantógrafo salta a la nueva coordenada a baja velocidad.
+4. La máquina arranca con un ciclo de aceleración suave ejecutando puntadas lentas de remate inicial.
+En un texto o motivo compuesto por decenas de elementos desconectados, los cortes y saltos pueden duplicar la duración del bordado y generan nudos traseros propensos a deshilacharse o cabos sueltos que deben limpiarse a mano con tijera pulidora.
+5.1 Enrutamiento por Conectores de Pespunte Oculto
+El método maestro para optimizar secuencias complejas consiste en conectar los elementos adyacentes mediante corridos rectos de traslado trazados deliberadamente por debajo de las áreas que serán cubiertas posteriormente por satines o capas superiores.
+Secuencia optimizada de enrutamiento continuo (letras consecutivas):
+[Elemento 1: Letra G] ---> Finaliza en extremo superior
+                             |
+                             v (Corrido de enlace oculto)
+[Punto de entrada de E] ---> [Borda trazo vertical] ---> [Satín horizontal pisa conector]
+
+
+Protocolo de Ejecución de Conectores:
+1. Al trazar una letra o elemento ornamental en satín, se identifica en qué extremo conviene situar la salida.
+2. Desde ese punto final, se traza un corrido simple que viaje en línea recta o sinuosa hacia el punto de inicio de la siguiente letra.
+3. El corrido de enlace debe penetrar entre 1.0 mm y 2.0 mm dentro de la estructura de la siguiente letra.
+4. Al bordarse la segunda letra en puntada satín, sus pasadas transversales caen directamente encima del pespunte de enlace, fijándolo mecánicamente y ocultándolo al 100% tanto a la vista como al tacto.
+5. Resultado operativo : La máquina borda palabras completas o ramas intrincadas de flores y hojas sin realizar un solo corte ni dejar puentes de hilo superficiales.
+5.2 Control de Entrada y Salida: Comandos Starting Position y Ending Position
+Por defecto, cuando Ink/Stitch calcula el relleno de una figura cerrada o una columna compleja, su algoritmo coloca los puntos de inicio y finalización en las coordenadas que minimicen el cálculo matemático interno, lo cual con frecuencia sitúa la salida en el centro geométrico de la pieza.
+Cuando un relleno comienza o termina en el centro de una forma, divide el tendido de hilos en dos direcciones divergentes. Con la tensión y elasticidad de la tela, esta divergencia abre una línea de costura visible (una grieta o pliegue en el tejido) que expone la prenda base.
+Para erradicar este problema:
+1. Se selecciona el objeto vectorial en cuestión.
+2. Se accede a Extensiones > Ink/Stitch > Comandos > Adjuntar comandos a los objetos seleccionados (Attach Commands).
+3. Se activan las casillas de  Posición de inicio  (Starting position) y  Posición final  (Ending position).
+4. El programa genera dos iconos interactivos en el lienzo (un triángulo de reproducción para el inicio y un cuadrado o cruz para el final).
+5. Mediante la herramienta de selección de nodos, se arrastran físicamente ambos comandos a los extremos opuestos del objeto (por ejemplo, inicio en el vértice inferior izquierdo y fin en el vértice superior derecho).
+6. Al recalcular los parámetros, la máquina bordará en un único sentido continuo de barrido, eliminando costuras intermedias y garantizando que el punto de salida enlace fluidamente con el siguiente elemento.
+5.3 Desmitificación de los Agujeros en Rellenos de Fondo
+Una creencia extendida entre digitalizadores novatos es que recortar huecos internos en los rellenos de fondo (por ejemplo, calar un fondo amarillo para no bordar debajo de letras o figuras negras) ahorra puntadas e hilo.
+La experimentación controlada demuestra lo contrario:
+* Al introducir orificios internos en un tatami, la trayectoria continua de la aguja se interrumpe constantemente. El algoritmo se ve forzado a insertar puntadas de desaceleración, microbloqueos perimetrales alrededor de cada hueco y trayectos de enlace redundantes para reanudar el relleno del otro lado.
+* En una prueba técnica sobre un escudo circular de 9 cm, la matriz original calada con múltiples huecos y saltos desordenados arrojaba  49,998 puntadas . Al rediseñar la pieza eliminando los cortes internos, extendiendo fondos sólidos continuos y delimitando con cordones de satín conectados, el diseño final se redujo a  21,900 puntadas  (una reducción de más del 56% en tiempo de máquina y desgaste de aguja).
+* Además, bordar fondos sólidos proporciona una base homogénea que aísla la elasticidad de la prenda y evita que las contracciones del tejido desalineen los bordes exteriores.
+6. Dinámica Físico-Textil: Compensación de Tracción (Pull Compensation), Traslapes y Refuerzos (Underlay)
+El hilo de bordar se introduce en la tela bajo una tensión mecánica constante impuesta por los tensores de la máquina y el devanador de bobina. Tan pronto como las puntadas zigzaguean sobre la tela, se desata el fenómeno biomecánico de  empuje y tracción  ( Push and Pull effect ):
+$$\text{Deformación Textil: Contracción en el eje de la puntada} \longleftrightarrow \text{Elongación en el eje de avance}$$
+El hilo contrae la tela hacia el centro de la columna en la dirección del tendido de la puntada, haciendo que el cordón quede físicamente más angosto de lo que fue dibujado en la pantalla de la computadora, mientras que empuja y estira la tela en el sentido perpendicular de las filas.
+Comportamiento del satín bajo tensión:
+   Vector digital en pantalla:              Resultado físico en la tela:
+   +-----------------------+                >---------------------<  (Se contrae hacia el centro)
+   |                       |  Tensión de    |                     |  
+   |                       |  hilo (Pull)   |                     |  
+   +-----------------------+                >---------------------<
+   Ancho teórico = 3.0 mm                   Ancho real = 2.4 mm (Pérdida por falta de compensación)
+
+
+6.1 Calibración Métrica de Compensación de Tracción
+En Ink/Stitch, dentro de la pestaña de  Columnas de Raso , la compensación se gestiona mediante el parámetro de  Compensación de tracción  (Pull compensation en valor absoluto en milímetros, o porcentual). Es preferible utilizar siempre el valor absoluto en milímetros por su reproducibilidad industrial:
+* Tejidos estables y rígidos (Dril, sarga, loneta, parche) : Compensación de  0.20 mm a 0.30 mm .
+* Tejidos con elasticidad media (Polo piqué, franela de algodón, toalla) : Compensación de  0.30 mm a 0.40 mm .
+* Prendas complejas y gorras armadas : En gorras de estructura dura o telas de punto con licra, la contracción se agrava exponencialmente, requiriendo valores de  0.50 mm a 0.80 mm  de compensación.
+6.2 El Margen de Seguridad o Traslape (Overlap)
+Jamás se debe digitalizar un empalme entre dos figuras al ras de la línea geométrica original de una imagen de referencia. Si el borde de un satín toca de forma exacta el borde de un relleno tatami en la pantalla, al bordarse en la máquina, la contracción del hilo separará ambos elementos, dejando una ranura descubierta donde asomará la tela base.
+* Regla del traslape obligatorio : Todo elemento que borde posteriormente (como bordes de satín o sombras superiores) debe montarse y sobrepasar el contorno del relleno subyacente entre  1.0 mm y 2.0 mm . Esta pestaña de tolerancia absorbe cualquier holgura o estiramiento de la tela durante el ciclo de costura.
+6.3 Refuerzos Estructurales (Underlays): Cuándo Aplicarlos y Cuándo Desactivarlos
+El refuerzo ( underlay ) es una estructura de puntadas preliminares que la máquina deposita sobre la entretela antes de crear la capa visible. Su función es fusionar el tejido con el estabilizador y crear un colchón de soporte:
+* Refuerzo en Rellenos Tatami :
+* En áreas grandes, una celosía densa de refuerzo arruga la tela y crea un bloque rígido como cartón.
+* Parámetros óptimos en Ink/Stitch:  Longitud máxima de puntada  a  5.0 mm o 6.0 mm  y  Espaciado de fila  a  5.0 mm o 6.0 mm .
+* Margen interior del refuerzo (  Inset  ) : Se debe configurar obligatoriamente en  1.5 mm . Si se deja en 0 mm, el refuerzo se trazará en el perímetro exterior exacto del objeto; cuando el relleno se contraiga, las líneas del refuerzo sobresaldrán por fuera de las puntadas finales, arruinando la pieza.
+* Refuerzo en Letras y Textos Pequeños (Regla de los 5 mm) :
+* En textos pequeños (alturas inferiores a 5 mm o anchos de trazo menores a 1.5 mm), el refuerzo es el enemigo número uno del bordador. Depositar corridos de base o zigzags inferiores en un espacio tan diminuto acumula puntadas, genera nudos gigantescos, quiebra agujas y distorsiona la tipografía.
+* Protocolo de microtexto : Desactivar absolutamente todas las casillas de verificación de refuerzo (corrido central, contorno y zigzag). La letra debe bordarse limpia, directa y con una densidad relajada (espaciado entre 0.50 mm y 0.60 mm).
+7. Matriz Maestra de Parámetros y Protocolo de Control de Calidad
+Para facilitar la configuración rápida en taller, la siguiente tabla condensa los valores probados operativamente en Ink/Stitch según el tipo de elemento y soporte textil:
+Elemento / Tipo de Objeto,Tipo de Puntada,Espaciado de Puntada (Densidad),Compensación de Tracción,Tipo de Refuerzo (Underlay),Configuración de Refuerzo
+Bordado 3D en Foami,Satín Ultra Denso,0.18 mm – 0.20 mm,0.30 mm – 0.40 mm,Corrido perimetral de corte,Pespunte previo de sellado
+Toallas y Felpa,Satín Denso,0.30 mm,0.30 mm – 0.50 mm,Corrido central (Center walk),Estabilizado con Solvy superior
+Bordado Estándar (Camisas/Polos),Satín Regular,0.40 mm,0.25 mm – 0.30 mm,Corrido central o zigzag,Espaciado estándar
+Textos Pequeños (< 5 mm),Satín Abierto,0.50 mm – 0.60 mm,0.25 mm – 0.30 mm,Ninguno (Desactivado),Sin capas base
+Fondo Plano Tatami,Relleno Auto-fill,0.30 mm – 0.35 mm,Traslape de 1.5 mm,Cuadrícula abierta / Fill underlay,Longitud: 5-6 mm; Espaciado: 5-6 mm; Inset: 1.5 mm
+Delineados Fuertes sin Satín,Pespunte Frijol,2.0 mm (Longitud),N/A,Ninguno,Repeticiones: 1 o 2 (Triple/Quíntuple)
+7.1 Protocolo de Control de Calidad y Solución de Fallos en Taller
+Antes de enviar cualquier diseño a producción masiva, el digitalizador debe someter la matriz al siguiente checklist de verificación técnica:
+1. Simulación de trayectorias en Ink/Stitch : Ejecutar Extensiones > Ink/Stitch > Visualizar y Exportar > Simulador. Reducir la velocidad virtual y comprobar que el orden de ejecución avance de abajo hacia arriba sin saltos descontrolados de pantógrafo.
+2. Inspección de saltos residuales : Si en el simulador se aprecian líneas rectas largas que cruzan la pantalla, insertar conectores de corrido ocultos o reubicar los comandos de inicio y fin (Starting / Ending position).
+3. Comprobación de solapamientos : Verificar visualmente que todos los empalmes entre satines y rellenos tatami posean su margen de seguridad de 1.5 mm para prevenir aberturas durante el encogimiento del tejido.
+4. Verificación de tensión en máquina (Regla de los Tercios) : En el reverso de una columna de satín estándar bien tensionada, el hilo blanco de bobina debe ocupar exactamente el tercio central ( $1/3$ ) del ancho total de la columna, dejando dos tercios exteriores simétricos cubiertos por el hilo de color superior. Si el hilo de bobina asoma por el derecho de la prenda, la tensión superior es excesiva o la de bobina es demasiado débil; si el hilo superior forma bucles abajo, falta tensión superior.
