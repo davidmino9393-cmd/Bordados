@@ -22,7 +22,7 @@ Contenido: [Medición](#medición), [Parámetros](#parámetros), [Rutas](#rutas)
 | ≥7 mm | Tatami | Filas 0,35 mm; puntada máxima 5 mm |
 
 - Satín: sin relleno; ancho de trazo medido; zigzag 0,40 mm; recorte 0,15; máximo 7 mm; corrido central inferior activo.
-- Micro satín: altura original <5 mm o trazo <1,5 mm; zigzag 0,55 mm; todos los refuerzos desactivados.
+- Micro satín: altura original <5 mm o trazo <1,5 mm; zigzag 0,55 mm; sin contorno ni zigzag inferior; corrido central solo en tela elástica (piqué, polar), desactivado en tela estable.
 - Compensación por lado: 0,25 mm estable; 0,35 mm si `fabric_profile` identifica elasticidad o punto.
 - Tatami: refuerzo abierto, filas 5 mm, inset 1,5 mm, puntada máxima 5 mm, ángulo perpendicular al superior. Solape objetivo 1,5 mm bajo satines vecinos, limitado a píxeles E1.
 - Islas <1 mm², rellenos netos <2 mm² y capas retenidas <2 mm² mantienen omisión informada. Los huecos nunca son ruido descartable.

@@ -69,6 +69,21 @@ class ReferenceTechniqueTests(unittest.TestCase):
                 self.assertTrue(satin)
                 self.assertEqual(set(satin), {expected.get(fabric["profile_id"], .25)})
 
+    def test_micro_satin_keeps_the_centre_run_only_on_elastic_fabrics(self):
+        """Guía 6.3: en microtexto el refuerzo se decide por la tela; nunca contorno ni zigzag."""
+        image = Image.new("RGBA", (240, 100))
+        ImageDraw.Draw(image).rectangle((20, 40, 219, 63), fill=(20, 40, 90))  # 24 px a 0,05 mm/px = trazo de 1,2 mm: satén micro
+        for fabric, expected in (("gabardina", "false"), ("pique", "true")):
+            with self.subTest(fabric=fabric):
+                config = settings(12, 5, 1).model_copy(update={"fabric_profile": fabric})
+                root = ET.fromstring(to_reference_inkstitch_svg(result_for(png(image), configuration=config)))
+                satin = [n for n in root.iter(SVG + "path") if n.get(INKSTITCH + "satin_column") == "true"]
+                self.assertTrue(satin)
+                for node in satin:
+                    self.assertEqual(float(node.get(INKSTITCH + "zigzag_spacing_mm")), .55)
+                    self.assertEqual(node.get(INKSTITCH + "center_walk_underlay"), expected)
+                    self.assertEqual((node.get(INKSTITCH + "contour_underlay"), node.get(INKSTITCH + "zigzag_underlay")), ("false", "false"))
+
     def test_width_fixtures_select_real_techniques_and_guide_parameters(self):
         for width, technique in ((.3, "running"), (.5, "running"), (.8, "running"), (1.5, "satin"), (3., "satin")):
             with self.subTest(width=width):

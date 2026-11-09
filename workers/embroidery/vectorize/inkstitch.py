@@ -179,7 +179,8 @@ def _unit_attributes(index, unit):
         return {"inkstitch:satin_column": "true", "inkstitch:zigzag_spacing_mm": str(.55 if micro else .4),
                 "inkstitch:short_stitch_inset": "0.15", "inkstitch:max_stitch_length_mm": "7.0",
                 "inkstitch:start_at_nearest_point": "false", "inkstitch:end_at_nearest_point": "false",
-                "inkstitch:center_walk_underlay": str(not micro).lower(),
+                # Guía 6.3: en microtexto el refuerzo depende de la tela; en telas elásticas o blandas se conserva la pasada central.
+                "inkstitch:center_walk_underlay": str(not micro or unit["pull_compensation_mm"] > REFERENCE_PULL_COMPENSATION_MM).lower(),
                 "inkstitch:contour_underlay": "false", "inkstitch:zigzag_underlay": "false",
                 "inkstitch:fill_underlay": "false",
                 "inkstitch:pull_compensation_mm": str(unit["pull_compensation_mm"])}
