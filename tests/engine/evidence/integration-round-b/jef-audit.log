@@ -1,0 +1,16 @@
+test_a_prepared_svg_job_is_digitized_at_its_declared_size_and_the_target_is_only_a_limit (test_api.ApiTests.test_a_prepared_svg_job_is_digitized_at_its_declared_size_and_the_target_is_only_a_limit)
+B2: el job base no escala el SVG preparado aunque el destino difiera; solo una variante cambia el tama�o. ... ok
+test_a_prepared_svg_larger_than_the_target_still_fails_with_the_dimensions_issue (test_api.ApiTests.test_a_prepared_svg_larger_than_the_target_still_fails_with_the_dimensions_issue)
+El destino sigue siendo un l�mite: lo que no entra se rechaza con motivo, no se achica en silencio. ... ok
+test_a_variant_of_a_variant_is_fitted_from_the_original_asset_not_from_the_parents_fitted_svg (test_api.ApiTests.test_a_variant_of_a_variant_is_fitted_from_the_original_asset_not_from_the_parents_fitted_svg)
+B3: la cadena base -> A -> B parte siempre del asset que subi� la persona. ... ok
+test_repeating_a_prepared_svg_variant_request_returns_the_same_body_and_does_not_fit_again (test_api.ApiTests.test_repeating_a_prepared_svg_variant_request_returns_the_same_body_and_does_not_fit_again)
+B3: el replay con la misma clave no crea otra revisi�n ni vuelve a leer y ajustar el SVG. ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 3.456s
+
+OK
+no_viewbox {"passed": true, "http": 422, "problem": {"schema_version": "0.1", "type": "urn:embroidery:problem:invalid-request", "title": "Invalid Request", "status": 422, "detail": "No se puede cambiar el tama\u00f1o de este SVG: El SVG no declara viewBox: sin \u00e9l no se puede cambiar el tama\u00f1o del dibujo.", "instance": "/api/v1/projects/project_2f4fc7f243624925a94b4545cbab5cd0/revisions", "code": "INVALID_REQUEST", "request_id": "d0c3782d-23d0-42d7-9c6e-5cfcee658f5d", "errors": []}, "counts_before": {"jobs": 1, "revisions": 1}, "counts_after": {"jobs": 1, "revisions": 1}, "parent_real_worker_status": "needs_review"}
+relative_dimensions {"passed": true, "http": 422, "problem": {"schema_version": "0.1", "type": "urn:embroidery:problem:invalid-request", "title": "Invalid Request", "status": 422, "detail": "No se puede cambiar el tama\u00f1o de este SVG: El SVG no declara un \u00abwidth\u00bb absoluto (en mm, cm, in, pt, pc, px o sin unidad).", "instance": "/api/v1/projects/project_97549afd86aa43d982e95b9a8d12f38f/revisions", "code": "INVALID_REQUEST", "request_id": "8281fc94-5aca-4079-96dc-6614b9dca3a1", "errors": []}, "counts_before": {"jobs": 1, "revisions": 1}, "counts_after": {"jobs": 1, "revisions": 1}, "parent_real_worker_status": "needs_review"}
+{"verdict": "GO for scoped roundB API delta e426456", "checks": ["base_target_larger_is_only_limit", "base_target_equal", "base_target_smaller_fails_without_scaling", "exact_replay_does_not_read_or_fit", "base_A_B_original_input_and_immutability", "no_viewbox", "relative_dimensions"]}

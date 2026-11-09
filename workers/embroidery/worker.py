@@ -85,6 +85,12 @@ def execute(args, directory):
     command = [str(args.inkstitch.resolve())]
     if args.inkstitch.is_file():
         result["engine_sha256"] = hashlib.sha256(args.inkstitch.read_bytes()).hexdigest()
+    from native_routing import requested, route
+    if requested(source):
+        records, routing = route(source, args.inkstitch.resolve(), directory, args.timeout)
+        result["processes"].extend(records)
+        result["native_routing"] = routing
+        result["input_sha256"] = hashlib.sha256(source.read_bytes()).hexdigest()
     payload, record = run_logged(command + ["--extension=troubleshoot", str(source)], directory, "diagnostics", args.timeout)
     (directory / "diagnostics.svg").write_bytes(payload)
     result["diagnostics"] = diagnostics(payload)

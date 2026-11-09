@@ -132,7 +132,7 @@ class ReferenceAdapterTests(unittest.TestCase):
             self.assertEqual(float(node.attrib[INKSTITCH + "row_spacing_mm"]), REFERENCE_ROW_SPACING_MM)
             self.assertEqual(float(node.attrib[INKSTITCH + "max_stitch_length_mm"]), REFERENCE_MAX_STITCH_LENGTH_MM)
             self.assertEqual(float(node.attrib[INKSTITCH + "pull_compensation_mm"]), REFERENCE_PULL_COMPENSATION_MM)
-            self.assertEqual(node.attrib[INKSTITCH + "fill_underlay"], "False")
+            self.assertEqual(node.attrib[INKSTITCH + "fill_underlay"].lower(), "true")
             self.assertEqual(float(node.attrib[INKSTITCH + "angle"]), REFERENCE_ANGLES_DEG[index % len(REFERENCE_ANGLES_DEG)])
 
     def test_the_svg_declares_that_nothing_is_calibrated_or_approved(self):

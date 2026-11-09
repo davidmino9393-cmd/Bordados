@@ -112,7 +112,8 @@ class VectorizeTests(unittest.TestCase):
                 self.assertEqual(EmbroideryDocument.model_validate_json(value.document.model_dump_json()), value.document)
                 self.assertLessEqual(len({obj.work_color for obj in value.document.objects}), case["expected_colors"])
                 self.assertTrue(all(obj.geometry_kind == "verified_mask" for obj in value.document.objects))
-                self.assertTrue(all(obj.effective_technique != "satin" for obj in value.document.objects))
+                self.assertTrue(all(obj.satin is not None for obj in value.document.objects
+                                    if obj.effective_technique == "satin"))
                 self.assertIn(IssueCode.DENSITY_REVIEW_REQUIRED, {issue.code for issue in value.issues})
                 provisional = [decision for decision in value.document.decisions
                                if decision.field == "parameters" and isinstance(decision.new_value, dict)

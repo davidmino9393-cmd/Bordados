@@ -1,0 +1,12 @@
+{
+  "base_candidate": "b1ce70ca06d06b81e35c8becfefecac5e40412c9",
+  "observed_main": "b1ce70ca06d06b81e35c8becfefecac5e40412c9",
+  "motor": "66b943a38b24a08502e851795742eeb5eb12010d",
+  "merge_commit": "fd39dbdf4cf7d68e63dbb9afa11c21af051ef6e1",
+  "resolved_tree": "d14cf1ea8bdc8eb94a24a1dd4e4273b9add6adad",
+  "conflicts": [],
+  "refs_changed": true,
+  "changed_refs": ["refs/heads/codex/motor"],
+  "main_updated_by_codex": false,
+  "main_posterior_confirmed": true
+}
