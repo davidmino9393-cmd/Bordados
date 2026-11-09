@@ -199,6 +199,23 @@ class SvgTests(unittest.TestCase):
         self.assertGreater(blue[2], 150)
 
     @needs_inkscape
+    def test_a_transient_inkscape_failure_is_retried_once_before_refusing(self):
+        real, calls = subprocess.run, []
+
+        def flaky(command, **options):
+            calls.append(command)
+            if len(calls) == 1:
+                return subprocess.CompletedProcess(command, 1, b"", b"fallo pasajero")
+            return real(command, **options)
+
+        with patch.object(convert.subprocess, "run", side_effect=flaky):
+            result = normalize_upload(PLAIN_SVG, SVG, "logo.svg", accepted=ACCEPTED_TODAY, inkscape=INKSCAPE)
+        self.assertEqual((result.media_type, len(calls)), (PNG, 2))
+        with patch.object(convert.subprocess, "run", return_value=subprocess.CompletedProcess([], 1, b"", b"")) as always:
+            self.assertEqual(refused(self, PLAIN_SVG).code, "INVALID_REQUEST")
+        self.assertEqual(always.call_count, convert.INKSCAPE_ATTEMPTS)  # no reintenta sin fin
+
+    @needs_inkscape
     def test_a_very_tall_drawing_is_drawn_with_its_long_side_at_the_limit(self):
         tall = b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 1000"><rect width="100" height="1000" fill="#000"/></svg>'
         image = decoded(normalize_upload(tall, SVG, "alto.svg", accepted=ACCEPTED_TODAY, inkscape=INKSCAPE).data)

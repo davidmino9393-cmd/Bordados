@@ -28,6 +28,7 @@ RASTER_CONVERTED_WITH_PILLOW = {WEBP, GIF, BMP, TIFF}
 ORIGINAL_SUFFIX = {SVG: ".svg", PDF: ".pdf", WEBP: ".webp", GIF: ".gif", BMP: ".bmp", TIFF: ".tiff"}
 
 INKSCAPE_TIMEOUT_S = 60
+INKSCAPE_ATTEMPTS = 2
 INKSCAPE_LONG_SIDE_PX = 2000  # un logo se dibuja a 2000 px de ancho; más píxeles solo hacen más lento a E1 sin más detalle bordable
 INKSCAPE_MAX_PIXELS = 4_000_000
 _INKSCAPE_SLOTS = BoundedSemaphore(2)
@@ -192,12 +193,17 @@ def _with_inkscape(data, kind, inkscape):
                        "--export-background-opacity=0", *size]
             if kind == PDF:
                 command.append("--pages=1")
-            target.unlink(missing_ok=True)
-            try:
-                done = subprocess.run(command, capture_output=True, timeout=INKSCAPE_TIMEOUT_S, cwd=directory)
-            except subprocess.TimeoutExpired:
-                raise ConversionRefused("INVALID_REQUEST", f"El archivo tardó más de {INKSCAPE_TIMEOUT_S} s en convertirse.") from None
-            if done.returncode != 0 or not target.exists():
+            # Inkscape a veces falla sin motivo cuando la máquina está cargada (medido: el mismo SVG convierte al reintentar):
+            # se intenta INKSCAPE_ATTEMPTS veces antes de decirle a la persona que el archivo no sirve.
+            for attempt in range(INKSCAPE_ATTEMPTS):
+                target.unlink(missing_ok=True)
+                try:
+                    done = subprocess.run(command, capture_output=True, timeout=INKSCAPE_TIMEOUT_S, cwd=directory)
+                except subprocess.TimeoutExpired:
+                    raise ConversionRefused("INVALID_REQUEST", f"El archivo tardó más de {INKSCAPE_TIMEOUT_S} s en convertirse.") from None
+                if done.returncode == 0 and target.exists():
+                    break
+            else:
                 raise ConversionRefused("INVALID_REQUEST", f"No se pudo convertir el archivo {NAMES[kind]}: está dañado o usa algo que no se admite.")
             with Image.open(target) as image:
                 return image.size
