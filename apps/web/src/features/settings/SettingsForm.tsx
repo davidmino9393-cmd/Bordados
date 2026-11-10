@@ -7,6 +7,7 @@ import { Field } from '../../shared/components/Field';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { estimateContain } from '../../shared/utils/fit';
 import { formatMm } from '../../shared/utils/format';
+import { InscriptionNotice } from './InscriptionNotice';
 import { LegibilityNotice } from './LegibilityNotice';
 import { ProviderPicker } from './ProviderPicker';
 import {
@@ -110,6 +111,9 @@ export function SettingsForm({ catalog, asset, busy, onSubmit }: SettingsFormPro
               colorLimit={Number.parseInt(values.color_limit, 10) || 0}
               hoop={hoop}
             />
+          )}
+          {isImage && asset && (
+            <InscriptionNotice projectId={asset.project_id} assetId={asset.asset_id} widthMm={width} heightMm={height} />
           )}
           <ProviderPicker
             providers={catalog.providers}

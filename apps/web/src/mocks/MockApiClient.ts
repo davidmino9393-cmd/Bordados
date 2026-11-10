@@ -20,6 +20,7 @@ import { newIdempotencyKey } from '../shared/utils/idempotency';
 import { mockStitchPreviewImage, mockTextFile, mockVectorImage } from './fixtures/media';
 import { CANCEL_STOP_MS, simulateJob, type SimulatedJob } from './jobSimulation';
 import { buildAnalysisSpec } from './analysis';
+import { simulatedInscriptions } from './inscriptions';
 import { pickScenario, ScenarioOutcome, type Scenario } from './scenarios/scenarios';
 
 const DEFAULT_STAGE_MS = 1500;
@@ -86,6 +87,7 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
   const jobs = new Map<string, SimulatedJob>();
   const sewouts = new Map<string, SewoutResponse[]>();
   const replays = new Map<string, { fingerprint: string; value: unknown }>();
+  const confirmedInscriptions = new Map<string, Map<string, string>>();
   let counter = 0;
   const nextId = (prefix: string) => `${prefix}_sim_${String(++counter).padStart(3, '0')}`;
   const iso = (ms: number) => new Date(ms).toISOString();
@@ -319,6 +321,17 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
         inks: ['#1f3a93'],
         method: 'SIMULADO',
       };
+    },
+    // Guía 1.3 (SIMULADO): siempre las mismas dos lecturas; la altura en mm sí sigue al tamaño pedido.
+    async getInscriptions(_projectId, assetId, size) {
+      if (!assets.has(assetId)) throw problem(ErrorCode.NotFound);
+      return simulatedInscriptions(size, confirmedInscriptions.get(assetId));
+    },
+    async confirmInscriptions(_projectId, assetId, confirmed, size) {
+      if (!assets.has(assetId)) throw problem(ErrorCode.NotFound);
+      const saved = new Map(confirmed.map((item) => [item.inscription_id, item.text.trim()]));
+      confirmedInscriptions.set(assetId, saved);
+      return simulatedInscriptions(size, saved);
     },
     // H2 (confirmado por OpenCode, aún fuera de OpenAPI v0.1): 200 si el job tiene un análisis asociado,
     // propio o el aprobado de su padre en un job de continuación; 404 en cualquier otro caso.

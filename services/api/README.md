@@ -48,6 +48,21 @@ Contenido: [Generación](#generacion), [Operaciones](#operaciones), [Límites](#
 
 Antes de vectorizar una imagen, `palette.py` fusiona los halos de antialias con su tinta (el límite de colores es de hilos y no se infla) y el motor recibe un PNG limpio; el asset original no cambia y la regla, el umbral y los conteos quedan en `evidence.stitching.palette_cleaning`. `legibility.py` mide el ancho de trazo al tamaño pedido. Medición: [evidence/orden3](evidence/orden3/README.md).
 
+## Inscripciones (guía 1.3)
+
+`inscriptions.py` lee el texto de una imagen PNG/JPEG para que la persona confirme la frase antes de bordarla con letras de bordado. Usa los modelos PP-OCRv5 (detección + reconocimiento latino) con RapidOCR sobre onnxruntime. PaddlePaddle no se usa porque Smart App Control bloquea sus DLL en Windows; onnxruntime está firmado. El texto en curva de un sello se lee buscando círculos (Hough) y desenrollando el anillo en coordenadas polares. La altura de letra se mide sobre la tinta y se marca la menor de 5 mm, el mismo umbral del microtexto del motor.
+
+| Ruta | Respuesta |
+|---|---|
+| GET /projects/{id}/assets/{asset_id}/inscriptions?width_mm&height_mm | 200 con las lecturas; `available: false` si el lector no está instalado (CAMBIO PROPUESTO, fuera de OpenAPI v0.1) |
+| PUT /projects/{id}/assets/{asset_id}/inscriptions?width_mm&height_mm | guarda `{confirmed: [{inscription_id, text}]}` con el asset; 503 sin lector |
+
+- Dependencias: `rapidocr`, `onnxruntime` y `opencv-python-headless` (en `requirements.txt`). Sin ellas la API arranca igual y la búsqueda responde `available: false`.
+- Modelos: RapidOCR los descarga la primera vez, verifica su SHA256 y los guarda dentro del paquete. Los que se usan pesan ~13 MB; el paquete también baja sus modelos por defecto (PP-OCRv6, ~31 MB).
+- Tiempos medidos en CPU: ~1 s de carga, ~1 s de texto recto y 5–8 s por círculo candidato. La lectura se guarda por contenido de la imagen: cambiar el tamaño no la repite.
+- Límite: la cursiva y las letras muy estilizadas pueden leerse mal ("Anime" leído "nime"). Por eso la frase se confirma y no se reemplaza sola.
+- Pendiente: la variante con letras de bordado de Ink/Stitch que use la frase confirmada.
+
 ## Bastidores, telas y colores (orden 4)
 
 `profiles.json` trae los seis bastidores de la Janome MC 550E (SQ10b, SQ14b, RE20b, SQ20b, RE28b, RE36b), seis telas nuevas con `calibration_status: "proposed"` y `max_colors: 12`. El límite del trabajo sale del bastidor: `validate_settings` rechaza un destino mayor que el bastidor y un diseño que no entra termina en `HOOP_INCOMPATIBLE` con el bastidor y las medidas (no hay escala al cambiar de bastidor). El JEF solo codifica 5 tamaños: los bastidores mayores van con el código 4. Medición: [evidence/orden4](evidence/orden4/README.md).

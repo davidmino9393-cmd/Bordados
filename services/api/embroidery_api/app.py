@@ -34,6 +34,7 @@ from .config import ApiConfig
 from .downloads import ASSET_SCOPE, DownloadSigner
 from .errors import ApiProblem
 from .input_convert import ORIGINAL_SUFFIX, ConversionRefused, normalize_upload
+from .inscriptions import InscriptionConfirmation, ReaderUnavailable, report as inscription_report, timed_detect, unavailable as inscriptions_unavailable
 from .legibility import check as check_legibility, prepare as prepare_legibility
 from .profiles import load_profiles, validate_settings
 from .runner import FIT_SVG_TO_TARGET, JobRunner, continuation_stages, initial_stages, raster_stages, unanalyzed_raster_stages
@@ -187,7 +188,7 @@ def _original_response(request, store, data_root, grant):
                         headers={"X-Content-Type-Options": "nosniff"})
 
 
-def create_app(config: ApiConfig, analysis_providers=None):
+def create_app(config: ApiConfig, analysis_providers=None, inscription_detector=timed_detect):
     providers = dict(analysis_providers) if analysis_providers is not None else configured_providers(config)
     # La disponibilidad de proveedores sale de lo realmente configurado, no del archivo de perfiles.
     catalog = load_profiles(config.profiles_path).model_copy(update={"providers": provider_availability(providers)})
@@ -389,6 +390,79 @@ def create_app(config: ApiConfig, analysis_providers=None):
         if result is None:
             raise ApiProblem("INVALID_REQUEST", "La imagen no tiene tinta que medir.")
         return JSONResponse(result.model_dump(mode="json"))
+
+    inscription_cache, inscription_lock = {}, threading.Lock()
+
+    def inscription_asset(project_id, asset_id):
+        owned("project", project_id)
+        asset = owned("asset", asset_id, project_id)
+        if asset["body"].get("purpose", "design") != "design" or asset["body"].get("media_type") not in ("image/png", "image/jpeg"):
+            raise ApiProblem("INVALID_REQUEST", "La detección de texto aplica solo a un diseño PNG o JPEG.")
+        return asset
+
+    def detected_inscriptions(asset):
+        """Lecturas del original (lentas: segundos), guardadas por contenido; no dependen del tamaño pedido."""
+        key = asset["body"]["sha256"]
+        with inscription_lock:
+            cached = inscription_cache.get(key)
+        if cached is None:
+            try:
+                cached = inscription_detector(Path(asset["private"]["path"]).read_bytes())
+            except ValueError as exc:
+                raise ApiProblem("INVALID_REQUEST", str(exc)) from exc
+            with inscription_lock:
+                if len(inscription_cache) >= 8:
+                    inscription_cache.pop(next(iter(inscription_cache)))
+                inscription_cache[key] = cached
+        return cached
+
+    def asset_size(asset):
+        return asset["body"]["original_width_px"], asset["body"]["original_height_px"]
+
+    @api.get("/projects/{id}/assets/{asset_id}/inscriptions")
+    def get_asset_inscriptions(
+        id: str,
+        asset_id: str,
+        width_mm: float | None = Query(None, gt=0, le=2000),
+        height_mm: float | None = Query(None, gt=0, le=2000),
+    ):
+        """CAMBIO PROPUESTO (guía 1.3, fuera de OpenAPI v0.1): inscripciones de la imagen para confirmar la frase.
+
+        No bloquea nada y no crea jobs. Con el tamaño pedido informa la altura de letra en mm y marca las menores de 5 mm.
+        Sin el lector instalado responde `available: false`: es un aviso que falta, no un error del pedido.
+        """
+        asset = inscription_asset(id, asset_id)
+        try:
+            found, duration_ms = detected_inscriptions(asset)
+        except ReaderUnavailable as exc:
+            LOGGER.warning("lector de texto no disponible: %s", exc)
+            return JSONResponse(inscriptions_unavailable("El lector de texto no está instalado en el servidor.").model_dump(mode="json"))
+        confirmed = asset["private"].get("inscriptions")
+        body = inscription_report(found, asset_size(asset), width_mm, height_mm, confirmed, duration_ms)
+        return JSONResponse(body.model_dump(mode="json"))
+
+    @api.put("/projects/{id}/assets/{asset_id}/inscriptions")
+    def confirm_asset_inscriptions(
+        id: str,
+        asset_id: str,
+        payload: InscriptionConfirmation,
+        width_mm: float | None = Query(None, gt=0, le=2000),
+        height_mm: float | None = Query(None, gt=0, le=2000),
+    ):
+        """CAMBIO PROPUESTO (guía 1.3): guarda la frase exacta de cada inscripción. Reemplaza las confirmaciones anteriores."""
+        asset = inscription_asset(id, asset_id)
+        try:
+            found, duration_ms = detected_inscriptions(asset)
+        except ReaderUnavailable as exc:
+            raise ApiProblem("SERVICE_UNAVAILABLE", "El lector de texto no está instalado en el servidor.") from exc
+        detected = {f"inscription_{number}": item.text for number, item in enumerate(found, start=1)}
+        unknown = sorted({c.inscription_id for c in payload.confirmed} - detected.keys())
+        if unknown:
+            raise ApiProblem("INVALID_REQUEST", f"Esas inscripciones no existen en la imagen: {', '.join(unknown)}.")
+        saved = {c.inscription_id: {"detected": detected[c.inscription_id], "confirmed": c.text} for c in payload.confirmed}
+        store.mutate("asset", asset_id, lambda body, private: (body, {**private, "inscriptions": saved}))
+        body = inscription_report(found, asset_size(asset), width_mm, height_mm, saved, duration_ms)
+        return JSONResponse(body.model_dump(mode="json"))
 
     @api.post("/projects/{id}/revisions")
     def create_revision(

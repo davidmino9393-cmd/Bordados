@@ -162,6 +162,22 @@ export const es = {
     methodText: 'Ancho de trazo a tamaño final, medido sobre la imagen con el borde suavizado ya fusionado con su color. Es una estimación: en trazos diagonales exagera la finura hasta 1,4 veces.',
     marginTitle: 'Opción de ajuste: recortar el margen blanco',
   },
+  inscriptions: {
+    searching: 'Buscando texto en la imagen… La primera vez tarda unos segundos.',
+    failed: 'No se pudo buscar texto en la imagen. Es solo un aviso: podés generar igual.',
+    unavailable: 'La búsqueda de texto no está instalada en este servidor.',
+    title: 'Texto encontrado en la imagen',
+    intro:
+      'Confirmá o corregí cada frase tal como tiene que quedar bordada. Se guarda con la imagen para la variante con letras de bordado, que llega en una próxima etapa.',
+    fieldLabel: (curved: boolean, mm: string | null) =>
+      `${curved ? 'Texto en curva' : 'Texto'}${mm ? ` (letras de ~${mm} mm de alto)` : ''}`,
+    small: (limit: string) => `Las letras de menos de ${limit} mm se pierden al trazarlas: conviene bordar esta frase con letras de bordado.`,
+    confidence: (percent: number) => `Leído con ${percent}% de confianza.`,
+    confirm: 'Confirmar frases',
+    saving: 'Guardando…',
+    saved: 'Frases confirmadas y guardadas con la imagen.',
+    saveFailed: 'No se pudieron guardar las frases. Probá de nuevo.',
+  },
   settings: {
     title: '2. Ajustes del bordado',
     limit: (w: string, h: string) =>

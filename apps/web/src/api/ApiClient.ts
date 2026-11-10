@@ -1,6 +1,7 @@
 import type { AnalysisDecision, AnalysisSpec } from '../contracts/analysis';
 import type { AuthorizedArtifactManifest } from '../contracts/artifacts';
 import type { JobCreate, JobResponse } from '../contracts/job';
+import type { ConfirmedInscription, InscriptionReport, InscriptionSizeQuery } from '../contracts/inscriptions';
 import type { LegibilityCheck, LegibilityQuery } from '../contracts/legibility';
 import type {
   AssetPurpose,
@@ -100,6 +101,15 @@ export interface ApiClient {
    * devuelve el aviso de legibilidad con números. No crea nada ni bloquea: es una consulta.
    */
   getLegibility(projectId: string, assetId: string, query: LegibilityQuery): Promise<LegibilityCheck>;
+  /** CAMBIO PROPUESTO (guía 1.3): inscripciones detectadas en la imagen, con la altura de letra al tamaño pedido. */
+  getInscriptions(projectId: string, assetId: string, size: InscriptionSizeQuery): Promise<InscriptionReport>;
+  /** Guarda la frase exacta de cada inscripción (reemplaza las confirmaciones anteriores). */
+  confirmInscriptions(
+    projectId: string,
+    assetId: string,
+    confirmed: ConfirmedInscription[],
+    size: InscriptionSizeQuery,
+  ): Promise<InscriptionReport>;
   /** Registra la muestra física de una revisión; nunca cambia el estado digital del trabajo. */
   recordSewout(projectId: string, request: SewoutRecordRequest, idempotencyKey?: string): Promise<SewoutResponse>;
   /** Variante de tamaño o corrección: responde con el trabajo nuevo. */

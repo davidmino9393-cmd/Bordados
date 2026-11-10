@@ -29,6 +29,7 @@ from PIL import Image, ImageDraw
 
 from embroidery_api.analysis import AnalysisProvider, OllamaProvider, ProviderError, ProviderResult
 from embroidery_api.app import create_app
+from embroidery_api.inscriptions import Detected, ReaderUnavailable, mm_per_px
 from embroidery_api.config import ApiConfig
 from embroidery_contracts import IssueCode
 from api_adapter import HOOP_MARGIN_MM
@@ -74,7 +75,7 @@ class AnalysisApiTests(unittest.TestCase):
     providers = None
     raster_digitizing = True  # con el worker falso: se prueba el cableado, no la calidad de las puntadas
 
-    def start(self, providers):
+    def start(self, providers, **app_options):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         config = ApiConfig(
@@ -84,7 +85,8 @@ class AnalysisApiTests(unittest.TestCase):
             max_workers=1, max_queued_jobs=8, timeout_s=20, worker_script=FAKE_WORKER,
             raster_digitizing=self.raster_digitizing,
         )
-        server = uvicorn.Server(uvicorn.Config(create_app(config, analysis_providers=providers), host="127.0.0.1", port=0, log_level="critical"))
+        app = create_app(config, analysis_providers=providers, **app_options)
+        server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=0, log_level="critical"))
         thread = threading.Thread(target=server.run, daemon=True)
         thread.start()
         deadline = time.time() + 10
@@ -653,3 +655,71 @@ class LegibilityEndpointTests(AnalysisApiTests):
             urllib.request.urlopen(request, timeout=10)
         self.assertEqual(caught.exception.code, 401)
         caught.exception.close()
+
+
+class InscriptionEndpointTests(AnalysisApiTests):
+    """Guía 1.3: las inscripciones se leen antes de generar para confirmar la frase. El lector es falso: se prueba el cableado."""
+    FOUND = (
+        Detected("MUNICIPALIDAD DE EL FORTÍN", 0.998, "curved", (10, 10, 900, 900), 50.0),
+        Detected("TALLER", 0.99, "straight", (100, 1000, 600, 260), 200.0),
+    )
+    SIZE = (2000, 1500)
+
+    def setUp(self):
+        self.reads, self.reader_missing = 0, False
+
+        def detector(data):
+            self.reads += 1
+            if self.reader_missing:
+                raise ReaderUnavailable("ModuleNotFoundError: rapidocr")
+            return list(self.FOUND), 12
+
+        self.start({}, inscription_detector=detector)
+        _, project = self.call("POST", "/api/v1/projects", {"name": "I"})
+        self.pid = project["project_id"]
+        _, self.asset = self.upload(self.pid, png(*self.SIZE, shape=True))
+
+    def url(self, asset_id=None, query=""):
+        return f"/api/v1/projects/{self.pid}/assets/{asset_id or self.asset['asset_id']}/inscriptions" + (f"?{query}" if query else "")
+
+    def test_the_readings_come_with_letter_heights_at_the_requested_size_and_are_read_once(self):
+        status, body = self.call("GET", self.url(query="width_mm=100&height_mm=100"))
+        self.assertEqual(status, 200, body)
+        scale = mm_per_px(100.0, 100.0, self.SIZE)
+        self.assertTrue(body["available"])
+        self.assertEqual([(i["inscription_id"], i["text"], i["layout"]) for i in body["inscriptions"]],
+                         [("inscription_1", "MUNICIPALIDAD DE EL FORTÍN", "curved"), ("inscription_2", "TALLER", "straight")])
+        self.assertEqual([i["letter_height_mm"] for i in body["inscriptions"]], [round(50 * scale, 1), round(200 * scale, 1)])
+        self.assertEqual([i["small"] for i in body["inscriptions"]], [True, False])
+        status, other = self.call("GET", self.url(query="width_mm=130&height_mm=130"))
+        self.assertEqual((status, self.reads), (200, 1))  # otro tamaño no vuelve a leer la imagen
+        _, detail = self.call("GET", f"/api/v1/projects/{self.pid}")
+        self.assertEqual(detail["jobs"], [])
+
+    def test_a_confirmed_phrase_is_saved_with_the_asset_and_returned_afterwards(self):
+        status, body = self.call("PUT", self.url(query="width_mm=100&height_mm=100"),
+                                 {"confirmed": [{"inscription_id": "inscription_1", "text": " Municipalidad de El Fortín "}]})
+        self.assertEqual(status, 200, body)
+        self.assertEqual([i["confirmed_text"] for i in body["inscriptions"]], ["Municipalidad de El Fortín", None])
+        _, again = self.call("GET", self.url())
+        self.assertEqual([i["confirmed_text"] for i in again["inscriptions"]], ["Municipalidad de El Fortín", None])
+
+    def test_unknown_inscriptions_empty_phrases_and_assets_that_are_not_images_are_refused(self):
+        _, svg = self.upload(self.pid, PREPARED_SVG, "a.svg", "image/svg+xml")
+        for method, url, body, expected in (
+            ("PUT", self.url(), {"confirmed": [{"inscription_id": "inscription_9", "text": "x"}]}, 422),
+            ("PUT", self.url(), {"confirmed": [{"inscription_id": "inscription_1", "text": "  "}]}, 422),
+            ("PUT", self.url(), {}, 400),
+            ("GET", self.url(svg["asset_id"]), None, 422),
+            ("GET", self.url("asset_missing"), None, 404),
+        ):
+            with self.subTest(method=method, url=url, body=body):
+                self.assertEqual(self.call(method, url, body)[0], expected)
+
+    def test_without_the_reader_the_query_says_so_and_a_confirmation_cannot_be_saved(self):
+        self.reader_missing = True
+        status, body = self.call("GET", self.url(query="width_mm=100&height_mm=100"))
+        self.assertEqual((status, body["available"], body["inscriptions"]), (200, False, []))
+        self.assertIn("no está instalado", body["unavailable_reason"])
+        status, body = self.call("PUT", self.url(), {"confirmed": []})
+        self.assertEqual((status, body["code"]), (503, "SERVICE_UNAVAILABLE"))
