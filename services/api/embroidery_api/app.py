@@ -439,7 +439,7 @@ def create_app(config: ApiConfig, analysis_providers=None):
             raise ApiProblem("REVISION_CONFLICT", "El trabajo de origen todavía está en curso: esperá a que termine para pedir una variante.")
         asset = owned("asset", original.asset_id, project_id)
         settings = original.settings_snapshot.model_copy(update={"target": request.target})
-        validate_settings(settings, catalog)
+        validate_settings(settings, catalog, allow_oversize=True)
         extra = None
         if original.input_kind == "prepared_svg":
             stages = initial_stages()

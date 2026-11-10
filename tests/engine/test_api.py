@@ -593,6 +593,18 @@ class ApiTests(unittest.TestCase):
         self.assertEqual((issue["evidence"]["hoop_profile"], issue["evidence"]["hoop_width_mm"], issue["evidence"]["hoop_height_mm"]), ("sq10b", 100.0, 100.0))
         self.assertIn("100 x 100", issue["description"])
 
+    def test_a_size_variant_larger_than_the_hoop_is_accepted_and_the_result_warns_with_hoop_incompatible(self):
+        """Decisión de David: una variante más grande que el bastidor se permite y se avisa; no se achica en silencio."""
+        settings = self.hoop_settings("sq10b", 100.0, 100.0, 0)
+        project_id, asset_id, revision_id = self.setup_project(svg(), settings)
+        _, parent, _ = self.create_job(project_id, asset_id, revision_id, settings)
+        self.wait_job(project_id, parent["job_id"], {"failed", "needs_review"})
+        status, _, child = self.variant(project_id, parent["job_id"], 130.0, 120.0)
+        self.assertEqual(status, 202, child)
+        self.assertEqual(child["settings_snapshot"]["target"], {"width_mm": 130.0, "height_mm": 120.0, "fit": "contain"})
+        done = self.wait_job(project_id, child["job_id"], {"failed", "needs_review"})
+        self.assertIn("HOOP_INCOMPATIBLE", [issue["code"] for issue in done["issues"]])
+
     def test_a_job_target_larger_than_the_hoop_is_refused_before_any_job_exists(self):
         settings = {**self.hoop_settings("sq10b", 100.0, 100.0, 0), "target": {"width_mm": 130.0, "height_mm": 120.0, "fit": "contain"}}
         project_id, asset_id, revision_id = self.setup_project(svg(), self.with_target(10.0, 10.0))

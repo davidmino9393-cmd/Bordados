@@ -435,10 +435,12 @@ class JobRunner:
         # Guía 1.1 y comprobación del bastidor: lo bordado queda HOOP_MARGIN_MM por lado dentro del bastidor. Sin esto, un
         # destino igual al bastidor (el caso normal en los chicos) terminaba siempre en HOOP_INCOMPATIBLE.
         hoop = settings.hoop
-        target = target.model_copy(update={
-            "width_mm": min(target.width_mm, hoop.width_mm - 2 * HOOP_MARGIN_MM),
-            "height_mm": min(target.height_mm, hoop.height_mm - 2 * HOOP_MARGIN_MM),
-        })
+        # Una variante pedida más grande que el bastidor se respeta: no se achica en silencio y el resultado lo avisa.
+        if target.width_mm <= hoop.width_mm and target.height_mm <= hoop.height_mm:
+            target = target.model_copy(update={
+                "width_mm": min(target.width_mm, hoop.width_mm - 2 * HOOP_MARGIN_MM),
+                "height_mm": min(target.height_mm, hoop.height_mm - 2 * HOOP_MARGIN_MM),
+            })
         if min(target.width_mm, target.height_mm) > 2 * inset:
             target = target.model_copy(update={"width_mm": target.width_mm - inset, "height_mm": target.height_mm - inset})
         cleaning = clean_palette(image, asset.media_type, settings.color_limit, event)

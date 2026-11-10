@@ -184,7 +184,7 @@ export const es = {
     positive: 'Ingresá un número mayor que cero.',
     colorsRange: (max: number) => `Elegí entre 1 y ${max} colores.`,
     outsideHoop: (w: number, h: number) =>
-      `El área indicada es mayor que el bastidor (${w} × ${h} mm). El servidor la va a rechazar.`,
+      `El área indicada es mayor que el bastidor (${w} × ${h} mm). Se genera igual, pero no entra en este bastidor: el resultado queda para revisar.`,
     estimate: (w: string, h: string) =>
       `Tamaño estimado: ${w} × ${h} mm. El tamaño real se mide al releer el archivo generado.`,
     preparedSvgSize:
