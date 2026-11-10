@@ -168,11 +168,14 @@ export const es = {
     unavailable: 'La búsqueda de texto no está instalada en este servidor.',
     title: 'Texto encontrado en la imagen',
     intro:
-      'Confirmá o corregí cada frase tal como tiene que quedar bordada. Se guarda con la imagen para la variante con letras de bordado, que llega en una próxima etapa.',
+      'Confirmá o corregí cada frase tal como tiene que quedar bordada. Se guarda con la imagen y vale para los próximos bordados.',
     fieldLabel: (curved: boolean, mm: string | null) =>
       `${curved ? 'Texto en curva' : 'Texto'}${mm ? ` (letras de ~${mm} mm de alto)` : ''}`,
     small: (limit: string) => `Las letras de menos de ${limit} mm se pierden al trazarlas: conviene bordar esta frase con letras de bordado.`,
     confidence: (percent: number) => `Leído con ${percent}% de confianza.`,
+    useFont: 'Bordar esta frase con letras de bordado (fuente de Ink/Stitch)',
+    useFontHint:
+      'Reemplaza el trazo copiado de la imagen por letras parejas. Pide hilo 60 y aguja 60/8: con hilo 40, probá antes en un retazo.',
     confirm: 'Confirmar frases',
     saving: 'Guardando…',
     saved: 'Frases confirmadas y guardadas con la imagen.',

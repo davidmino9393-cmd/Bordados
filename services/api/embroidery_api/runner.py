@@ -20,6 +20,7 @@ from vectorize.inkstitch import REFERENCE_PULL_COMPENSATION_MM, reference_issues
 from .analysis import ProviderError, normalize, region_incoherent_issue
 from .errors import ApiProblem
 from .legibility import raster_box
+from . import lettering
 from .palette import clean_palette
 from .profiles import exceeds_hoop
 from .svg_fit import fit_to_target
@@ -533,12 +534,38 @@ class JobRunner:
                 {"issues": [failure.issue.model_dump(mode="json")]},
             )
             return
+        svg, lettering_issues = self._lettering(svg, result, previous)
         job_dir = Path(private["job_dir"])
         svg_path = job_dir / REFERENCE_SVG_FILENAME
         svg_path.write_bytes(svg)
         stem = Path(asset.original_filename).stem or DEFAULT_JEF_STEM
-        self._run_worker(previous, private, event, svg_path, job_dir / DIGITIZING_DIRECTORY, reference_issues(result),
+        self._run_worker(previous, private, event, svg_path, job_dir / DIGITIZING_DIRECTORY,
+                         (*reference_issues(result), *lettering_issues),
                          self.config.digitizing_timeout_s, {"jef": f"{stem}.jef"}, asset.sha256)
+
+    def _lettering(self, svg, result, previous):
+        """Guía 1.3: las frases en curva que la persona confirmó y eligió bordar con letras reemplazan al trazo copiado.
+
+        Si no se puede (fuente fuera de escala, letras no encontradas), el trazo copiado queda y el motivo se avisa.
+        """
+        saved = (self.store.get("asset", previous.asset_id)["private"].get("inscriptions") or {}).values()
+        chosen = [item for item in saved if item.get("use_font") and item.get("layout") == "curved"
+                  and item.get("circle_px") and item.get("arc")]
+        if not chosen:
+            return svg, ()
+        phrases = [(item["confirmed"], lettering.circle_to_mm(result.document, item["circle_px"]), item["arc"]) for item in chosen]
+        try:
+            svg, evidence = lettering.apply(svg, result.document, phrases,
+                                            lettering.font_directory(self.config.inkstitch_executable))
+        except lettering.LetteringUnavailable as exc:
+            return svg, (make_issue(IssueCode.LEGIBILITY_RISK, f"Las frases elegidas no se bordaron con letras: {exc}",
+                                    {"lettering": "not_applied", "reason": str(exc),
+                                     "phrases": [item["confirmed"] for item in chosen]}),)
+        texts = ", ".join(f"«{item['text']}»" for item in evidence)
+        description = (f"{texts} se bordó con la fuente {lettering.FONT_ID} de Ink/Stitch en lugar del trazo copiado de la "
+                       f"imagen, con mayúsculas de {evidence[0]['cap_mm']:.1f} mm. {lettering.FONT_THREAD}")
+        return svg, (make_issue(IssueCode.LEGIBILITY_RISK, description, {"lettering": evidence},
+                                tuple(sorted({item["object_id"] for item in evidence}))),)
 
     def _command(self, asset_path, job_dir, timeout_s, hoop_code):
         command = [

@@ -46,11 +46,13 @@ interface InscriptionFieldProps {
   inscription: Inscription;
   value: string;
   smallBelowMm: number;
+  useFont: boolean;
   onChange: (value: string) => void;
+  onUseFont: (value: boolean) => void;
   onEnter: () => void;
 }
 
-function InscriptionField({ inscription, value, smallBelowMm, onChange, onEnter }: InscriptionFieldProps) {
+function InscriptionField({ inscription, value, smallBelowMm, useFont, onChange, onUseFont, onEnter }: InscriptionFieldProps) {
   const text = es.inscriptions;
   const mm = inscription.letter_height_mm === null ? null : formatMm(inscription.letter_height_mm);
   const confidence = text.confidence(Math.round(inscription.confidence * PERCENT));
@@ -61,10 +63,21 @@ function InscriptionField({ inscription, value, smallBelowMm, onChange, onEnter 
     event.preventDefault();
     onEnter();
   };
+  const curved = inscription.layout === InscriptionLayout.Curved;
   return (
-    <Field label={text.fieldLabel(inscription.layout === InscriptionLayout.Curved, mm)} hint={hint}>
-      <input type="text" value={value} maxLength={200} onChange={(e) => onChange(e.target.value)} onKeyDown={handleKey} />
-    </Field>
+    <>
+      <Field label={text.fieldLabel(curved, mm)} hint={hint}>
+        <input type="text" value={value} maxLength={200} onChange={(e) => onChange(e.target.value)} onKeyDown={handleKey} />
+      </Field>
+      {curved && (
+        <>
+          <label className="radio">
+            <input type="checkbox" checked={useFont} onChange={(e) => onUseFont(e.target.checked)} /> {text.useFont}
+          </label>
+          <p className="field__hint">{text.useFontHint}</p>
+        </>
+      )}
+    </>
   );
 }
 
@@ -76,6 +89,7 @@ export function InscriptionNotice(props: InscriptionNoticeProps) {
   const api = useApi();
   const [state, setReport] = useInscriptions(props);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [fonts, setFonts] = useState<Record<string, boolean>>({});
   const [save, setSave] = useState<SaveStatus>(SaveStatus.Idle);
   const text = es.inscriptions;
 
@@ -87,9 +101,19 @@ export function InscriptionNotice(props: InscriptionNoticeProps) {
   if (report.inscriptions.length === 0) return null;
 
   const valueOf = (item: Inscription) => drafts[item.inscription_id] ?? item.confirmed_text ?? item.text;
+  const fontOf = (item: Inscription) => fonts[item.inscription_id] ?? item.use_font;
+  // Una sola frase por arco del sello se borda con letras: el lector puede leer dos veces la misma frase.
+  const chooseFont = (chosen: Inscription, value: boolean) => {
+    const sameArc = (item: Inscription) => item.inscription_id !== chosen.inscription_id && item.arc === chosen.arc;
+    setFonts(Object.fromEntries(report.inscriptions.map((item) => [
+      item.inscription_id,
+      item.inscription_id === chosen.inscription_id ? value : value && sameArc(item) ? false : fontOf(item),
+    ])));
+    setSave(SaveStatus.Idle);
+  };
   const confirm = () => {
     const confirmed = report.inscriptions
-      .map((item) => ({ inscription_id: item.inscription_id, text: valueOf(item).trim() }))
+      .map((item) => ({ inscription_id: item.inscription_id, text: valueOf(item).trim(), use_font: fontOf(item) }))
       .filter((item) => item.text !== '');
     setSave(SaveStatus.Saving);
     api
@@ -110,6 +134,8 @@ export function InscriptionNotice(props: InscriptionNoticeProps) {
           inscription={item}
           value={valueOf(item)}
           smallBelowMm={report.small_below_mm}
+          useFont={fontOf(item)}
+          onUseFont={(value) => chooseFont(item, value)}
           onChange={(value) => {
             setDrafts((current) => ({ ...current, [item.inscription_id]: value }));
             setSave(SaveStatus.Idle);

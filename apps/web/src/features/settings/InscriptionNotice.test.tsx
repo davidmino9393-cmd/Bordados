@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { ApiClient } from '../../api/ApiClient';
 import { ApiProvider } from '../../api/ApiProvider';
-import { InscriptionLayout, type InscriptionReport } from '../../contracts/inscriptions';
+import { InscriptionArc, InscriptionLayout, type InscriptionReport } from '../../contracts/inscriptions';
 import { createMockApiClient } from '../../mocks/MockApiClient';
 import { InscriptionNotice } from './InscriptionNotice';
 
@@ -14,9 +14,11 @@ function report(over: Partial<InscriptionReport> = {}): InscriptionReport {
     schema_version: '0.1-inscriptions', available: true, unavailable_reason: null, small_below_mm: 5, duration_ms: 12, method: 'm',
     inscriptions: [
       { inscription_id: 'inscription_1', text: 'MUNICIPALIDAD DE EL FORTIN', confidence: 0.998, layout: InscriptionLayout.Curved,
-        bounds_px: [0, 0, 600, 600], letter_height_px: 50, letter_height_mm: 1.7, small: true, confirmed_text: null },
+        bounds_px: [0, 0, 600, 600], letter_height_px: 50, letter_height_mm: 1.7, small: true, confirmed_text: null,
+        arc: InscriptionArc.Top, use_font: false },
       { inscription_id: 'inscription_2', text: 'TALLER', confidence: 0.97, layout: InscriptionLayout.Straight,
-        bounds_px: [0, 700, 300, 90], letter_height_px: 200, letter_height_mm: 6.8, small: false, confirmed_text: null },
+        bounds_px: [0, 700, 300, 90], letter_height_px: 200, letter_height_mm: 6.8, small: false, confirmed_text: null,
+        arc: null, use_font: false },
     ],
     ...over,
   };
@@ -54,8 +56,24 @@ describe('texto encontrado en la imagen (guía 1.3)', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Confirmar frases' }));
     expect(await screen.findByText('Frases confirmadas y guardadas con la imagen.')).toBeInTheDocument();
     expect(confirmInscriptions).toHaveBeenCalledWith('p1', 'a1', [
-      { inscription_id: 'inscription_1', text: 'Municipalidad de El Fortín' },
-      { inscription_id: 'inscription_2', text: 'TALLER' },
+      { inscription_id: 'inscription_1', text: 'Municipalidad de El Fortín', use_font: false },
+      { inscription_id: 'inscription_2', text: 'TALLER', use_font: false },
+    ], SIZE);
+  });
+
+  it('ofrece bordar con letras solo el texto en curva y una sola frase por arco', async () => {
+    const twice = report();
+    twice.inscriptions.push({ ...twice.inscriptions[0], inscription_id: 'inscription_3', text: 'MUNTCTPAL', confidence: 0.92 });
+    const confirmInscriptions = vi.fn(async () => twice);
+    renderNotice({ getInscriptions: async () => twice, confirmInscriptions });
+    const boxes = await screen.findAllByRole('checkbox', { name: /letras de bordado/ });
+    expect(boxes).toHaveLength(2); // las dos lecturas en curva; el texto recto no
+    await userEvent.click(boxes[0]);
+    await userEvent.click(boxes[1]);
+    expect(boxes.map((box) => (box as HTMLInputElement).checked)).toEqual([false, true]);
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar frases' }));
+    expect(confirmInscriptions).toHaveBeenCalledWith('p1', 'a1', [
+      expect.objectContaining({ use_font: false }), expect.objectContaining({ use_font: false }), expect.objectContaining({ use_font: true }),
     ], SIZE);
   });
 

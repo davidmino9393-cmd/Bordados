@@ -47,6 +47,8 @@ class Inscription(BaseModel):
     letter_height_mm: float | None         # solo si se pidió un tamaño
     small: bool | None
     confirmed_text: str | None = None
+    arc: Literal["top", "bottom"] | None = None   # texto en curva: arco de arriba (horario) o de abajo (antihorario)
+    use_font: bool = False                 # la persona eligió bordarla con letras de bordado (fuente de Ink/Stitch)
 
 
 class InscriptionReport(BaseModel):
@@ -63,6 +65,7 @@ class InscriptionReport(BaseModel):
 class ConfirmedInscription(BaseModel):
     inscription_id: str = Field(pattern=r"^inscription_\d{1,3}$")
     text: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
+    use_font: bool = False  # solo vale para texto en curva: se borda con la fuente en lugar del trazo copiado de la imagen
 
 
 class InscriptionConfirmation(BaseModel):
@@ -78,6 +81,8 @@ class Detected:
     layout: str
     bounds_px: tuple[int, int, int, int]
     letter_height_px: float
+    circle_px: tuple[float, float, float] | None = None  # sello: centro y radio del círculo en el original
+    arc: str | None = None
 
 
 class ReaderUnavailable(Exception):
@@ -163,6 +168,16 @@ def _circles(image):
     return inside[:MAX_RINGS]
 
 
+def _arc(x, width, steps, mirrored):
+    """Arco de una lectura por su posición, no por el volteo: el lector endereza también el texto girado 180°.
+
+    En la tira (dos vueltas) la columna es el paso de ángulo de `warpPolar`, que crece en sentido horario desde +x; con y
+    hacia abajo, de 180° a 360° es la mitad de arriba del sello.
+    """
+    angle = ((width - x if mirrored else x) / steps * 360) % 360
+    return "top" if angle > 180 else "bottom"
+
+
 def _ring_readings(image, circle, read):
     """Frases del anillo de un sello: varias bandas, arco de arriba (horario) y de abajo (antihorario), agrupadas por frase."""
     import cv2
@@ -175,7 +190,7 @@ def _ring_readings(image, circle, read):
     for start in RING_BANDS:
         ring = polar[:, int(r * start):min(outer, int(r * (start + RING_BAND_SPAN)))]
         strip = cv2.transpose(np.vstack([ring, ring]))  # dos vueltas: ninguna palabra queda cortada en 0°
-        for band in (cv2.flip(strip, 0), cv2.flip(strip, 1)):
+        for mirrored, band in ((False, cv2.flip(strip, 0)), (True, cv2.flip(strip, 1))):
             gray = cv2.cvtColor(band, cv2.COLOR_BGR2GRAY)
             for points, text, score in read(band):
                 key = _key(text)
@@ -183,14 +198,15 @@ def _ring_readings(image, circle, read):
                     continue
                 left, top, right, bottom = (int(round(v)) for v in _box(points))
                 height = _ink_height(gray[max(0, top):max(0, bottom), max(0, left):max(0, right)])
-                groups.setdefault(key, []).append((text.strip(), float(score), height))
+                arc = _arc((left + right) / 2, band.shape[1], steps, mirrored)
+                groups.setdefault(key, []).append((text.strip(), float(score), height, arc))
     # Una lectura parcial (una palabra suelta de la frase) no es otra inscripción.
     keys = [k for k in groups if not any(k != other and k in other for other in groups)]
     phrases = []
     for key in keys:
         # Se prefiere la lectura con espacios y tildes ("EL FORTÍN - CORDOBA" antes que "ELFORTIN-CORDOBA").
-        text, score, height = max(groups[key], key=lambda item: (len(item[0].split()), any(ord(c) > 127 for c in item[0]), item[1]))
-        phrases.append((text, max(s for _t, s, _h in groups[key]), height))
+        text, score, height, arc = max(groups[key], key=lambda item: (len(item[0].split()), any(ord(c) > 127 for c in item[0]), item[1]))
+        phrases.append((text, max(s for _t, s, _h, _a in groups[key]), height, arc))
     return phrases
 
 
@@ -210,7 +226,8 @@ def detect(data, read=None):
         phrases = _ring_readings(image, circle, read)
         if phrases:  # solo un círculo con texto en el anillo es un sello; Hough también toma flores o aros
             seals.append(circle)
-        found += [Detected(text, round(score, 3), "curved", box, height) for text, score, height in phrases]
+        found += [Detected(text, round(score, 3), "curved", box, height, (float(cx), float(cy), float(r)), arc)
+                  for text, score, height, arc in phrases]
     import cv2
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     for points, text, score in read(image):
@@ -245,11 +262,13 @@ def report(detected, size=None, width_mm=None, height_mm=None, confirmed=None, d
         inscription_id = f"inscription_{number}"
         letter_mm = round(item.letter_height_px * scale, 1) if scale else None
         saved = confirmed.get(inscription_id) or {}
+        current = saved.get("detected") == item.text
         items.append(Inscription(
             inscription_id=inscription_id, text=item.text, confidence=item.confidence, layout=item.layout, bounds_px=item.bounds_px,
             letter_height_px=round(item.letter_height_px, 1), letter_height_mm=letter_mm,
             small=None if letter_mm is None else letter_mm < SMALL_LETTER_MM,
-            confirmed_text=saved.get("confirmed") if saved.get("detected") == item.text else None,
+            confirmed_text=saved.get("confirmed") if current else None, arc=item.arc,
+            use_font=bool(current and saved.get("use_font")),
         ))
     return InscriptionReport(available=True, inscriptions=items, duration_ms=duration_ms)
 

@@ -747,6 +747,24 @@ class InscriptionEndpointTests(AnalysisApiTests):
         _, again = self.call("GET", self.url())
         self.assertEqual([i["confirmed_text"] for i in again["inscriptions"]], ["Municipalidad de El Fortín", None])
 
+    def test_a_curved_phrase_can_be_chosen_for_letters_once_per_arc_and_never_a_straight_line(self):
+        circle = (460.0, 460.0, 450.0)
+        self.FOUND = (Detected("MUNICIPALIDAD DE EL FORTÍN", 0.988, "curved", (10, 10, 900, 900), 42.0, circle, "top"),
+                      Detected("MUNTCTPALTDAD", 0.92, "curved", (10, 10, 900, 900), 22.0, circle, "top"),
+                      Detected("TALLER", 0.99, "straight", (100, 1000, 600, 260), 200.0))
+        status, body = self.call("PUT", self.url(), {"confirmed": [
+            {"inscription_id": "inscription_1", "text": "MUNICIPALIDAD DE EL FORTÍN", "use_font": True}]})
+        self.assertEqual(status, 200, body)
+        self.assertEqual([(i["arc"], i["use_font"]) for i in body["inscriptions"]], [("top", True), ("top", False), (None, False)])
+        for confirmed in ([{"inscription_id": "inscription_3", "text": "TALLER", "use_font": True}],
+                          [{"inscription_id": "inscription_1", "text": "A", "use_font": True},
+                           {"inscription_id": "inscription_2", "text": "B", "use_font": True}]):
+            with self.subTest(confirmed=confirmed):
+                status, body = self.call("PUT", self.url(), {"confirmed": confirmed})
+                self.assertEqual((status, body["code"]), (422, "INVALID_REQUEST"))
+        _, again = self.call("GET", self.url())
+        self.assertEqual([i["use_font"] for i in again["inscriptions"]], [True, False, False])  # lo rechazado no se guardó
+
     def test_unknown_inscriptions_empty_phrases_and_assets_that_are_not_images_are_refused(self):
         _, svg = self.upload(self.pid, PREPARED_SVG, "a.svg", "image/svg+xml")
         for method, url, body, expected in (

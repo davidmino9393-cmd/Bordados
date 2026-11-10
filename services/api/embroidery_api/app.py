@@ -455,11 +455,23 @@ def create_app(config: ApiConfig, analysis_providers=None, inscription_detector=
             found, duration_ms = detected_inscriptions(asset)
         except ReaderUnavailable as exc:
             raise ApiProblem("SERVICE_UNAVAILABLE", "El lector de texto no está instalado en el servidor.") from exc
-        detected = {f"inscription_{number}": item.text for number, item in enumerate(found, start=1)}
+        detected = {f"inscription_{number}": item for number, item in enumerate(found, start=1)}
         unknown = sorted({c.inscription_id for c in payload.confirmed} - detected.keys())
         if unknown:
             raise ApiProblem("INVALID_REQUEST", f"Esas inscripciones no existen en la imagen: {', '.join(unknown)}.")
-        saved = {c.inscription_id: {"detected": detected[c.inscription_id], "confirmed": c.text} for c in payload.confirmed}
+        straight = sorted(c.inscription_id for c in payload.confirmed if c.use_font and detected[c.inscription_id].layout != "curved")
+        if straight:
+            raise ApiProblem("INVALID_REQUEST", f"Por ahora solo el texto en curva de un sello se borda con letras: {', '.join(straight)}.")
+        arcs = [(detected[c.inscription_id].circle_px, detected[c.inscription_id].arc) for c in payload.confirmed if c.use_font]
+        if len(arcs) != len(set(arcs)):
+            # El lector puede leer dos veces la misma frase (una con errores): se borda con letras una sola por arco.
+            raise ApiProblem("INVALID_REQUEST", "Elegí una sola frase por arco del sello para bordar con letras.")
+        # El runner necesita dónde está la frase (círculo y arco) para reemplazarla por letras de bordado.
+        saved = {c.inscription_id: {"detected": detected[c.inscription_id].text, "confirmed": c.text, "use_font": c.use_font,
+                                    "layout": detected[c.inscription_id].layout, "arc": detected[c.inscription_id].arc,
+                                    "circle_px": detected[c.inscription_id].circle_px,
+                                    "letter_height_px": detected[c.inscription_id].letter_height_px}
+                 for c in payload.confirmed}
         store.mutate("asset", asset_id, lambda body, private: (body, {**private, "inscriptions": saved}))
         body = inscription_report(found, asset_size(asset), width_mm, height_mm, saved, duration_ms)
         return JSONResponse(body.model_dump(mode="json"))
