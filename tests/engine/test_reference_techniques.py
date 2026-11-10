@@ -295,5 +295,15 @@ class StableTechniqueTests(unittest.TestCase):
         self.assertIn("running", {s["technique"] for s in local_columns._stable_techniques(long, self.Grid(.05))})
 
 
+
+class RunningToleranceTests(unittest.TestCase):
+    def test_running_units_ask_ink_stitch_for_a_stitch_at_every_corner(self):
+        """El Fortín: con la tolerancia por defecto (0,2 mm) la esquina de una L de 2,5 mm quedaba a ~0,5 mm del vértice."""
+        root = ET.fromstring(to_reference_inkstitch_svg(stroke(.5)))
+        running = [p for p in root.iter(f"{SVG}path") if p.get("data-technique") == "running"]
+        self.assertTrue(running)
+        self.assertEqual({p.get(INKSTITCH + "running_stitch_tolerance_mm") for p in running}, {"0.05"})
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -122,6 +122,9 @@ REFERENCE_ADAPTER = "e1-reference-local-width-v2"
 REFERENCE_ROW_SPACING_MM = 0.35
 REFERENCE_MAX_STITCH_LENGTH_MM = 5.0
 REFERENCE_PULL_COMPENSATION_MM = 0.25
+# Ink/Stitch reparte el corrido con una tolerancia de 0,2 mm por defecto y corta las esquinas de las letras chicas (El Fortín:
+# la L salía «(», la esquina quedaba a ~0,5 mm del vértice). Con 0,05 mm cae una puntada en cada esquina.
+REFERENCE_RUNNING_TOLERANCE_MM = 0.05
 REFERENCE_ANGLES_DEG = (45, 135, 0, 90)  # ángulos alternados por objeto: filas paralelas entre colores vecinos se notan más
 REFERENCE_NOTICE = (
     "Los parámetros siguen la guía de digitalización de Ink/Stitch y las técnicas se derivan del ancho local; "
@@ -174,7 +177,8 @@ def _unit_attributes(index, unit):
     technique = unit["technique"]
     if technique == "running":
         return {"inkstitch:stroke_method": "running_stitch",
-                "inkstitch:running_stitch_length_mm": str(unit.get("running_stitch_length_mm", 2.5))}
+                "inkstitch:running_stitch_length_mm": str(unit.get("running_stitch_length_mm", 2.5)),
+                "inkstitch:running_stitch_tolerance_mm": str(REFERENCE_RUNNING_TOLERANCE_MM)}
     if technique == "satin":
         return {"inkstitch:satin_column": "true", "inkstitch:zigzag_spacing_mm": str(.55 if micro else .4),
                 "inkstitch:short_stitch_inset": "0.15", "inkstitch:max_stitch_length_mm": "7.0",
