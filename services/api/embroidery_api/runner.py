@@ -21,6 +21,7 @@ from .analysis import ProviderError, normalize, region_incoherent_issue
 from .errors import ApiProblem
 from .legibility import raster_box
 from .palette import clean_palette
+from .profiles import exceeds_hoop
 from .svg_fit import fit_to_target
 
 
@@ -251,7 +252,7 @@ class JobRunner:
         try:
             report, manifest, artifact_paths = result_documents(
                 previous.model_dump(mode="json"), result, job_dir, duration_ms,
-                self.config.dimension_tolerance_mm, display_names, input_sha256,
+                self.config.dimension_tolerance_mm, display_names, input_sha256, private.get("vectorization", {}).get("svg"),
             )
         except Exception:
             LOGGER.exception("Could not map worker result for job %s", job_id)
@@ -259,19 +260,21 @@ class JobRunner:
             return
         private["artifact_paths"] = artifact_paths
         issues = tuple(extra_issues) + tuple(report.issues)
-        blocking = any(issue.severity == Severity.BLOCKING_ERROR for issue in issues)
+        blocking_codes = {issue.code for issue in issues if issue.severity == Severity.BLOCKING_ERROR}
         review = any(
             issue.severity == Severity.REVIEW_REQUIRED and (issue.object_ids or issue.region_ids)
             for issue in issues
         )
-        if blocking:
+        oversized_variant = previous.parent_job_id is not None and exceeds_hoop(previous.settings_snapshot)
+        hoop_review = oversized_variant and review and blocking_codes == {IssueCode.HOOP_INCOMPATIBLE}
+        if blocking_codes and not hoop_review:
             self._save_transition(
                 previous, JobStatus.FAILED, private,
                 {"digitizing": ("failed", duration_ms, None), "validating": ("pending", None, None)},
                 {"issues": [issue.model_dump(mode="json") for issue in issues]},
             )
             return
-        if not review and not report.digital_checks_passed:
+        if not review and (oversized_variant or not report.digital_checks_passed):
             self._save_failed(previous, private, "WORKER_EXPORT_FAILED", "review_localization_unavailable")
             return
         extra = {

@@ -22,7 +22,11 @@ def _entry(collection, identifier, label):
     return entry
 
 
-def validate_settings(settings, catalog, allow_oversize=False):
+def exceeds_hoop(settings):
+    return settings.target.width_mm > settings.hoop.width_mm or settings.target.height_mm > settings.hoop.height_mm
+
+
+def validate_settings(settings, catalog, *, size_variant=False):
     machine = _entry(catalog.machines, settings.machine_profile, "machine_profile")
     if machine.profile_version != settings.machine_profile_version:
         raise ApiProblem("INVALID_REQUEST", "machine_profile_version no coincide con el perfil configurado.")
@@ -34,9 +38,9 @@ def validate_settings(settings, catalog, allow_oversize=False):
     for name in ("width_mm", "height_mm", "jef_hoop_code"):
         if getattr(hoop, name) != getattr(settings.hoop, name):
             raise ApiProblem("INVALID_REQUEST", f"El snapshot del bastidor no coincide en {name}.")
-    # El límite del trabajo lo fija el bastidor: el destino nunca lo supera (la web lo deriva, no lo edita). Una variante de
-    # tamaño sí puede pedirlo más grande: se genera igual y la comprobación del resultado la marca HOOP_INCOMPATIBLE.
-    if not allow_oversize and (settings.target.width_mm > hoop.width_mm or settings.target.height_mm > hoop.height_mm):
+    # Una variante de tamaño puede pedir un destino más grande que el bastidor: se genera igual y la comprobación del
+    # resultado la marca HOOP_INCOMPATIBLE, para que el trabajo quede en revisión en vez de fallar al crear el pedido.
+    if not size_variant and exceeds_hoop(settings):
         raise ApiProblem(
             "INVALID_REQUEST",
             f"El destino ({settings.target.width_mm:g} x {settings.target.height_mm:g} mm) supera el bastidor {hoop.label} "

@@ -102,7 +102,7 @@ def measured_checks(job, result, tolerance):
     return checks, issues
 
 
-def result_documents(job, result, directory, duration_ms, tolerance, display_names=None, input_sha256=None):
+def result_documents(job, result, directory, duration_ms, tolerance, display_names=None, input_sha256=None, editable_svg=None):
     """`display_names`: nombre que ve la persona al descargar, por tipo de archivo; en disco el archivo no cambia.
 
     `input_sha256`: huella de lo que subió la persona. Sin ella (un SVG preparado) la entrada es el SVG que recibió el
@@ -121,7 +121,7 @@ def result_documents(job, result, directory, duration_ms, tolerance, display_nam
     report = ValidationReport(report_id=f"{job_id}_report", job_id=job_id, revision_id=job["revision_id"],
                               provenance=provenance, checks=checks, issues=issues, digital_checks_passed=False, metrics=metrics)
     (directory / "validation.json").write_text(report.model_dump_json(indent=2), encoding="utf-8")
-    shutil.copyfile(directory / "input.svg", directory / "editable.svg")
+    shutil.copyfile(editable_svg or directory / "input.svg", directory / "editable.svg")
     shutil.copyfile(directory / "input.svg", directory / "inkstitch.svg")
     files = (("jef", "output.jef", "application/octet-stream", "export"),
              ("editable_svg", "editable.svg", "image/svg+xml", "document"), ("inkstitch_svg", "inkstitch.svg", "image/svg+xml", "document"),

@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import json
 import secrets
+from pathlib import Path
 
 from embroidery_contracts.results import ArtifactDownload, DOWNLOAD_TTL_SECONDS
 
@@ -62,3 +63,21 @@ class DownloadSigner:
             return grant
         except (ValueError, TypeError, KeyError, UnicodeError):
             raise ApiProblem("FORBIDDEN", "La autorización de descarga venció o no es válida.") from None
+
+def archived_vector(job, manifest):
+    """Offer the stored E1 drawing when an older raster export labelled the stitch SVG as editable."""
+    if not manifest or job["body"].get("input_kind") != "raster_image":
+        return None
+    editable = next((a for a in manifest.artifacts if a.kind == "editable_svg"), None)
+    stitch = next((a for a in manifest.artifacts if a.kind == "inkstitch_svg"), None)
+    stored = job["private"].get("vectorization", {}).get("svg")
+    if not stored or not editable or not stitch or editable.sha256 != stitch.sha256:
+        return None
+    path = Path(stored).resolve()
+    if not path.is_relative_to(Path(job["private"]["job_dir"]).resolve()) or not path.is_file():
+        return None
+    data = path.read_bytes()
+    if not data:
+        return None
+    return editable.model_copy(update={"artifact_id": manifest.job_id + "_design_svg",
+                                       "sha256": hashlib.sha256(data).hexdigest(), "byte_size": len(data)}), path

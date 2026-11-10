@@ -15,7 +15,11 @@ interface ComparePanelProps {
  */
 export function ComparePanel({ asset, artifacts }: ComparePanelProps) {
   const [zoomed, setZoomed] = useState<string>();
-  const vector = artifacts.find((a) => a.kind === ArtifactKind.EditableSvg);
+  const editable = artifacts.find((a) => a.kind === ArtifactKind.EditableSvg);
+  const machineSvg = artifacts.find((a) => a.kind === ArtifactKind.InkStitchSvg);
+  // En una entrada ráster, una exportación vieja podía etiquetar el SVG de puntadas como editable: no se muestra duplicado.
+  const duplicateMachineFile = asset?.media_type !== 'image/svg+xml' && editable?.sha256 === machineSvg?.sha256;
+  const vector = duplicateMachineFile ? undefined : editable;
   // Solo vale como «relectura» la vista previa derivada del JEF releído.
   const preview = artifacts.find((a) => a.kind === ArtifactKind.PreviewPng && a.derived_from === 'jef_reread');
   // Sin JEF releído no hay vista previa de puntadas: no se reserva un hueco vacío para ella.

@@ -85,3 +85,5 @@ main:focus, h1:focus { outline: none; }
 
 .swatch { display: inline-block; width: 1rem; height: 1rem; border: 1px solid var(--color-border); border-radius: 3px; vertical-align: middle; }
 .swatch-label { display: inline-flex; gap: var(--space-1); align-items: center; }
+
+.compare { align-items: start; }
