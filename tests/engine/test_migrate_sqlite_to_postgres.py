@@ -81,6 +81,17 @@ class MigrationTests(unittest.TestCase):
         self.assertEqual((target.rows("project"), target.rows("asset")), ([], []))
         self.assertTrue(migrate(self.file, self.url)["copiado"])  # y se puede reintentar
 
+    def test_moved_files_get_their_stored_paths_rewritten_in_either_slash_style(self):
+        windows = "C:\\datos\\assets\\a2.svg".replace("\\\\", "\\")
+        self.sqlite.create("asset", "a2", "ana", "p1", {}, {"path": windows, "otra": ["C:/DATOS/jobs/j1/x.jef", "C:/datos2/no"], "n": 3})
+        migrate(self.file, self.url, rewrite_root=("C:/datos", "D:/fijo"))
+        target = self.target()
+        self.assertEqual(target.get("asset", "a1")["private"], {"path": "D:/fijo/assets/a1.svg"})
+        moved = target.get("asset", "a2")["private"]
+        self.assertEqual(moved["path"], windows.replace("C:", "D:").replace("datos", "fijo"))
+        self.assertEqual((moved["otra"], moved["n"]), (["D:/fijo/jobs/j1/x.jef", "C:/datos2/no"], 3))
+        self.assertEqual(self.sqlite.get("asset", "a1")["private"], {"path": "C:/datos/assets/a1.svg"})  # el origen no cambia
+
     def test_a_dry_run_counts_without_touching_postgresql(self):
         result = migrate(self.file, self.url, dry_run=True)
         self.assertEqual((result["copiado"], result["recursos"]["project"]), (False, 2))

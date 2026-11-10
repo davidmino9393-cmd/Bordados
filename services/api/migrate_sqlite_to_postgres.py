@@ -39,7 +39,21 @@ def _digest(resources, idempotency):
     return digest.hexdigest()
 
 
-def migrate(sqlite_file, database_url, dry_run=False):
+def _rewrite_paths(value, old, new):
+    """Cambia el prefijo `old` por `new` en toda ruta guardada, conservando el estilo de barras de cada ruta."""
+    if isinstance(value, dict):
+        return {key: _rewrite_paths(item, old, new) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_rewrite_paths(item, old, new) for item in value]
+    if isinstance(value, str):
+        normalized, prefix = value.replace("\\", "/"), old.replace("\\", "/").rstrip("/")
+        if normalized.lower() == prefix.lower() or normalized.lower().startswith(prefix.lower() + "/"):
+            result = new.replace("\\", "/").rstrip("/") + normalized[len(prefix):]
+            return result.replace("/", "\\") if "\\" in value else result
+    return value
+
+
+def migrate(sqlite_file, database_url, dry_run=False, rewrite_root=None):
     source = sqlite3.connect(f"file:{Path(sqlite_file).resolve().as_posix()}?mode=ro", uri=True)
     source.row_factory = sqlite3.Row
     try:
@@ -47,6 +61,10 @@ def migrate(sqlite_file, database_url, dry_run=False):
         idempotency = [dict(row) for row in source.execute(f"SELECT {IDEMPOTENCY_COLUMNS} FROM idempotency")]
     finally:
         source.close()
+    if rewrite_root:  # los archivos se movieron: las rutas guardadas en `private` apuntan a la carpeta nueva
+        old, new = rewrite_root
+        for row in resources:
+            row["private"] = canonical(_rewrite_paths(json.loads(row["private"]), old, new))
     summary = {
         "recursos": dict(sorted(Counter(row["kind"] for row in resources).items())),
         "claves_de_idempotencia": len(idempotency),
@@ -95,6 +113,7 @@ def main():
     parser.add_argument("--config", type=Path, help="configuración privada de la API (data_root y database_url)")
     parser.add_argument("--sqlite", type=Path, help="metadata.sqlite3 de origen (si no, data_root/metadata.sqlite3 de --config)")
     parser.add_argument("--database-url-file", type=Path, help="JSON con la clave database_url (si no, la de --config)")
+    parser.add_argument("--rewrite-root", nargs=2, metavar=("VIEJA", "NUEVA"), help="carpeta de datos de antes y de ahora: corrige las rutas de archivos guardadas")
     parser.add_argument("--dry-run", action="store_true", help="solo cuenta lo que se copiaría; no toca PostgreSQL")
     args = parser.parse_args()
     config = json.loads(args.config.read_text(encoding="utf-8")) if args.config else {}
@@ -103,7 +122,7 @@ def main():
     if sqlite_file is None or (not args.dry_run and not url_source.get("database_url")):
         parser.error("Faltan el SQLite de origen y la database_url de destino (usá --config o --sqlite y --database-url-file).")
     try:
-        result = migrate(sqlite_file, url_source.get("database_url"), args.dry_run)
+        result = migrate(sqlite_file, url_source.get("database_url"), args.dry_run, args.rewrite_root)
     except MigrationRefused as refused:
         print(f"NO SE COPIÓ NADA: {refused}", file=sys.stderr)
         return 2
