@@ -125,6 +125,9 @@ REFERENCE_PULL_COMPENSATION_MM = 0.25
 # Ink/Stitch reparte el corrido con una tolerancia de 0,2 mm por defecto y corta las esquinas de las letras chicas (El Fortín:
 # la L salía «(», la esquina quedaba a ~0,5 mm del vértice). Con 0,05 mm cae una puntada en cada esquina.
 REFERENCE_RUNNING_TOLERANCE_MM = 0.05
+# Puntada más corta que Ink/Stitch deja en corrido, satén y relleno (las fuentes de Ink/Stitch usan 0,2-0,3 mm). Las más
+# cortas suman pinchazos sin cubrir y pueden cortar el hilo; El Fortín tenía el 6,7 % por debajo de 0,3 mm.
+REFERENCE_MIN_STITCH_MM = 0.3
 REFERENCE_ANGLES_DEG = (45, 135, 0, 90)  # ángulos alternados por objeto: filas paralelas entre colores vecinos se notan más
 REFERENCE_NOTICE = (
     "Los parámetros siguen la guía de digitalización de Ink/Stitch y las técnicas se derivan del ancho local; "
@@ -169,6 +172,7 @@ def _reference_attributes(index, spacing=REFERENCE_ROW_SPACING_MM, compensation=
         "inkstitch:fill_underlay_max_stitch_length_mm": "5.0",
         "inkstitch:fill_underlay_angle": str((angle + 90) % 180),
         "inkstitch:pull_compensation_mm": str(compensation),
+        "inkstitch:min_stitch_length_mm": str(REFERENCE_MIN_STITCH_MM),
     }
 
 
@@ -178,7 +182,8 @@ def _unit_attributes(index, unit):
     if technique == "running":
         return {"inkstitch:stroke_method": "running_stitch",
                 "inkstitch:running_stitch_length_mm": str(unit.get("running_stitch_length_mm", 2.5)),
-                "inkstitch:running_stitch_tolerance_mm": str(REFERENCE_RUNNING_TOLERANCE_MM)}
+                "inkstitch:running_stitch_tolerance_mm": str(REFERENCE_RUNNING_TOLERANCE_MM),
+                "inkstitch:min_stitch_length_mm": str(REFERENCE_MIN_STITCH_MM)}
     if technique == "satin":
         return {"inkstitch:satin_column": "true", "inkstitch:zigzag_spacing_mm": str(.55 if micro else .4),
                 "inkstitch:short_stitch_inset": "0.15", "inkstitch:max_stitch_length_mm": "7.0",
@@ -187,7 +192,8 @@ def _unit_attributes(index, unit):
                 "inkstitch:center_walk_underlay": str(not micro or unit["pull_compensation_mm"] > REFERENCE_PULL_COMPENSATION_MM).lower(),
                 "inkstitch:contour_underlay": "false", "inkstitch:zigzag_underlay": "false",
                 "inkstitch:fill_underlay": "false",
-                "inkstitch:pull_compensation_mm": str(unit["pull_compensation_mm"])}
+                "inkstitch:pull_compensation_mm": str(unit["pull_compensation_mm"]),
+                "inkstitch:min_stitch_length_mm": str(REFERENCE_MIN_STITCH_MM)}
     return _reference_attributes(index, unit["row_spacing_mm"], unit["pull_compensation_mm"], micro)
 
 

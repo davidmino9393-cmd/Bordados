@@ -14,11 +14,17 @@ RAIL_INSET_MM = 0.15
 RAY_STEP_PX = 0.2
 TANGENT_WINDOW_MM = 0.5
 SAMPLE_INTERVAL_MM = 0.2
+# Un corrido más corto que esto es una sola puntada diminuta: no dibuja nada que el hilo (0,4 mm) no tape y suma un
+# pinchazo (El Fortín: 175 trocitos así, sobre todo de satenes partidos).
+MIN_RUNNING_UNIT_MM = 0.3
 # A stroke whose width hovers at the running/satin limit (El Fortín «Con»: median 0.98 mm, 48 flips in one C) is
 # one stroke: a raster width cannot be told apart from the limit within one source pixel (the antialias rim is often
 # another colour), so those widths follow the stroke's median; a technique stretch shorter than this between two
 # stretches of the other technique is absorbed by them.
 MIN_TECHNIQUE_STRETCH_MM = 1.0
+# En un trazo de satén, un tramo más fino sigue en satén hasta este ancho: en «Con» el borde de antialias (otro azul) le
+# roba un píxel a la panza de la C y al arco de la n, que quedaban como un hilo suelto entre columnas de satén.
+MIN_STROKE_SATIN_MM = 0.6
 
 
 def path(points):
@@ -146,8 +152,9 @@ def _stable_techniques(samples, mask):
         return samples
     band = mask.scale  # one source pixel
     stroke = "satin" if median(narrow) >= RUNNING_LIMIT_MM - band else "running"
-    output = [{**s, "technique": stroke} if s["technique"] != "fill" and
-              abs(s["width"] - RUNNING_LIMIT_MM) <= band else s for s in samples]
+    output = [{**s, "technique": stroke} if s["technique"] != "fill" and (
+              abs(s["width"] - RUNNING_LIMIT_MM) <= band or stroke == "satin" and s["width"] >= MIN_STROKE_SATIN_MM)
+              else s for s in samples]
     stretches, start = [], 0
     for i in range(1, len(output) + 1):
         if i == len(output) or output[i]["technique"] != output[start]["technique"]:
@@ -261,12 +268,17 @@ def derive(image, origin, scale, thin, cancel=None, normal_image=None):
             if technique == "satin" and satin is None:
                 # Split a folded column rather than sending invalid rails.
                 for part, local in _valid_parts(run, mask):
-                    output.append(_unit(part, mask, local))
-                    _cover(draw, part, scale)
+                    _keep(output, draw, _unit(part, mask, local), part, scale)
                 continue
-            output.append(_unit(run, mask, satin))
-            _cover(draw, run, scale)
+            _keep(output, draw, _unit(run, mask, satin), run, scale)
     return output, covered
+
+
+def _keep(output, draw, unit, run, scale):
+    if unit["technique"] == "running" and unit["length_mm"] < MIN_RUNNING_UNIT_MM:
+        return
+    output.append(unit)
+    _cover(draw, run, scale)
 
 
 def _dedup(points):

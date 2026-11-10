@@ -288,6 +288,13 @@ class StableTechniqueTests(unittest.TestCase):
         samples = self.samples([.9] * 40, .05)
         self.assertEqual({s["technique"] for s in local_columns._stable_techniques(samples, self.Grid(.05))}, {"running"})
 
+    def test_a_thinner_stretch_of_a_satin_stroke_stays_satin_down_to_the_floor(self):
+        """El Fortín «Con»: la panza de la C (0,8 mm por el borde de antialias) quedaba como un hilo suelto."""
+        thin = self.samples([1.2] * 15 + [.7] * 10 + [1.2] * 15, .14)
+        self.assertEqual({s["technique"] for s in local_columns._stable_techniques(thin, self.Grid(.14))}, {"satin"})
+        hairline = self.samples([1.2] * 15 + [.4] * 10 + [1.2] * 15, .14)
+        self.assertIn("running", {s["technique"] for s in local_columns._stable_techniques(hairline, self.Grid(.14))})
+
     def test_a_short_island_is_absorbed_but_a_long_one_is_kept(self):
         short = self.samples([2.] * 10 + [.5] * 3 + [2.] * 10, .05)
         self.assertEqual({s["technique"] for s in local_columns._stable_techniques(short, self.Grid(.05))}, {"satin"})
@@ -303,6 +310,20 @@ class RunningToleranceTests(unittest.TestCase):
         running = [p for p in root.iter(f"{SVG}path") if p.get("data-technique") == "running"]
         self.assertTrue(running)
         self.assertEqual({p.get(INKSTITCH + "running_stitch_tolerance_mm") for p in running}, {"0.05"})
+
+    def test_every_stitched_unit_asks_for_a_minimum_stitch_and_tiny_runs_are_dropped(self):
+        """El Fortín: 6,7 % de puntadas bajo 0,3 mm; 175 corridos enteros más cortos que eso."""
+        root = ET.fromstring(to_reference_inkstitch_svg(stroke(.5)))
+        stitched = [p for p in root.iter(f"{SVG}path") if p.get("data-technique") in ("running", "satin", "fill")]
+        self.assertTrue(stitched)
+        self.assertEqual({p.get(INKSTITCH + "min_stitch_length_mm") for p in stitched}, {"0.3"})
+        output = []
+        local_columns._keep(output, None, {"technique": "running", "length_mm": .2}, [], .1)
+        self.assertEqual(output, [])
+        satin = {"technique": "satin", "length_mm": .2}
+        with mock.patch.object(local_columns, "_cover"):
+            local_columns._keep(output, None, satin, [], .1)
+        self.assertEqual(output, [satin])  # el satén corto no se descarta: su ancho cubre
 
 
 if __name__ == "__main__":
