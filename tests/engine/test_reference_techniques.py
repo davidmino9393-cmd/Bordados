@@ -1,6 +1,7 @@
 """Measured reference selection, skeleton topology, omissions and JEF integrity."""
 import json
 import unittest
+from unittest import mock
 from xml.etree import ElementTree as ET
 
 from PIL import Image, ImageDraw
@@ -9,7 +10,7 @@ from test_vectorize import ROOT, png, result_for, settings, inside_path, path_po
 from test_vectorize_inkstitch import INKSTITCH, SVG, h3_handoff
 from embroidery_contracts import IssueCode
 from vectorize import VectorizeFailure, stitchable
-from vectorize import reference_geometry as geometry
+from vectorize import local_columns, reference_geometry as geometry
 from vectorize.inkstitch import to_reference_inkstitch_svg, to_inkstitch_svg, reference_issues
 
 
@@ -215,6 +216,83 @@ class ReferenceTechniqueTests(unittest.TestCase):
         self.assertEqual(ring["technique"], "running")
         self.assertEqual(ring["omitted"], "reference_object_below_2mm2")
         self.assertAlmostEqual(ring["object_kept_area_mm2"], 1.25)
+
+
+
+class SatinFallbackTests(unittest.TestCase):
+    """El Fortín: satin pieces too short to bisect were dropped and the C lost axis between units."""
+
+    def samples(self, count):
+        return [{"technique": "satin", "center": (float(i), 0.), "width": 1.2} for i in range(count)]
+
+    def test_an_invalid_satin_run_keeps_every_sample_as_running(self):
+        run = self.samples(9)
+        with mock.patch.object(local_columns, "_satin", return_value=None):
+            parts = list(local_columns._valid_parts(run, mask=None))
+        self.assertTrue(parts)
+        self.assertTrue(all(local is None and {s["technique"] for s in part} == {"running"} for part, local in parts))
+        kept = {s["center"] for part, _ in parts for s in part}
+        self.assertEqual(kept, {s["center"] for s in run})  # no sample of the axis is dropped
+        self.assertEqual({s["technique"] for s in run}, {"satin"})  # the input run is not mutated
+
+    def test_valid_satin_parts_are_still_kept_as_satin(self):
+        run = self.samples(4)
+        with mock.patch.object(local_columns, "_satin", return_value={"path": "M 0 0"}):
+            parts = list(local_columns._valid_parts(run, mask=None))
+        self.assertEqual([(len(part), local) for part, local in parts], [(4, {"path": "M 0 0"})])
+
+
+
+class SeamTests(unittest.TestCase):
+    """El Fortín: a 1 px blend line between two colours was rescued as a small stroke and added a thread colour."""
+
+    def line(self):
+        image = Image.new("L", (30, 1), 0)
+        ImageDraw.Draw(image).line((0, 0, 29, 0), fill=255)
+        return image
+
+    def test_a_line_lying_on_another_colour_is_a_seam(self):
+        others = Image.new("L", (60, 20), 0)
+        ImageDraw.Draw(others).rectangle((10, 6, 39, 9), fill=255)   # the colour just below the line at y=5
+        ImageDraw.Draw(others).rectangle((10, 0, 39, 4), fill=255)   # and just above it
+        self.assertGreater(geometry._contact_share(self.line(), (10, 5), others), geometry.SEAM_CONTACT_SHARE)
+
+    def test_an_isolated_line_on_fabric_is_kept(self):
+        others = Image.new("L", (60, 20), 0)
+        ImageDraw.Draw(others).rectangle((50, 15, 59, 19), fill=255)  # another colour, but not touching
+        self.assertEqual(geometry._contact_share(self.line(), (10, 5), others), 0.)
+        self.assertEqual(geometry._contact_share(self.line(), (10, 5), None), 0.)
+
+
+
+class StableTechniqueTests(unittest.TestCase):
+    """El Fortín «Con»: a ~1 mm stroke flipped 48 times between running and satin inside one C."""
+
+    class Grid:
+        def __init__(self, scale):
+            self.scale = scale
+
+        def mm(self, point):
+            return (point[0] * self.scale, point[1] * self.scale)
+
+    def samples(self, widths, scale):
+        step = local_columns.SAMPLE_INTERVAL_MM / scale
+        return [{"center": (i * step, 0.), "width": w,
+                 "technique": "running" if w < local_columns.RUNNING_LIMIT_MM else "satin"} for i, w in enumerate(widths)]
+
+    def test_a_stroke_hovering_at_the_limit_gets_one_technique(self):
+        samples = self.samples([.95, 1.05] * 20, .14)
+        self.assertEqual({s["technique"] for s in local_columns._stable_techniques(samples, self.Grid(.14))}, {"satin"})
+
+    def test_a_crisp_narrow_stroke_stays_running(self):
+        samples = self.samples([.9] * 40, .05)
+        self.assertEqual({s["technique"] for s in local_columns._stable_techniques(samples, self.Grid(.05))}, {"running"})
+
+    def test_a_short_island_is_absorbed_but_a_long_one_is_kept(self):
+        short = self.samples([2.] * 10 + [.5] * 3 + [2.] * 10, .05)
+        self.assertEqual({s["technique"] for s in local_columns._stable_techniques(short, self.Grid(.05))}, {"satin"})
+        long = self.samples([2.] * 10 + [.5] * 12 + [2.] * 10, .05)
+        self.assertIn("running", {s["technique"] for s in local_columns._stable_techniques(long, self.Grid(.05))})
 
 
 if __name__ == "__main__":

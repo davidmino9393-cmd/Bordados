@@ -14,6 +14,11 @@ RAIL_INSET_MM = 0.15
 RAY_STEP_PX = 0.2
 TANGENT_WINDOW_MM = 0.5
 SAMPLE_INTERVAL_MM = 0.2
+# A stroke whose width hovers at the running/satin limit (El Fortín «Con»: median 0.98 mm, 48 flips in one C) is
+# one stroke: a raster width cannot be told apart from the limit within one source pixel (the antialias rim is often
+# another colour), so those widths follow the stroke's median; a technique stretch shorter than this between two
+# stretches of the other technique is absorbed by them.
+MIN_TECHNIQUE_STRETCH_MM = 1.0
 
 
 def path(points):
@@ -134,13 +139,39 @@ def sections(chain, mask):
     return output
 
 
+def _stable_techniques(samples, mask):
+    """One technique per stroke near the running/satin limit, without short alternating stretches."""
+    narrow = [s["width"] for s in samples if s["technique"] != "fill"]
+    if not narrow:
+        return samples
+    band = mask.scale  # one source pixel
+    stroke = "satin" if median(narrow) >= RUNNING_LIMIT_MM - band else "running"
+    output = [{**s, "technique": stroke} if s["technique"] != "fill" and
+              abs(s["width"] - RUNNING_LIMIT_MM) <= band else s for s in samples]
+    stretches, start = [], 0
+    for i in range(1, len(output) + 1):
+        if i == len(output) or output[i]["technique"] != output[start]["technique"]:
+            stretches.append((start, i)); start = i
+    for k in range(1, len(stretches) - 1):
+        (a, b), before, after = stretches[k], output[stretches[k - 1][0]], output[stretches[k + 1][0]]
+        technique = output[a]["technique"]
+        length = sum(math.dist(mask.mm(output[i]["center"]), mask.mm(output[i + 1]["center"])) for i in range(max(a - 1, 0), b))
+        if (technique != "fill" and before["technique"] == after["technique"] != technique
+                and before["technique"] != "fill" and length < MIN_TECHNIQUE_STRETCH_MM):
+            for i in range(a, b):
+                output[i] = {**output[i], "technique": before["technique"]}
+    return output
+
+
 def _with_width_crossings(samples):
     """Split a sampled edge at the physical running/satin threshold."""
     for previous, current in zip(samples, samples[1:]):
         yield previous
         if {previous["technique"], current["technique"]} != {"running", "satin"}:
             continue
-        t = (RUNNING_LIMIT_MM - previous["width"]) / (current["width"] - previous["width"])
+        change = current["width"] - previous["width"]
+        # After stabilisation the limit may lie outside the pair: change technique at the nearer sample.
+        t = min(1., max(0., (RUNNING_LIMIT_MM - previous["width"]) / change)) if change else 1.
         crossing = {"width": RUNNING_LIMIT_MM,
                     "inset_mm": min(previous["inset_mm"], current["inset_mm"])}
         for key in ("center", "left", "right", "edge_left", "edge_right"):
@@ -222,7 +253,7 @@ def derive(image, origin, scale, thin, cancel=None, normal_image=None):
         check_cancel(cancel)
         chain = _smooth(chain, mask)
         chain = _extend_ends(chain, mask, skeleton)
-        for run in _runs(sections(chain, mask), mask):
+        for run in _runs(_stable_techniques(sections(chain, mask), mask), mask):
             technique = run[0]["technique"]
             if technique == "fill":
                 continue

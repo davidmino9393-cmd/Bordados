@@ -18,6 +18,9 @@ from .types import check_cancel
 RUNNING_BELOW_MM = 1.0
 WIDE_FILL_FROM_MM = 7.0
 MIN_REFERENCE_FILL_AREA_MM2 = 2.0
+# A rescued small stroke whose outline touches another colour along more than this share is an antialias seam
+# or rim between two colours (El Fortín: 1 px mauve line where the coloured and grey halves meet), not a drawn line.
+SEAM_CONTACT_SHARE = 0.5
 NARROW_ROW_SPACING_MM = 0.35
 WIDE_ROW_SPACING_MM = 0.35
 MAX_COMPENSATION_MM = 0.25
@@ -287,7 +290,20 @@ def _is_small_running_stroke(units):
     return span >= 1.25 and span >= 3 * unit["local_width_mm"]
 
 
-def _decision(index, outer, holes, widths, origin, scale, tolerance, color, cancel, elastic=False):
+def _contact_share(image, origin, others):
+    """Share of the 1 px outline around a ring mask that lies on another colour's pixels."""
+    if others is None:
+        return 0.
+    padded = Image.new("L", (image.width + 2, image.height + 2), 0)
+    padded.paste(image, (1, 1))
+    outline = ImageChops.subtract(padded.filter(ImageFilter.MaxFilter(3)), padded)
+    left, top = round(origin[0]) - 1, round(origin[1]) - 1
+    near = others.crop((left, top, left + padded.width, top + padded.height))
+    total = outline.histogram()[255]
+    return ImageChops.multiply(outline, near).histogram()[255] / total if total else 0.
+
+
+def _decision(index, outer, holes, widths, origin, scale, tolerance, color, cancel, elastic=False, others=None):
     stats = _statistics([widths], scale)
     area = widths.pixels * scale * scale
     omitted = stitchable.OMITTED_NEAR_WHITE if stitchable.is_near_white(color) else None
@@ -295,7 +311,8 @@ def _decision(index, outer, holes, widths, origin, scale, tolerance, color, canc
     if not omitted:
         units, covered = local_columns.derive(widths.image, origin, scale, _thin, cancel)
         if (stitchable.ring_area_mm2(outer) < stitchable.MIN_STITCHABLE_AREA_MM2
-                and not _is_small_running_stroke(units)):
+                and not (_is_small_running_stroke(units)
+                         and _contact_share(widths.image, origin, others) <= SEAM_CONTACT_SHARE)):
             omitted = stitchable.OMITTED_TOO_SMALL
     if omitted:
         return [{"ring_index": index, "width": stats, "area_mm2": area, "technique": "fill",
@@ -387,13 +404,13 @@ def _decision(index, outer, holes, widths, origin, scale, tolerance, color, canc
                        "fill_path_mm": None, "row_spacing_mm": None, "pull_compensation_mm": 0}]
 
 
-def measure_object(obj, scale, tolerance, cancel=None, grid_origin=(0, 0), elastic=False):
+def measure_object(obj, scale, tolerance, cancel=None, grid_origin=(0, 0), elastic=False, others=None):
     measured, rings, kept_area = [], [], 0.
     for index, outer, holes in _components(obj.path_data_mm, cancel):
         check_cancel(cancel)
         image, origin = _mask([outer, *holes], scale, cancel, grid_origin)
         widths = Widths(image, scale, cancel)
-        units = _decision(index, outer, holes, widths, origin, scale, tolerance, obj.work_color, cancel, elastic)
+        units = _decision(index, outer, holes, widths, origin, scale, tolerance, obj.work_color, cancel, elastic, others)
         rings.extend(units)
         if any(not unit["omitted"] for unit in units):
             kept_area += widths.pixels * scale * scale
@@ -419,14 +436,41 @@ def is_elastic(fabric_profile):
     return name in ELASTIC_FABRIC_PROFILES or any(word in name for word in ELASTIC_KEYWORDS)
 
 
+def _coloured_pages(document, scale, cancel):
+    """One page raster per non-white object; pixel = mm / scale, the frame of the ring mask origins."""
+    bounds = document.page_bounds_mm
+    size = (math.ceil(bounds.max_x_mm / scale) + 2, math.ceil(bounds.max_y_mm / scale) + 2)
+    pages = {}
+    for obj in document.objects:
+        if stitchable.is_near_white(obj.work_color):
+            continue
+        page = Image.new("L", size, 0)
+        draw = ImageDraw.Draw(page)
+        for _, outer, holes in _components(obj.path_data_mm, cancel):
+            for ring, fill in ((outer, 255), *((hole, 0) for hole in holes)):
+                draw.polygon([(x / scale, y / scale) for x, y in ring], fill=fill)
+        pages[obj.object_id] = page
+    return pages
+
+
+def _others(pages, object_id):
+    union = None
+    for key, page in pages.items():
+        if key != object_id:
+            union = page if union is None else ImageChops.lighter(union, page)
+    return union
+
+
 def apply(document, cancel=None, settings=None):
     """Publish per-ring decisions on objects while retaining E1 paths and bounds."""
     affine = document.coordinates.source_px_to_mm
     scale = abs(affine[0])
     objects, evidence = [], {}
+    pages = _coloured_pages(document, scale, cancel)
     for obj in document.objects:
         elastic = is_elastic(getattr(settings, "fabric_profile", None))
-        rings, stats = measure_object(obj, scale, stitchable.tolerance_for(document), cancel, (affine[4], affine[5]), elastic)
+        rings, stats = measure_object(obj, scale, stitchable.tolerance_for(document), cancel, (affine[4], affine[5]), elastic,
+                                      _others(pages, obj.object_id))
         kept = [r for r in rings if not r["omitted"]]
         techniques = {r["technique"] for r in kept}
         technique = next(iter(techniques)) if len(techniques) == 1 else "fill"
