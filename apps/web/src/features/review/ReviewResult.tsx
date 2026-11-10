@@ -3,7 +3,6 @@ import type { SourceAsset } from '../../contracts/project';
 import { es } from '../../copy/es';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
 import { JobFiles } from '../job-progress/JobFiles';
-import { PhysicalSewout } from '../sewout/PhysicalSewout';
 import { VariantForm } from '../variants/VariantForm';
 import { canCorrect, isGeometryOnly, isRasterWithJef } from './geometryOnly';
 import { JefHero } from './JefHero';
@@ -39,7 +38,6 @@ export function ReviewResult({ job, asset, onJobChanged }: ReviewResultProps) {
           <VariantForm job={job} />
         </>
       )}
-      {!geometryOnly && <PhysicalSewout job={job} onJobChanged={onJobChanged} />}
     </>
   );
 }

@@ -65,7 +65,12 @@ export function VariantForm({ job }: { job: JobResponse }) {
               <input type="text" inputMode="decimal" value={height} onChange={(e) => setHeight(e.target.value)} />
             </Field>
           </div>
-          {outsideHoop && <Notice tone={NoticeTone.Warning}>{es.settings.outsideHoop(hoop.width_mm, hoop.height_mm)}</Notice>}
+          {outsideHoop && (
+            <Notice tone={NoticeTone.Warning}>
+              El destino supera el bastidor de {hoop.width_mm} × {hoop.height_mm} mm. Podés crear la variante
+              para inspección. La validación comprueba si las puntadas generadas entran en ese bastidor.
+            </Notice>
+          )}
           <div className="row">
             <button type="submit" disabled={busy}>{es.variants.create}</button>
           </div>

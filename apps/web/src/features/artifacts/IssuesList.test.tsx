@@ -1,9 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { Issue } from '../../contracts/validation';
 import { IssuesList } from './IssuesList';
-
-afterEach(() => vi.restoreAllMocks());
 
 /** Forma observada en el backend real: 14 avisos idénticos, cada uno con TODOS los object_ids candidatos. */
 function unmappedWarnings(count: number): Issue[] {
@@ -21,12 +19,19 @@ function unmappedWarnings(count: number): Issue[] {
 }
 
 describe('IssuesList con avisos idénticos del backend real', () => {
-  it('muestra todos los avisos sin claves repetidas ni ocultar ninguno', () => {
-    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const { container } = render(<IssuesList issues={unmappedWarnings(14)} />);
-    expect(container.querySelectorAll('.issue')).toHaveLength(14);
-    expect(screen.getAllByText(/Faltan guías en una columna de satén/)).toHaveLength(14);
-    const duplicateKeyWarnings = errors.mock.calls.filter((call) => String(call[0]).includes('same key'));
-    expect(duplicateKeyWarnings).toEqual([]);
+  it('agrupa los avisos internos en una indicación para revisar el diseño', () => {
+    render(<IssuesList issues={unmappedWarnings(14)} />);
+    expect(screen.getByText('Revisá el diseño en la vista de puntadas.')).toBeInTheDocument();
+    expect(screen.queryByText(/satin_0|SATIN_RUNG_WARNING|Satin has no rungs|Faltan guías/)).not.toBeInTheDocument();
+  });
+
+  it('conserva una descripción legible de cada problema público aunque el motor lo repita', () => {
+    const internal = unmappedWarnings(1)[0];
+    const tooLarge = { ...internal, code: 'DIMENSIONS_EXCEEDED' };
+    const mismatch = { ...internal, code: 'VISUAL_MISMATCH' };
+    render(<IssuesList issues={[internal, tooLarge, tooLarge, mismatch]} />);
+    expect(screen.getByText(/La medida real supera el tamaño pedido/)).toBeInTheDocument();
+    expect(screen.getByText(/El resultado difiere del original/)).toBeInTheDocument();
+    expect(screen.queryByText(/satin_0|Satin has no rungs/)).not.toBeInTheDocument();
   });
 });

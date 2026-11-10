@@ -1,3 +1,4 @@
+import { PhysicalSewout } from '../sewout/PhysicalSewout';
 import { Link, useParams } from 'react-router-dom';
 import { useApi } from '../../api/ApiProvider';
 import { JobStatus, type JobResponse } from '../../contracts/job';
@@ -18,7 +19,7 @@ import { ReadyResult } from './ReadyResult';
 const isAnalysisReview = (job: JobResponse) =>
   job.input_kind === 'raster_image' && !!job.review?.issues.some((issue) => issue.stage === 'analysis');
 
-export function JobPage() {
+export function JobPage({ sewout = false }: { sewout?: boolean }) {
   const { jobId = '' } = useParams();
   const api = useApi();
   const { job, error, retryAt, replace } = useJobPolling(jobId);
@@ -41,6 +42,10 @@ export function JobPage() {
     );
   }
   if (!job) return <p role="status">{es.loading}</p>;
+
+  if (sewout && (job.status === JobStatus.NeedsReview || job.status === JobStatus.ReadyForSewout)) {
+    return <PhysicalSewout job={job} onJobChanged={replace} />;
+  }
 
   return (
     <>

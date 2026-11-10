@@ -188,7 +188,7 @@ export const es = {
   result: {
     readyTitle: 'Listo para prueba (digital)',
     readyText:
-      'Los archivos se generaron y pasaron las comprobaciones digitales. Esto no significa que la muestra en tela esté aprobada.',
+      'Los archivos pasaron las comprobaciones digitales.',
     sewoutTitle: 'Muestra física',
     sewoutTestedOn: (date: string) => `Probada el ${date}`,
     cancelledTitle: 'Generación cancelada',
@@ -241,7 +241,7 @@ export const es = {
     originalRef: 'Original para consultar',
     filesNotReadyTitle: 'Archivos para revisar: no están listos para prueba',
     filesNotReadyText:
-      'Los controles digitales no pasaron. Podés inspeccionarlos o registrar una muestra, pero resolvé las incidencias antes de usarlos como versión final.',
+      'Los controles digitales no pasaron. Compará el diseño con la vista de puntadas antes de usar el archivo.',
     jefHeroTitle: 'Tu archivo de bordado',
     jefHeroText:
       'El JEF está listo para descargar, pero los parámetros de puntada son de referencia y no están calibrados para tu tela. Cosé una prueba en un retazo antes de bordar la pieza final y revisá los avisos de más abajo.',

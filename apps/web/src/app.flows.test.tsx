@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
+import { App } from './App';
+import { ApiProvider } from './api/ApiProvider';
 import { ApiError, ClientErrorCode } from './api/ApiClient';
 import { createHttpApiClient } from './api/HttpApiClient';
 import { ErrorCode } from './contracts/http';
@@ -49,13 +52,18 @@ describe('recorrido principal (cliente SIMULADO)', () => {
     await advance(FULL_RUN_MS);
 
     expect((await screen.findAllByText(READY)).length).toBeGreaterThan(0);
-    expect(screen.getByText('Sin probar en tela')).toBeInTheDocument();
+    expect(screen.queryByText('Sin probar en tela')).not.toBeInTheDocument();
     expect(screen.queryByText('Muestra física aprobada')).not.toBeInTheDocument();
     expect(screen.getByText('Medidas del archivo generado')).toBeInTheDocument();
     expect(screen.getByText(/ejecución en la máquina no está verificada/)).toBeInTheDocument();
     expect(screen.getByAltText('Original')).toBeInTheDocument();
     expect(screen.getByAltText('Vector')).toBeInTheDocument();
     expect(screen.getByAltText('Puntadas del archivo releído')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Ampliar Puntadas del archivo releído' }));
+    const zoom = screen.getByRole('button', { name: 'Reducir Puntadas del archivo releído' });
+    expect(zoom).toHaveAttribute('aria-pressed', 'true');
+    await user.click(zoom);
+    expect(screen.getByRole('button', { name: 'Ampliar Puntadas del archivo releído' })).toHaveAttribute('aria-pressed', 'false');
 
     const downloads = screen.getAllByRole('link', { name: /Descargar/ });
     expect(downloads).toHaveLength(6);
@@ -124,14 +132,13 @@ describe('recorrido principal (cliente SIMULADO)', () => {
     await advance(FULL_RUN_MS);
 
     expect(await screen.findByText('Hay un elemento que necesita revisión')).toBeInTheDocument();
-    expect(screen.getAllByText(/No se pudo verificar la correspondencia/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/object_mock_satin/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/SATIN_RAILS_UNVERIFIED|object_mock_satin/)).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Descargar/ })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Aplicar y regenerar' }));
     expect(screen.getByText('Elegí al menos una corrección para regenerar.')).toBeInTheDocument();
 
-    await user.selectOptions(screen.getByLabelText(/Qué querés hacer \(object_mock_satin\)/), 'Excluir del bordado');
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Qué querés hacer (elemento 1)' }), 'Excluir del bordado');
     await user.click(screen.getByRole('button', { name: 'Aplicar y regenerar' }));
     await screen.findByRole('heading', { name: 'Generación del bordado' });
     const request = calls.find((c) => c.method === 'createDerivedRevision')!.args[1];
@@ -173,16 +180,19 @@ describe('recorrido principal (cliente SIMULADO)', () => {
 
     const width = screen.getByLabelText('Ancho máximo (mm)');
     await user.clear(width);
-    await user.type(width, '250');
-    expect(screen.getByText(/mayor que el bastidor \(200 × 200 mm\)/)).toBeInTheDocument();
-    await user.clear(width);
     await user.type(width, '90');
-    expect(screen.queryByText(/mayor que el bastidor/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/para inspección/)).not.toBeInTheDocument();
+    await user.clear(width);
+    await user.type(width, '280');
+    const height = screen.getByLabelText('Alto máximo (mm)');
+    await user.clear(height);
+    await user.type(height, '360');
+    expect(screen.getByText(/supera el bastidor de 200 × 200 mm/)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Generar variante' }));
     await screen.findByRole('heading', { name: 'Generación del bordado' });
     const request = calls.find((c) => c.method === 'createDerivedRevision')!.args[1];
-    expect(request).toMatchObject({ kind: 'size_variant', target: { width_mm: 90 } });
+    expect(request).toMatchObject({ kind: 'size_variant', target: { width_mm: 280, height_mm: 360, fit: 'contain' } });
   });
 
   it('renueva los enlaces antes de que venzan (TTL de 300 s) sin conservarlos más allá de expires_at', async () => {
@@ -331,17 +341,27 @@ describe('accesibilidad', () => {
   });
 });
 
+/** Navega por las rutas públicas con el mismo trabajo y cliente durante todo el recorrido. */
+async function jobWithRoutes(client: ApiClient, file: File) {
+  const router = createMemoryRouter([{ path: '*', element: <App /> }]);
+  const user = setupUser();
+  render(<ApiProvider client={client}><RouterProvider router={router} /></ApiProvider>);
+  await generateFrom(user, file);
+  const jobPath = router.state.location.pathname;
+  const navigate = (path: string) => act(async () => { await router.navigate(path); });
+  return { user, openJob: () => navigate(jobPath), openSample: () => navigate(`${jobPath}/muestra`) };
+}
+
 describe('muestra física (POST /sewouts)', () => {
   const FORM = 'Registrar muestra física';
   const PAST = '2026-10-01T11:00';
 
   async function readyPage(client: ApiClient) {
-    const user = setupUser();
-    renderApp(client);
-    await generateFrom(user, pngFile('logo.png'));
+    const routes = await jobWithRoutes(client, pngFile('logo.png'));
     await advance(FULL_RUN_MS);
+    await routes.openSample();
     await screen.findByRole('heading', { name: FORM });
-    return user;
+    return routes;
   }
   async function fill(user: ReturnType<typeof setupUser>, result: string, date: string | null = PAST) {
     await user.click(screen.getByRole('radio', { name: result }));
@@ -351,12 +371,12 @@ describe('muestra física (POST /sewouts)', () => {
     await user.type(screen.getByLabelText('Observaciones'), 'Sin arrugas.');
   }
 
-  it('el formulario solo aparece con el trabajo en ready_for_sewout', async () => {
-    const user = setupUser();
-    renderApp();
-    await generateFrom(user, pngFile('logo.png'));
-    expect(screen.queryByRole('heading', { name: FORM })).not.toBeInTheDocument();
+  it('al completar el trabajo el formulario solo aparece al abrir la ruta de muestra', async () => {
+    const { openSample } = await jobWithRoutes(createMockApiClient(), pngFile('logo.png'));
     await advance(FULL_RUN_MS);
+    expect(await screen.findByRole('heading', { name: 'Medidas del archivo generado' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: FORM })).not.toBeInTheDocument();
+    await openSample();
     expect(await screen.findByRole('heading', { name: FORM })).toBeInTheDocument();
   });
 
@@ -381,20 +401,19 @@ describe('muestra física (POST /sewouts)', () => {
   });
 
   it('también aparece en needs_review (decisión del integrador) y no cambia el estado digital', async () => {
-    const user = setupUser();
-    renderApp();
-    await generateFrom(user, pngFile('logo-revision.png'));
+    const { openSample } = await jobWithRoutes(createMockApiClient(), pngFile('logo-revision.png'));
     await advance(FULL_RUN_MS);
     await screen.findByText('Hay un elemento que necesita revisión');
-    expect(screen.getByRole('heading', { name: FORM })).toBeInTheDocument();
-    // Sin archivos generados no hay descargas ni aviso de archivos no aptos.
+    expect(screen.queryByRole('heading', { name: FORM })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Descargar/ })).not.toBeInTheDocument();
     expect(screen.queryByText(/no están listos para prueba/)).not.toBeInTheDocument();
+    await openSample();
+    expect(await screen.findByRole('heading', { name: FORM })).toBeInTheDocument();
   });
 
   it('registra una muestra aprobada: cambia el estado físico y el digital queda igual', async () => {
     const { client, calls } = instrument();
-    const user = await readyPage(client);
+    const { user, openJob } = await readyPage(client);
     expect(screen.getByText('Sin probar en tela')).toBeInTheDocument();
 
     await fill(user, 'Aprobada');
@@ -403,8 +422,9 @@ describe('muestra física (POST /sewouts)', () => {
     expect(await screen.findByText(/Muestra registrada/)).toBeInTheDocument();
     expect(await screen.findByText('Muestra física aprobada')).toBeInTheDocument();
     expect(screen.queryByText('Sin probar en tela')).not.toBeInTheDocument();
-    expect(screen.getAllByText(READY).length).toBeGreaterThan(0);
     expect(screen.getByText(/Sin arrugas\./)).toBeInTheDocument();
+    await openJob();
+    expect((await screen.findAllByText(READY)).length).toBeGreaterThan(0);
 
     const sent = calls.find((c) => c.method === 'recordSewout')!.args[1] as Record<string, unknown>;
     expect(sent).toMatchObject({
@@ -422,7 +442,7 @@ describe('muestra física (POST /sewouts)', () => {
 
   it('sube fotos de la muestra como fotos (no como diseños), envía sus ids y no las ofrece para bordar', async () => {
     const { client, calls } = instrument();
-    const user = await readyPage(client);
+    const { user } = await readyPage(client);
     await user.upload(screen.getByLabelText(/Fotos de la muestra/), [pngFile('muestra-1.png'), pngFile('muestra-2.png')]);
     expect(await screen.findByRole('button', { name: /Quitar muestra-1\.png/ })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Quitar muestra-2\.png/ }));
@@ -440,7 +460,8 @@ describe('muestra física (POST /sewouts)', () => {
     expect(screen.queryByRole('button', { name: /Quitar/ })).not.toBeInTheDocument();
 
     // En el proyecto, las fotos no aparecen entre las imágenes para bordar.
-    await user.click(screen.getByRole('link', { name: /^←/ }));
+    await user.click(screen.getByRole('link', { name: 'Proyectos' }));
+    await user.click(await screen.findByRole('link', { name: 'Prueba' }));
     await screen.findByRole('heading', { name: 'Prueba' });
     expect(screen.queryByLabelText('Imagen del proyecto')).not.toBeInTheDocument();
     expect(screen.queryByText(/muestra-1\.png/)).not.toBeInTheDocument();
@@ -448,7 +469,7 @@ describe('muestra física (POST /sewouts)', () => {
 
   it('rechaza fotos que no son PNG ni JPG y más de cuatro por muestra, sin subir nada', async () => {
     const { client, count } = instrument();
-    const user = await readyPage(client);
+    const { user } = await readyPage(client);
     const uploadsBefore = count('uploadAsset');
     // El navegador filtra por `accept` al elegir; acá se fuerza el evento para comprobar la validación propia.
     fireEvent.change(screen.getByLabelText(/Fotos de la muestra/), { target: { files: [new File(['x'], 'muestra.gif', { type: 'image/gif' })] } });
@@ -462,16 +483,17 @@ describe('muestra física (POST /sewouts)', () => {
   });
 
   it('una muestra que requiere ajustes se refleja sin tocar el estado digital', async () => {
-    const user = await readyPage(instrument().client);
+    const { user, openJob } = await readyPage(instrument().client);
     await fill(user, 'Requiere ajustes');
     await user.click(screen.getByRole('button', { name: 'Registrar muestra' }));
     expect(await screen.findByText('La muestra requiere ajustes')).toBeInTheDocument();
-    expect(screen.getAllByText(READY).length).toBeGreaterThan(0);
+    await openJob();
+    expect((await screen.findAllByText(READY)).length).toBeGreaterThan(0);
   });
 
   it('"sin probar" no lleva fecha y se envía con tested_at null', async () => {
     const { client, calls } = instrument();
-    const user = await readyPage(client);
+    const { user } = await readyPage(client);
     await user.click(screen.getByRole('radio', { name: /Sin probar \(solo dejar constancia\)/ }));
     expect(screen.getByLabelText('Fecha de la muestra')).toBeDisabled();
     await user.type(screen.getByLabelText('Estabilizador'), 'Tear-away');
@@ -485,7 +507,7 @@ describe('muestra física (POST /sewouts)', () => {
 
   it('valida los datos antes de enviar y no llama al servidor', async () => {
     const { client, count } = instrument();
-    const user = await readyPage(client);
+    const { user } = await readyPage(client);
     await user.click(screen.getByRole('button', { name: 'Registrar muestra' }));
     expect(screen.getAllByText('Completá este dato.').length).toBeGreaterThanOrEqual(4);
 
@@ -510,7 +532,7 @@ describe('muestra física (POST /sewouts)', () => {
         throw new ApiError('INVALID_REQUEST', 'El servidor no aceptó algunos datos. Revisá los ajustes.', 422);
       },
     };
-    const user = await readyPage(client);
+    const { user } = await readyPage(client);
     await fill(user, 'Aprobada');
     await user.click(screen.getByRole('button', { name: 'Registrar muestra' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Código de incidencia: INVALID_REQUEST');
@@ -521,40 +543,24 @@ describe('muestra física (POST /sewouts)', () => {
 
 describe('job completo con archivos pero en needs_review (SIMULADO, fixture job-completed-real)', () => {
   const FORM = 'Registrar muestra física';
-  // Los 14 object_ids reales del backend (H0-04): cada uno de los 14 avisos los lista todos.
-  const REAL_IDS = [
-    'satin_A_descenso_0', 'satin_A_lazo_ascenso_0', 'satin_A_lazo_ascenso_2', 'satin_A_lazo_ascenso_4',
-    'satin_SOCKS_C_0', 'satin_SOCKS_K_diagonales_0', 'satin_SOCKS_K_vertical_0', 'satin_SOCKS_O_0',
-    'satin_SOCKS_S_1_0', 'satin_SOCKS_S_2_0', 'satin_e_0', 'satin_i_0', 'satin_m_0', 'satin_n_0',
-  ];
-
-  it('muestra las 14 incidencias con sus object_ids, el aviso de no apto, la muestra física y las descargas', async () => {
+  it('presenta los elementos por número, los archivos y el estado digital', async () => {
     const user = setupUser();
     renderApp();
     await generateFrom(user, svgFile('logo-completo.svg'));
     await advance(FULL_RUN_MS);
 
     expect(await screen.findByText('Hay un elemento que necesita revisión')).toBeInTheDocument();
-    // 14 filas de incidencia (el aviso superior repite el título de la primera).
-    const rows = screen.getAllByText(/Faltan guías en una columna de satén/).filter((el) => el.closest('.issue'));
-    expect(rows).toHaveLength(14);
-    for (const id of REAL_IDS) {
-      expect(screen.getByLabelText(new RegExp(`Qué querés hacer \\(${id}\\)`))).toBeInTheDocument();
-    }
-    // Cada aviso lista las 14 columnas candidatas (el backend no las asigna una a una).
-    for (const row of rows) {
-      const text = row.closest('.issue')?.textContent ?? '';
-      expect(REAL_IDS.every((id) => text.includes(id))).toBe(true);
-    }
+    const targets = screen.getAllByRole('combobox', { name: /Qué querés hacer \(elemento/ });
+    expect(targets).toHaveLength(14);
+    targets.forEach((target, index) => expect(target).toHaveAccessibleName(`Qué querés hacer (elemento ${index + 1})`));
+    expect(screen.queryByText(/satin_A_descenso_0|SATIN_RUNG_WARNING|Satin has no rungs/)).not.toBeInTheDocument();
 
-    // Estado digital: nunca "listo para prueba"; los archivos se avisan como no aptos.
     expect(screen.getAllByText('Necesita tu revisión').length).toBeGreaterThan(0);
     expect(screen.queryByText(READY)).not.toBeInTheDocument();
     expect(screen.getByText('Archivos para revisar: no están listos para prueba')).toBeInTheDocument();
 
-    // Muestra física permitida en needs_review, con el estado físico aparte.
-    expect(screen.getByRole('heading', { name: FORM })).toBeInTheDocument();
-    expect(screen.getByText('Sin probar en tela')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: FORM })).not.toBeInTheDocument();
+    expect(screen.queryByText('Sin probar en tela')).not.toBeInTheDocument();
 
     // Medidas y archivos del fixture.
     expect(screen.getByText('150,0 × 142,8 mm')).toBeInTheDocument();
@@ -567,7 +573,7 @@ describe('job completo con archivos pero en needs_review (SIMULADO, fixture job-
     expect(screen.getByRole('link', { name: /Descargar SVG editable/ }).getAttribute('download')).toMatch(/-editable\.svg$/);
   });
 
-  it('con los 14 avisos idénticos del backend real (todos con los mismos object_ids) los muestra todos sin claves repetidas', async () => {
+  it('los avisos técnicos repetidos quedan fuera del resultado', async () => {
     const user = setupUser();
     const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
     const base = createMockApiClient();
@@ -586,16 +592,15 @@ describe('job completo con archivos pero en needs_review (SIMULADO, fixture job-
     await generateFrom(user, svgFile('logo-completo.svg'));
     await advance(FULL_RUN_MS);
     await screen.findByText('Hay un elemento que necesita revisión');
-    const rows = screen.getAllByText(/Faltan guías en una columna de satén/).filter((el) => el.closest('.issue'));
-    expect(rows).toHaveLength(14);
+    expect(screen.queryByText(/Faltan guías en una columna de satén|Satin has no rungs/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Aplicar y regenerar' })).toBeEnabled();
     expect(errors.mock.calls.filter((c) => String(c[0]).includes('same key'))).toEqual([]);
   });
 
   it('registrar una muestra aquí no cambia el estado digital', async () => {
-    const user = setupUser();
-    renderApp();
-    await generateFrom(user, svgFile('logo-completo.svg'));
+    const { user, openJob, openSample } = await jobWithRoutes(createMockApiClient(), svgFile('logo-completo.svg'));
     await advance(FULL_RUN_MS);
+    await openSample();
     await screen.findByRole('heading', { name: FORM });
     await user.click(screen.getByRole('radio', { name: 'Requiere ajustes' }));
     fireEvent.change(screen.getByLabelText('Fecha de la muestra'), { target: { value: '2026-10-01T11:00' } });
@@ -604,7 +609,8 @@ describe('job completo con archivos pero en needs_review (SIMULADO, fixture job-
     await user.type(screen.getByLabelText('Observaciones'), 'Satén fruncido.');
     await user.click(screen.getByRole('button', { name: 'Registrar muestra' }));
     expect(await screen.findByText('La muestra requiere ajustes')).toBeInTheDocument();
-    expect(screen.getAllByText('Necesita tu revisión').length).toBeGreaterThan(0);
+    await openJob();
+    expect((await screen.findAllByText('Necesita tu revisión')).length).toBeGreaterThan(0);
     expect(screen.queryByText(READY)).not.toBeInTheDocument();
   });
 
@@ -675,7 +681,7 @@ describe('409 al pedir los archivos aunque el job traiga manifiesto', () => {
     expect(screen.queryByRole('link', { name: /Descargar/ })).not.toBeInTheDocument();
     // El resto sigue usable.
     expect((await screen.findAllByText(restOfScreen)).length).toBeGreaterThan(0);
-    expect(screen.getByRole('heading', { name: 'Registrar muestra física' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Generar variante' })).toBeEnabled();
 
     state.blocked = false;
     calls.length = 0;

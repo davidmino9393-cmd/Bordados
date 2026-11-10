@@ -77,3 +77,9 @@ main:focus, h1:focus { outline: none; }
 
 .swatch { display: inline-block; width: 1rem; height: 1rem; border: 1px solid var(--color-border); border-radius: 3px; vertical-align: middle; }
 .swatch-label { display: inline-flex; gap: var(--space-1); align-items: center; }
+
+.compare { align-items: start; }
+.compare__expanded { grid-column: 1 / -1; }
+.compare .compare__zoom { display: block; width: 100%; padding: 0; border: 0; background: white; cursor: zoom-in; }
+.compare__zoom img { display: block; }
+.compare__zoom[aria-pressed="true"] { cursor: zoom-out; }

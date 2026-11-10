@@ -25,6 +25,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<ProjectsPage />} />
           <Route path="/proyectos/:projectId" element={<ProjectPage />} />
+          <Route path="/trabajos/:jobId/muestra" element={<JobPage sewout />} />
           <Route path="/trabajos/:jobId" element={<JobPage />} />
           <Route path="*" element={<p>{es.errors.notFound}</p>} />
         </Routes>

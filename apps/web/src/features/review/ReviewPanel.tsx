@@ -1,3 +1,4 @@
+import { publicIssues } from '../artifacts/publicIssues';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '../../api/ApiProvider';
@@ -75,17 +76,10 @@ export function ReviewPanel({ job, asset, correctable = true }: ReviewPanelProps
     <Card>
       <Card.Header>{es.review.title}</Card.Header>
       <Card.Body>
-        <Notice tone={NoticeTone.Warning} title={issueTitle(review.issues[0]?.code ?? '', review.cause)} />
-        {review.issues.map((issue, index) => (
-          <div key={`${issue.code}-${index}`} className="issue">
-            <strong>{severityLabel[issue.severity]}: {issueTitle(issue.code, issue.description)}</strong>
-            <span>
-              {issue.object_ids.length > 0 && `${es.review.objects}: ${issue.object_ids.join(', ')}`}
-              {issue.region_ids.length > 0 && ` ${es.review.regions}: ${issue.region_ids.join(', ')}`}
-            </span>
-            <span>{es.review.evidence}: {issue.description}</span>
-            <span>{es.review.suggestion}: {issue.suggested_correction}</span>
-          </div>
+        {publicIssues(job.issues).map((issue) => (
+          <p key={issue.code} className="issue">
+            <strong>{severityLabel[issue.severity]}: {issueTitle(issue.code, 'Revisá el resultado')}</strong>
+          </p>
         ))}
         {originalUrl && (
           <figure className="region-view">
@@ -93,8 +87,8 @@ export function ReviewPanel({ job, asset, correctable = true }: ReviewPanelProps
             <figcaption className="field__hint">{es.review.originalRef}</figcaption>
           </figure>
         )}
-        {correctable && targets.map(({ kind, id }) => (
-          <Field key={`${kind}:${id}`} label={`${es.review.action} (${id})`}>
+        {correctable && targets.map(({ kind, id }, index) => (
+          <Field key={`${kind}:${id}`} label={`${es.review.action} (${kind === 'object' ? 'elemento' : 'zona'} ${index + 1})`}>
             <select
               value={choices[`${kind}:${id}`] ?? KEEP}
               onChange={(e) => setChoices({ ...choices, [`${kind}:${id}`]: e.target.value as Choice })}
