@@ -134,9 +134,28 @@ def sections(chain, mask):
     return output
 
 
+def _with_width_crossings(samples):
+    """Split a sampled edge at the physical running/satin threshold."""
+    for previous, current in zip(samples, samples[1:]):
+        yield previous
+        if {previous["technique"], current["technique"]} != {"running", "satin"}:
+            continue
+        t = (RUNNING_LIMIT_MM - previous["width"]) / (current["width"] - previous["width"])
+        crossing = {"width": RUNNING_LIMIT_MM,
+                    "inset_mm": min(previous["inset_mm"], current["inset_mm"])}
+        for key in ("center", "left", "right", "edge_left", "edge_right"):
+            crossing[key] = tuple(a + (b - a) * t for a, b in zip(previous[key], current[key]))
+        if t > 0:
+            yield {**crossing, "technique": previous["technique"]}
+        if t < 1:
+            yield {**crossing, "technique": current["technique"]}
+    if samples:
+        yield samples[-1]
+
+
 def _runs(samples, mask):
     run = []
-    for sample in samples:
+    for sample in _with_width_crossings(samples):
         compatible = not run or (sample["technique"] == run[-1]["technique"] and
                                  mask.segment(run[-1]["center"], sample["center"]) and
                                  (sample["technique"] != "satin" or
@@ -272,7 +291,10 @@ def _intersection_count(rung, rail):
 
 
 def _valid_parts(run, mask):
-    """Bisect folded columns, keeping the longest valid parts intact."""
+    """Bisect folded columns, keeping the longest valid parts intact.
+
+    A piece too short to bisect further keeps its axis as a running stitch
+    instead of being dropped: dropping it left gaps in narrow letters."""
     pending = [run]
     while pending:
         part = pending.pop()
@@ -282,6 +304,8 @@ def _valid_parts(run, mask):
         elif len(part) > 3:
             middle = len(part) // 2
             pending.extend((part[:middle + 1], part[middle:]))
+        else:
+            yield [{**sample, "technique": "running"} for sample in part], None
 
 
 def _smooth(chain, mask):

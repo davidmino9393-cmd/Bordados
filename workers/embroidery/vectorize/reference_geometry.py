@@ -277,17 +277,30 @@ def _original_normal_width(fill_mask, fill_origin, original, origin, scale, canc
     return median(s["width"] for s in samples) if samples else 0.
 
 
+def _is_small_running_stroke(units):
+    # Retain an isolated stroke that can take a real short running stitch.
+    # The span/width check excludes compact flecks with a spurious skeleton.
+    if len(units) != 1 or units[0]["technique"] != "running":
+        return False
+    unit = units[0]
+    span = math.dist(unit["entry_mm"], unit["exit_mm"])
+    return span >= 1.25 and span >= 3 * unit["local_width_mm"]
+
+
 def _decision(index, outer, holes, widths, origin, scale, tolerance, color, cancel, elastic=False):
     stats = _statistics([widths], scale)
     area = widths.pixels * scale * scale
     omitted = stitchable.OMITTED_NEAR_WHITE if stitchable.is_near_white(color) else None
-    if not omitted and stitchable.ring_area_mm2(outer) < stitchable.MIN_STITCHABLE_AREA_MM2:
-        omitted = stitchable.OMITTED_TOO_SMALL
+    units, covered = [], None
+    if not omitted:
+        units, covered = local_columns.derive(widths.image, origin, scale, _thin, cancel)
+        if (stitchable.ring_area_mm2(outer) < stitchable.MIN_STITCHABLE_AREA_MM2
+                and not _is_small_running_stroke(units)):
+            omitted = stitchable.OMITTED_TOO_SMALL
     if omitted:
         return [{"ring_index": index, "width": stats, "area_mm2": area, "technique": "fill",
                  "omitted": omitted, "stitch_path_mm": None, "fill_path_mm": None,
                  "row_spacing_mm": None, "pull_compensation_mm": 0}]
-    units, covered = local_columns.derive(widths.image, origin, scale, _thin, cancel)
     output = []
     source_height = max(y for _, y in outer) - min(y for _, y in outer)
 
