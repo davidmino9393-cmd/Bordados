@@ -8,28 +8,30 @@ Contenido: [Medición](#medición) · [Técnicas](#técnicas) · [Cortes](#corte
 
 | Medida (JEF releído) | Antes (orden 5) | Después |
 |---|---|---|
-| Puntadas | 8 871 | 9 905 |
+| Puntadas | 8 871 | 10 402 |
 | Bloques / cambios de color | 1 / 0 | 1 / 0 |
-| Saltos JEF (crudos / con desplazamiento) | 212 / 209 | 188 / 74 |
-| Trims leídos (pyembroidery, `trim_at=3`) | 32 | 38 |
-| Cortes explícitos (3 saltos nulos) | 1 | 38 |
-| Recorrido de salto | 2 394,7 mm | 705,0 mm |
+| Saltos JEF (crudos / con desplazamiento) | 212 / 209 | 202 / 72 |
+| Trims leídos (pyembroidery, `trim_at=3`) | 32 | 43 |
+| Cortes explícitos (3 saltos nulos) | 1 | 42 |
+| Recorrido de salto | 2 394,7 mm | 686,1 mm |
 | Tamaño | 120,4 × 121,0 mm | 120,0 × 120,6 mm |
-| Digitalización (procesos Ink/Stitch) | 414,1 s | 217,0 s |
+| Digitalización (procesos Ink/Stitch) | 414,1 s | 179,8 s |
 | Troubleshoot | `Border crosses itself` | ninguno |
 
-Margen al bastidor ≥9,7 mm por lado. SHA256: PNG `3ba1cfc1…6f6c8`, E1 `8fb87ee0…936c0`, SVG previo al ruteo `be02413c…3f0b7`, SVG final `2983e84c…5c1e6`, JEF `2a4c933d…32aa9`. Todos en [measurements.json](measurements.json).
+Margen al bastidor ≥9,7 mm por lado. SHA256: PNG `3ba1cfc1…6f6c8`, E1 `8fb87ee0…936c0`, SVG previo al ruteo `f3ba464e…ddc130`, SVG final `7fe9496b…bb3f9`, JEF `d4a55247…69d71`. Todos en [measurements.json](measurements.json).
 
 ## Técnicas
 
 | Ancho local | Unidades | Técnica |
 |---|---|---|
-| <1 mm | 354 | corrido 2,5 mm; curvas 1,25 mm |
-| 1–<1,5 mm | 124 | satén micro 0,55 mm, sin underlay |
-| 1,5–4 mm | 155 | satén 0,40 mm, inset 0,15, máx. 7 mm, center-walk |
-| >4–<7 mm / ≥7 mm | 2 / 2 | tatami 0,35 mm, underlay 5 mm, inset 1,5 mm, ⟂ |
+| <1 mm | 286 corrido + 30 satén | corrido 2,5 mm; curvas 1,25 mm; tolerancia 0,05 mm (esquinas) |
+| 1–<1,5 mm | 132 satén + 105 corrido | satén micro 0,55 mm, sin underlay |
+| 1,5–4 mm | 147 satén + 198 corrido | satén 0,40 mm, inset 0,15, máx. 7 mm, center-walk |
+| >4–<7 mm / ≥7 mm | 1 / 3 | tatami 0,35 mm, underlay 5 mm, inset 1,5 mm, ⟂ |
 
-Tras `auto_satin`: 288 columnas con 2 rieles + 1 travesaño (155 a 0,40; 133 a 0,55). Compensación 0,25 mm.
+Tras `auto_satin`: 319 columnas con 2 rieles + 1 travesaño. Compensación 0,25 mm.
+
+Cambio del 2026-11-10 (El Fortín): el corrido en franjas de satén son trozos que no admiten rieles válidos y antes se descartaban (se perdía eje); un trazo cuyo ancho ronda 1 mm toma una sola técnica (±1 px del umbral sigue a su mediana); los bordes de antialias de un solo píxel pegados a otro color no se rescatan como trazos. Unidades: 637 → 902.
 
 ## Cortes
 
@@ -37,13 +39,13 @@ Clasificación de cada salto contra la máscara E1 dilatada 0,30 mm ([script](..
 
 | Salto | Antes | Después |
 |---|---|---|
-| Cruza tela vacía | 38 (2 334,5 mm) | 32 |
-| … cortado explícitamente | 0 | 32 |
+| Cruza tela vacía | 38 (2 334,5 mm) | 35 |
+| … cortado explícitamente | 0 | 35 |
 | … solo por regla de 3 saltos | 31 | 0 |
 | … hilo flotante visible | 7 (máx. 22,4 mm) | 0 |
-| Corte dentro de una pieza | 0 | 5 |
+| Corte dentro de una pieza | 0 | 7 |
 
-Mínimo físico: 28 componentes ⇒ 27 cruces. El "32" de antes no cortaba: dejaba 7 puentes visibles. Exceso actual: 5 cruces y 5 cortes internos, porque `auto_satin` decide su ruta interna y hay piezas unidas solo a través del relleno, que se borda antes.
+Mínimo físico: 28 componentes ⇒ 27 cruces. El "32" de antes no cortaba: dejaba 7 puentes visibles. Exceso actual: 8 cruces y 7 cortes internos, porque `auto_satin` decide su ruta interna y hay piezas unidas solo a través del relleno, que se borda antes.
 
 ## Límites
 

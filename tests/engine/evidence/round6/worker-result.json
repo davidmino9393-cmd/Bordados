@@ -1,9 +1,9 @@
 {
-  "input_sha256": "2983e84cf9abf23e4371144a21689ee8bc97cdffadeffb248d8c47acc505c1e6",
+  "input_sha256": "7fe9496bdee63824b4b2f4ea4f911387bdf9b90677ceb0f4641e7575739bb3f9",
   "engine_sha256": "2866a523b74e8b99dddaf09a5f7b0f0808bc2654c42843a5caeb41191ee96277",
   "engine_version": "v3.2.2",
   "engine_backend": "inkstitch_cli",
-  "python_version": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+  "python_version": "3.14.4 (tags/v3.14.4:23116f9, Apr  7 2026, 14:10:54) [MSC v.1944 64 bit (AMD64)]",
   "digital_readiness_evaluated": false,
   "physical_approval": "untested",
   "processes": [
@@ -15,17 +15,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 600.0,
+      "timeout_s": 599.999991299992,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 103072,
+      "pid": 175456,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 5531
+      "duration_ms": 5573
     },
     {
       "command": [
@@ -35,17 +35,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 594.4530000000086,
+      "timeout_s": 594.4030155999935,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 31404,
+      "pid": 156108,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 4594
+      "duration_ms": 4067
     },
     {
       "command": [
@@ -55,17 +55,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 589.8589999999967,
+      "timeout_s": 590.3310820999905,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 65084,
+      "pid": 38204,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 4343
+      "duration_ms": 4155
     },
     {
       "command": [
@@ -75,17 +75,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 585.5160000000033,
+      "timeout_s": 586.1715317999478,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 83244,
+      "pid": 135868,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 4657
+      "duration_ms": 4514
     },
     {
       "command": [
@@ -95,17 +95,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 580.8440000000119,
+      "timeout_s": 581.6527853999869,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 62152,
+      "pid": 152592,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 4344
+      "duration_ms": 4789
     },
     {
       "command": [
@@ -115,17 +115,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 576.5,
+      "timeout_s": 576.8553587999777,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 53464,
+      "pid": 87204,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 6047
+      "duration_ms": 4811
     },
     {
       "command": [
@@ -135,17 +135,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 570.4530000000086,
+      "timeout_s": 572.0412316999864,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 151732,
+      "pid": 151972,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 4844
+      "duration_ms": 4853
     },
     {
       "command": [
@@ -155,17 +155,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 565.6089999999967,
+      "timeout_s": 567.1851137999911,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 148328,
+      "pid": 51084,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 4703
+      "duration_ms": 4200
     },
     {
       "command": [
@@ -175,17 +175,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 560.9060000000172,
+      "timeout_s": 562.9820810999954,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 24796,
+      "pid": 22208,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 4359
+      "duration_ms": 4401
     },
     {
       "command": [
@@ -195,17 +195,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 556.5469999999914,
+      "timeout_s": 558.5769736999646,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 161324,
+      "pid": 162844,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 8531
+      "duration_ms": 3962
     },
     {
       "command": [
@@ -215,17 +215,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 548.0,
+      "timeout_s": 554.6115742999827,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 152780,
+      "pid": 58248,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 5375
+      "duration_ms": 3919
     },
     {
       "command": [
@@ -235,17 +235,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 542.625,
+      "timeout_s": 550.6890524999471,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 171072,
+      "pid": 23512,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 4781
+      "duration_ms": 4111
     },
     {
       "command": [
@@ -255,17 +255,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 537.8440000000119,
+      "timeout_s": 546.5742930999841,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 8964,
+      "pid": 78952,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 5235
+      "duration_ms": 4049
     },
     {
       "command": [
@@ -275,17 +275,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 532.5940000000119,
+      "timeout_s": 542.5218808999634,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 63968,
+      "pid": 134440,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 4547
+      "duration_ms": 4258
     },
     {
       "command": [
@@ -295,17 +295,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 528.0469999999914,
+      "timeout_s": 538.2605263000005,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 39352,
+      "pid": 52680,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 5000
+      "duration_ms": 4133
     },
     {
       "command": [
@@ -315,17 +315,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 523.0310000000172,
+      "timeout_s": 534.1224980999832,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 66288,
+      "pid": 150164,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 4578
+      "duration_ms": 4573
     },
     {
       "command": [
@@ -335,17 +335,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 518.4370000000054,
+      "timeout_s": 529.5458742999472,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 62292,
+      "pid": 69672,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 4796
+      "duration_ms": 4362
     },
     {
       "command": [
@@ -355,57 +355,57 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 513.6410000000033,
+      "timeout_s": 525.180372999981,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 127272,
+      "pid": 72368,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 4938
+      "duration_ms": 4340
     },
     {
       "command": [
         "C:\\Users\\david\\AppData\\Roaming\\inkscape\\extensions\\inkstitch\\inkstitch\\bin\\inkstitch.exe",
-        "--extension=auto_run",
+        "--extension=auto_satin",
         "--id=native_route_20",
         "--preserve_order=false",
-        "--break_up=false",
+        "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 508.68700000000536,
+      "timeout_s": 520.8351474999799,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 127424,
+      "pid": 166924,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 5125
+      "duration_ms": 4359
     },
     {
       "command": [
         "C:\\Users\\david\\AppData\\Roaming\\inkscape\\extensions\\inkstitch\\inkstitch\\bin\\inkstitch.exe",
-        "--extension=auto_run",
+        "--extension=auto_satin",
         "--id=native_route_21",
         "--preserve_order=false",
-        "--break_up=false",
+        "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 503.5469999999914,
+      "timeout_s": 516.4718215999892,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 65548,
+      "pid": 126864,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 4531
+      "duration_ms": 4353
     },
     {
       "command": [
@@ -415,17 +415,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 499.0,
+      "timeout_s": 512.1146684999694,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 107652,
+      "pid": 71888,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 4563
+      "duration_ms": 4268
     },
     {
       "command": [
@@ -435,17 +435,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 494.43700000000536,
+      "timeout_s": 507.84346859995276,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 86180,
+      "pid": 53508,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 5921
+      "duration_ms": 4337
     },
     {
       "command": [
@@ -455,17 +455,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 488.51600000000326,
+      "timeout_s": 503.4927864999627,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 33484,
+      "pid": 80680,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 7313
+      "duration_ms": 4637
     },
     {
       "command": [
@@ -475,17 +475,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 481.18700000000536,
+      "timeout_s": 498.852382699959,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 128500,
+      "pid": 101216,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 5578
+      "duration_ms": 4718
     },
     {
       "command": [
@@ -495,17 +495,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 475.5940000000119,
+      "timeout_s": 494.1303573999903,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 170192,
+      "pid": 158356,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 6844
+      "duration_ms": 6227
     },
     {
       "command": [
@@ -515,17 +515,17 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 468.75,
+      "timeout_s": 487.89939179999055,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 169428,
+      "pid": 18356,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 24109
+      "duration_ms": 12943
     },
     {
       "command": [
@@ -535,33 +535,33 @@
         "--preserve_order=false",
         "--keep_originals=false",
         "--trim=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\routing-input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\routing-input.svg"
       ],
-      "timeout_s": 444.64100000000326,
+      "timeout_s": 474.95302779995836,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 159216,
+      "pid": 150140,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 16375
+      "duration_ms": 13605
     },
     {
       "command": [
         "C:\\Users\\david\\AppData\\Roaming\\inkscape\\extensions\\inkstitch\\inkstitch\\bin\\inkstitch.exe",
         "--extension=troubleshoot",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\input.svg"
       ],
       "timeout_s": 600.0,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 129812,
+      "pid": 181804,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 17015
+      "duration_ms": 14218
     },
     {
       "command": [
@@ -569,39 +569,39 @@
         "--extension=output",
         "--format=jef",
         "--trims=true",
-        "C:\\dev\\wt-motor\\tests\\engine\\.tmp\\round6-final\\worker\\input.svg"
+        "C:\\dev\\wt-web\\tests\\engine\\.tmp\\round6-regen-claude2\\worker\\input.svg"
       ],
       "timeout_s": 600.0,
       "stdin": "DEVNULL",
       "shell": false,
       "hidden_window": true,
       "started_suspended": true,
-      "pid": 121200,
+      "pid": 169256,
       "process_tree_control": "Windows Job Object, KILL_ON_JOB_CLOSE",
       "returncode": 0,
-      "duration_ms": 28390
+      "duration_ms": 27041
     }
   ],
   "native_routing": {
     "method": "Ink/Stitch auto_satin/auto_run per dilated mask component; native hidden underpaths; cut only between components",
     "components_routed": 27,
     "extensions": {
-      "auto_satin": 25,
-      "auto_run": 2
+      "auto_satin": 27,
+      "auto_run": 0
     },
     "satin_cleanup": {
-      "satin_columns": 288,
-      "rewritten_columns": 6,
+      "satin_columns": 319,
+      "rewritten_columns": 7,
       "removed_guides": 0,
       "rails_preserved": true,
       "methods": {
-        "existing_verified": 282,
-        "interior_arclength_crossing": 6
+        "existing_verified": 312,
+        "interior_arclength_crossing": 7
       }
     },
-    "component_exit_trims_added": 2,
-    "source_svg_sha256": "be02413c319d3a9c2c86bab8125911c917385ee0e72dc7bf2d94d4d283c3f0b7",
-    "routed_svg_sha256": "2983e84cf9abf23e4371144a21689ee8bc97cdffadeffb248d8c47acc505c1e6"
+    "component_exit_trims_added": 0,
+    "source_svg_sha256": "f3ba464e66514fa82b20abe41657e3561a9f2bba0827af8f7f1ccf1b26ddc130",
+    "routed_svg_sha256": "7fe9496bdee63824b4b2f4ea4f911387bdf9b90677ceb0f4641e7575739bb3f9"
   },
   "diagnostics": [],
   "jef_header_patch": {
@@ -621,22 +621,22 @@
       60.0,
       60.3
     ],
-    "needle_stitches": 9905,
+    "needle_stitches": 10402,
     "thread_blocks": 1,
     "needle_stitches_by_thread_block": [
-      9905
+      10402
     ],
     "color_changes": 0,
-    "raw_jump_commands": 188,
-    "displacement_jump_commands": 74,
-    "interpreted_trims": 38,
+    "raw_jump_commands": 202,
+    "displacement_jump_commands": 72,
+    "interpreted_trims": 43,
     "end_commands": 1,
     "hoop_code": 2,
     "count_method": "pyembroidery 1.5.1: trims=True,trim_at=3,trim_distance=None,clipping=True; STITCH endpoint bounds; native coordinates /10 to mm",
     "physical_trim_execution_verified": false,
-    "jef_sha256": "2a4c933d79ca2b550e8f2e81498a7acd80d9f7a1ae44b64f16a512222b232aa9",
-    "byte_size": 20688,
-    "normalized_commands_sha256": "5ee6657e398e3b751ff76921e36639a345a73ef0ea73e13ba13f7c7f58f623b0"
+    "jef_sha256": "d4a552477fd05a45558ba1476c3a87e5b3569bc8ce466af71ed9798437469d71",
+    "byte_size": 21738,
+    "normalized_commands_sha256": "ee6ccf902a31122ac053ba57d83a3a7e5142b9db2dc3257e73440ea107fe6af3"
   },
   "reader_version": "1.5.1",
   "ok": true,
