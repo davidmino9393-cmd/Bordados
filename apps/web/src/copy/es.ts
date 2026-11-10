@@ -224,6 +224,7 @@ export const es = {
     title: 'Progreso',
     estimate: (s: number) => `Tiempo restante estimado: unos ${s} s (es una estimación).`,
     stageDuration: (s: string) => `${s} s medidos`,
+    elapsed: (clock: string) => `trabajando hace ${clock}`,
     cancel: 'Cancelar generación',
     cancelling: 'Cancelando…',
     retryingIn: (s: number) => `Reintentando en ${s} s…`,

@@ -46,6 +46,9 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 .stages { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
 .stage { display: flex; justify-content: space-between; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-radius: var(--radius); background: #faf9f5; }
 .stage--running { background: var(--color-info-bg); font-weight: 600; }
+.working-dot { display: inline-block; width: 0.6em; height: 0.6em; margin-right: var(--space-2); border-radius: 50%; background: var(--color-primary); animation: working-pulse 1.2s ease-in-out infinite; }
+@keyframes working-pulse { 0%, 100% { opacity: 0.25; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .working-dot { animation: none; } }
 .stage--failed { background: var(--color-bad-bg); }
 .progress-bar { height: 0.6rem; background: #ecebe6; border-radius: 999px; overflow: hidden; }
 .progress-bar > span { display: block; height: 100%; background: var(--color-primary); }

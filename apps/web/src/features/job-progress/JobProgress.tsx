@@ -9,8 +9,17 @@ import { errorMessage } from '../../shared/hooks/useAsync';
 import { formatSeconds } from '../../shared/utils/format';
 import { newIdempotencyKey } from '../../shared/utils/idempotency';
 import { summarizeProgress } from './progress';
+import { useRunningElapsed } from './useRunningElapsed';
 
 const PERCENT = 100;
+const MS_PER_SECOND = 1000;
+const SECONDS_PER_MINUTE = 60;
+
+/** 0:07, 1:42: el tiempo que lleva la etapa en curso. */
+function formatClock(ms: number): string {
+  const seconds = Math.floor(ms / MS_PER_SECOND);
+  return `${Math.floor(seconds / SECONDS_PER_MINUTE)}:${String(seconds % SECONDS_PER_MINUTE).padStart(2, '0')}`;
+}
 
 interface JobProgressProps {
   job: JobResponse;
@@ -23,6 +32,8 @@ export function JobProgress({ job, onJobChanged }: JobProgressProps) {
   const [error, setError] = useState<string>();
   const { done, total } = summarizeProgress(job.stages);
   const active = ACTIVE_STATUSES.includes(job.status);
+  const running = active ? job.stages.find((s) => s.outcome === StageOutcome.Running) : undefined;
+  const elapsed = useRunningElapsed(running ? `${job.job_id}:${running.stage}` : undefined);
 
   const cancel = async () => {
     setCancelling(true);
@@ -64,7 +75,11 @@ export function JobProgress({ job, onJobChanged }: JobProgressProps) {
             <li key={s.stage} className={`stage stage--${s.outcome}`}>
               <span>{stageLabel[s.stage]}</span>
               <span>
+                {s === running && <span className="working-dot" aria-hidden="true" />}
                 {stageOutcomeLabel[s.outcome]}
+                {s === running && elapsed !== undefined && (
+                  <span className="field__hint"> · {es.progress.elapsed(formatClock(elapsed))}</span>
+                )}
                 {s.outcome === StageOutcome.Completed && s.measured_duration_ms !== null && (
                   <span className="field__hint"> · {es.progress.stageDuration(formatSeconds(s.measured_duration_ms))}</span>
                 )}
