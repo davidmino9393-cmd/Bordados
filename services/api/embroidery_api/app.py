@@ -28,7 +28,7 @@ from embroidery_contracts.job_views import SewoutProjection
 
 from .analysis import configured_providers, provider_availability
 from .config import ApiConfig
-from .downloads import ASSET_SCOPE, DownloadSigner
+from .downloads import ASSET_SCOPE, DownloadSigner, archived_vector
 from .errors import ApiProblem
 from .profiles import load_profiles, validate_settings
 from .runner import FIT_SVG_TO_TARGET, JobRunner, continuation_stages, initial_stages, raster_stages, unanalyzed_raster_stages
@@ -377,7 +377,7 @@ def create_app(config: ApiConfig, analysis_providers=None):
             raise ApiProblem("REVISION_CONFLICT", "El trabajo de origen todavía está en curso: esperá a que termine para pedir una variante.")
         asset = owned("asset", original.asset_id, project_id)
         settings = original.settings_snapshot.model_copy(update={"target": request.target})
-        validate_settings(settings, catalog)
+        validate_settings(settings, catalog, size_variant=True)
         extra = None
         if original.input_kind == "prepared_svg":
             stages = initial_stages()
@@ -569,7 +569,10 @@ def create_app(config: ApiConfig, analysis_providers=None):
         if body.status not in ARTIFACT_STATES or body.artifact_manifest is None:
             raise ApiProblem("ARTIFACTS_UNAVAILABLE", "Los artefactos todavía no están disponibles para este trabajo.")
         artifacts = []
+        historical = archived_vector(job, body.artifact_manifest)
         for artifact in body.artifact_manifest.artifacts:
+            if historical and artifact.kind == "editable_svg":
+                artifact = historical[0]
             item = artifact.model_dump(mode="json")
             item.pop("download_url", None)
             item.pop("expires_at", None)
@@ -680,9 +683,13 @@ def create_app(config: ApiConfig, analysis_providers=None):
              if item.artifact_id == grant["artifact_id"]),
             None,
         )
+        path_value = job["private"].get("artifact_paths", {}).get(grant["artifact_id"])
+        if artifact is None and grant["artifact_id"] == body.job_id + "_design_svg":
+            historical = archived_vector(job, body.artifact_manifest)
+            if historical:
+                artifact, path_value = historical
         if artifact is None or artifact.sha256 != grant["sha256"]:
             return _download_error(request, "NOT_FOUND", "El artefacto no está disponible.")
-        path_value = job["private"].get("artifact_paths", {}).get(artifact.artifact_id)
         if not path_value:
             return _download_error(request, "NOT_FOUND", "El artefacto no está disponible.")
         job_dir = Path(job["private"]["job_dir"]).resolve()

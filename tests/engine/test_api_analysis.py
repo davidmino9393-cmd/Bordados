@@ -14,6 +14,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest.mock import patch
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -30,6 +31,7 @@ from PIL import Image, ImageDraw
 from embroidery_api.analysis import AnalysisProvider, OllamaProvider, ProviderError, ProviderResult
 from embroidery_api.app import create_app
 from embroidery_api.config import ApiConfig
+from embroidery_api.profiles import load_profiles
 from embroidery_contracts import IssueCode
 from vectorize.inkstitch import REFERENCE_ADAPTER, REFERENCE_PULL_COMPENSATION_MM
 
@@ -404,6 +406,10 @@ class JefFromImageTests(AnalysisApiTests):
         svg = self.artifact(job, "inkstitch_svg")
         self.assertEqual(manifest["input_sha256"], hashlib.sha256(image).hexdigest())
         self.assertEqual(manifest["geometry_sha256"], hashlib.sha256(svg).hexdigest())
+        editable = self.artifact(job, "editable_svg")
+        self.assertNotEqual(editable, svg)
+        drawing = next(a for a in manifest["artifacts"] if a["kind"] == "editable_svg")
+        self.assertEqual(drawing["sha256"], hashlib.sha256(editable).hexdigest())
         self.assertNotEqual(manifest["input_sha256"], manifest["geometry_sha256"])
 
     def test_an_image_without_ai_analysis_goes_straight_to_vectorizing_and_the_jef(self):
@@ -466,6 +472,43 @@ class JefFromImageTests(AnalysisApiTests):
         extent = self.x_extent(self.artifact(job, "inkstitch_svg").decode("utf-8").split("<path", 1)[1])
         # El destino pedido es 150 mm; el runner descuenta la compensación de ambos lados.
         self.assertAlmostEqual(extent, 150.0 - 2 * REFERENCE_PULL_COMPENSATION_MM, delta=0.02)
+
+    def test_oversized_variant_preserves_geometry_and_offers_only_hoop_blocked_jef_for_inspection(self):
+        # El JEF de la fixture mide 150 × 142,8 mm. Un aro de 140 mm lo bloquea realmente.
+        catalog_path = ROOT / "services" / "api" / "profiles.json"
+        catalog = load_profiles(catalog_path)
+        hoop = next(item for item in catalog.hoops if item.profile_id == SETTINGS["hoop_profile"])
+        narrow = hoop.model_copy(update={"width_mm": 140.0, "height_mm": 200.0})
+        catalog = catalog.model_copy(update={"hoops": (narrow,)})
+        with patch("embroidery_api.app.load_profiles", return_value=catalog):
+            self.start({})
+        settings = self.settings("none")
+        settings["hoop"].update(width_mm=140.0, height_mm=200.0)
+        settings["target"].update(width_mm=140.0, height_mm=160.0)
+        project, parent = self.raster_job("none", image=Image_bytes((80, 60), DARK_BLUE), settings=settings)
+        self.assertEqual(self.wait(parent["job_id"])["status"], "failed")
+
+        for height, expected in ((360.0, "needs_review"), (100.0, "failed")):
+            with self.subTest(height=height):
+                target = {"width_mm": 280.0, "height_mm": height, "fit": "contain"}
+                status, child = self.call("POST", f"/api/v1/projects/{project}/revisions", {
+                    "schema_version": "0.1", "kind": "size_variant", "parent_job_id": parent["job_id"], "target": target,
+                })
+                self.assertEqual(status, 202, child)
+                done = self.wait(child["job_id"])
+                self.assertEqual(done["status"], expected)
+                blocks = {i["code"] for i in done["issues"] if i["severity"] == "blocking_error"}
+                if expected == "needs_review":
+                    self.assertEqual(blocks, {"HOOP_INCOMPATIBLE"})
+                    self.assertTrue(done["review"]["object_ids"])
+                    self.assertFalse(done["validation_report"]["digital_checks_passed"])
+                    self.assertTrue(self.artifact(child, "jef"))
+                    svg = self.artifact(child, "inkstitch_svg").decode("utf-8")
+                    self.assertAlmostEqual(self.x_extent(svg.split("<path", 1)[1]),
+                                           280.0 - 2 * REFERENCE_PULL_COMPENSATION_MM, delta=0.2)
+                else:
+                    self.assertEqual(blocks, {"HOOP_INCOMPATIBLE", "DIMENSIONS_EXCEEDED"})
+                    self.assertEqual(self.call("GET", f"/api/v1/jobs/{child['job_id']}/artifacts")[0], 409)
 
 
 def Image_bytes(size, colour):
