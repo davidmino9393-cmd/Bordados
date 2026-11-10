@@ -49,9 +49,10 @@ test('proyecto: sin imagen y con imagen y ajustes (validación visible)', async 
   await expectAccessible(page, 'proyecto sin imagen');
   await page.getByLabel('Elegir archivo').setInputFiles({ name: 'logo.png', mimeType: 'image/png', buffer: PNG_1X1 });
   await expect(page.getByAltText('Imagen original: logo.png')).toBeVisible();
-  await page.getByLabel('Ancho máximo (mm)').fill('0');
+  // Orden 4: el tamaño lo fija el bastidor (ya no hay ancho ni alto que escribir); la validación visible es la de colores.
+  await page.getByLabel('Cantidad de colores').fill('0');
   await page.getByRole('button', { name: 'Generar bordado' }).click();
-  await expect(page.getByText('Ingresá un número mayor que cero.')).toBeVisible();
+  await expect(page.getByText(/Elegí entre 1 y \d+ colores\./)).toBeVisible();
   await expectAccessible(page, 'proyecto con imagen y error de validación');
   await page.getByLabel('Bastidor').selectOption({ label: 'Bastidor chico (SIMULADO)' });
   await expectAccessible(page, 'proyecto con aviso de bastidor');

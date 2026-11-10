@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useApi } from '../../api/ApiProvider';
 import type { JobResponse } from '../../contracts/job';
 import { Technique, type Correction, type SourceAsset } from '../../contracts/project';
+import type { Issue } from '../../contracts/validation';
 import { CONTRACT_SCHEMA_VERSION } from '../../contracts/version';
-import { es, issueTitle, severityLabel, techniqueLabel } from '../../copy/es';
+import { es, issueAdviceFor, issueTitle, severityLabel, techniqueLabel } from '../../copy/es';
 import { Card } from '../../shared/components/Card';
 import { Field } from '../../shared/components/Field';
 import { Notice, NoticeTone } from '../../shared/components/Notice';
@@ -30,6 +31,34 @@ function toCorrection(kind: TargetKind, id: string, choice: Choice): Correction 
   }
   // set_technique solo aplica a objetos (el contrato exige object_id).
   return kind === 'object' ? { action: 'set_technique', object_id: id, technique: choice } : null;
+}
+
+/**
+ * Un aviso: qué significa y qué hacer, en lenguaje simple. El código, los ids y el texto del motor quedan plegados en
+ * «Detalles técnicos»; los ids se muestran afuera solo cuando abajo se elige una acción por elemento.
+ */
+function IssueRow({ issue, showTargets }: { issue: Issue; showTargets: boolean }) {
+  const advice = issueAdviceFor(issue.code);
+  const targets = (
+    <span>
+      {issue.object_ids.length > 0 && `${es.review.objects}: ${issue.object_ids.join(', ')}`}
+      {issue.region_ids.length > 0 && ` ${es.review.regions}: ${issue.region_ids.join(', ')}`}
+    </span>
+  );
+  return (
+    <div className="issue">
+      <strong>{issueTitle(issue.code, issue.description)}</strong>
+      {advice && <span>{advice}</span>}
+      {showTargets && targets}
+      <details className="issue__details">
+        <summary>{es.review.details}</summary>
+        <span>{severityLabel[issue.severity]} · {es.review.code}: {issue.code}</span>
+        {!showTargets && targets}
+        <span>{es.review.evidence}: {issue.description}</span>
+        <span>{es.review.suggestion}: {issue.suggested_correction}</span>
+      </details>
+    </div>
+  );
 }
 
 /** Revisión localizada: causa, objetos/zonas concretos y correcciones que crean un trabajo nuevo. */
@@ -77,15 +106,7 @@ export function ReviewPanel({ job, asset, correctable = true }: ReviewPanelProps
       <Card.Body>
         <Notice tone={NoticeTone.Warning} title={issueTitle(review.issues[0]?.code ?? '', review.cause)} />
         {review.issues.map((issue, index) => (
-          <div key={`${issue.code}-${index}`} className="issue">
-            <strong>{severityLabel[issue.severity]}: {issueTitle(issue.code, issue.description)}</strong>
-            <span>
-              {issue.object_ids.length > 0 && `${es.review.objects}: ${issue.object_ids.join(', ')}`}
-              {issue.region_ids.length > 0 && ` ${es.review.regions}: ${issue.region_ids.join(', ')}`}
-            </span>
-            <span>{es.review.evidence}: {issue.description}</span>
-            <span>{es.review.suggestion}: {issue.suggested_correction}</span>
-          </div>
+          <IssueRow key={`${issue.code}-${index}`} issue={issue} showTargets={correctable} />
         ))}
         {originalUrl && (
           <figure className="region-view">

@@ -22,6 +22,7 @@
   --space-4: 1rem;
   --space-6: 1.5rem;
   --radius: 8px;
+  --compare-box: 16rem; /* alto de cada vista de la comparación: las tres en cajas iguales */
   --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --content-width: 72rem;
   --tap-target: 2.75rem;

@@ -76,7 +76,7 @@ const issueTitles: Record<string, string> = {
   PROVIDER_UNAVAILABLE: 'El proveedor de IA elegido no está disponible',
   LOCAL_MODEL_UNAVAILABLE: 'El modelo local no está disponible',
   GEOMETRY_INVALID: 'Hay una geometría inválida o degenerada',
-  GEOMETRY_REPAIR_AMBIGUOUS: 'Reparar la geometría podría cambiar la forma del elemento',
+  GEOMETRY_REPAIR_AMBIGUOUS: 'Revisá que el fondo se haya quitado bien',
   GEOMETRY_HOLES_CHANGED: 'La reparación modificó huecos del diseño',
   SATIN_RAILS_UNVERIFIED: 'No se pudo verificar la correspondencia de los bordes del satén',
   SATIN_WIDTH_UNSUPPORTED: 'El ancho del satén está fuera de lo calibrado',
@@ -84,21 +84,36 @@ const issueTitles: Record<string, string> = {
   SATIN_PAIRED_NODES_VERIFIED: 'Satén verificado por nodos correspondientes',
   ROUTING_PRECEDENCE_VIOLATION: 'Se violó un orden obligatorio de bordado',
   ROUTING_VISIBLE_TRAVEL: 'Hay desplazamientos visibles entre elementos',
-  DENSITY_REVIEW_REQUIRED: 'La densidad o los parámetros de puntada necesitan validación',
+  DENSITY_REVIEW_REQUIRED: 'Probá el bordado antes de usarlo en la pieza final',
   DIMENSIONS_EXCEEDED: 'La medida real supera el tamaño pedido',
   HOOP_INCOMPATIBLE: 'El diseño no es compatible con el bastidor elegido',
   JEF_INVALID: 'El archivo JEF generado no es válido',
   JEF_UNKNOWN_COMMAND: 'El JEF contiene una orden desconocida',
-  ENGINE_DIAGNOSTIC_UNCLASSIFIED: 'El motor informó un aviso sin clasificar',
+  ENGINE_DIAGNOSTIC_UNCLASSIFIED: 'Observación técnica del programa de bordado',
   WORKER_EXPORT_FAILED: 'Falló la exportación del bordado',
   WORKER_TIMEOUT: 'La generación superó el tiempo máximo',
   JOB_CANCELLED: 'Generación cancelada',
-  VISUAL_MISMATCH: 'El resultado difiere del original',
+  VISUAL_MISMATCH: 'El bordado no es idéntico a tu imagen',
   PHYSICAL_ADJUSTMENT_REQUIRED: 'La muestra física requiere ajustes',
 };
 
 export function issueTitle(code: string, fallback: string): string {
   return issueTitles[code] ?? fallback;
+}
+
+/** Qué significa el aviso para quien borda y qué conviene hacer, sin términos del motor. Sin entrada: solo el título. */
+const issueAdvice: Record<string, string> = {
+  DENSITY_REVIEW_REQUIRED: 'Las puntadas usan valores generales, no ajustados a tu tela. Probá el bordado en un retazo antes de la pieza final.',
+  GEOMETRY_REPAIR_AMBIGUOUS: 'El fondo se separó del dibujo de forma automática. Compará las vistas: si falta una parte o sobra fondo, usá una imagen con fondo liso o transparente.',
+  VISUAL_MISMATCH: 'Para poder bordarlo se simplificaron colores o se quitaron detalles muy chicos. Compará el bordado con tu imagen.',
+  ENGINE_DIAGNOSTIC_UNCLASSIFIED: 'El programa de bordado dejó una observación sobre la forma de alguna pieza. No suele impedir bordar: mirá la vista del bordado.',
+  HOOP_INCOMPATIBLE: 'El bordado no entra en el bastidor elegido con el margen de seguridad. Elegí un tamaño menor.',
+  DIMENSIONS_EXCEEDED: 'El bordado salió más grande que el tamaño pedido.',
+  SATIN_RUNG_WARNING: 'Una columna de satén no tiene guías de dirección. Revisá esa pieza en la vista del bordado.',
+};
+
+export function issueAdviceFor(code: string): string | undefined {
+  return issueAdvice[code];
 }
 
 export const es = {
@@ -209,6 +224,9 @@ export const es = {
     failedAt: (stage: string) => `Falló en la etapa: ${stage}.`,
     retrySame: 'Reintentar con los mismos ajustes',
     compareTitle: 'Comparación',
+    compareHint: 'Tocá una vista para ampliarla. El fondo cuadriculado marca las zonas sin dibujo.',
+    zoomIn: (label: string) => `Ampliar: ${label}`,
+    zoomClose: 'Cerrar ampliación',
     original: 'Original',
     vector: 'Vector',
     jefPreview: 'Puntadas del archivo releído',
@@ -241,6 +259,8 @@ export const es = {
     objects: 'Elementos',
     regions: 'Zonas',
     evidence: 'Qué se detectó',
+    details: 'Detalles técnicos',
+    code: 'Código',
     suggestion: 'Qué se sugiere',
     action: 'Qué querés hacer',
     keep: 'Sin cambios',

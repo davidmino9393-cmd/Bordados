@@ -127,6 +127,11 @@ describe('recorrido principal (cliente SIMULADO)', () => {
     expect(screen.getAllByText(/No se pudo verificar la correspondencia/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/object_mock_satin/).length).toBeGreaterThan(0);
     expect(screen.queryByRole('link', { name: /Descargar/ })).not.toBeInTheDocument();
+    // El código y el texto del motor quedan plegados en «Detalles técnicos»; el título va en lenguaje simple, sin la severidad adelante.
+    const details = screen.getAllByText('Detalles técnicos')[0].closest('details')!;
+    expect(details).not.toHaveAttribute('open');
+    expect(details.textContent).toMatch(/Código: SATIN_RAILS_UNVERIFIED/);
+    expect(details.closest('.issue')!.querySelector('strong')!.textContent).not.toMatch(/Revisión necesaria/);
 
     await user.click(screen.getByRole('button', { name: 'Aplicar y regenerar' }));
     expect(screen.getByText('Elegí al menos una corrección para regenerar.')).toBeInTheDocument();
