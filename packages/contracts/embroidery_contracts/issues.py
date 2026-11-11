@@ -89,6 +89,8 @@ ISSUE_RULES = {
     IssueCode.ROUTING_VISIBLE_TRAVEL: IssueRule(REVIEW, ValidationStage.ROUTING, "Visible connecting travel"),
     IssueCode.DENSITY_REVIEW_REQUIRED: IssueRule(REVIEW, ValidationStage.ROUTING, "Local density requires calibrated review"),
     IssueCode.DIMENSIONS_EXCEEDED: IssueRule(ERROR, ValidationStage.DIMENSIONS, "Reread bounds exceed target tolerance"),
+    # Excepcion declarada en services/api/embroidery_api/runner.py (hoop_review): en size_variant cuyo unico bloqueante
+    # es HOOP_INCOMPATIBLE y con un aviso con objetos o regiones, el trabajo queda en revision en vez de fallar.
     IssueCode.HOOP_INCOMPATIBLE: IssueRule(ERROR, ValidationStage.HOOP, "Hoop dimensions/code incompatible with profile"),
     IssueCode.JEF_INVALID: IssueRule(ERROR, ValidationStage.FILE, "Invalid header/table/records/end marker"),
     IssueCode.JEF_UNKNOWN_COMMAND: IssueRule(ERROR, ValidationStage.FILE, "Unknown binary command"),
