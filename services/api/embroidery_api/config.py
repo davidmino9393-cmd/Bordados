@@ -31,7 +31,7 @@ class ApiConfig:
     # Una imagen termina en un JEF con los parámetros de referencia (sin calibrar). Falso: se queda en la geometría de E1.
     raster_digitizing: bool = True
     # Ink/Stitch corre dos veces el plan de puntadas (diagnóstico y exportación): un diseño con flores y letras tarda minutos.
-    digitizing_timeout_s: float = 600
+    digitizing_timeout_s: float = 1200
     # H2: proveedores de visión. Las claves solo viven en esta configuración privada.
     # Sin `database_url` los datos van a SQLite dentro de `data_root`; con una URL `postgresql://` van a PostgreSQL. Es un secreto.
     database_url: str | None = field(default=None, repr=False)
