@@ -37,7 +37,7 @@ def vectorize(image: bytes, media_type: str, asset: SourceAsset, analysis: Analy
     started = perf_counter()
     rgba = decode(image, media_type, asset, cancel)
     _validate_analysis(analysis, asset)
-    segmented = segment(rgba, asset, settings.color_limit, cancel)
+    segmented = segment(rgba, asset, settings.color_limit, cancel, settings.target)
     traced = contours(segmented, cancel)
     affine = _affine(segmented, settings)
     objects = tuple(_object(mask, affine, segmented, revision_id, cancel) for mask in traced)

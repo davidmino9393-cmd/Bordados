@@ -97,6 +97,21 @@ class ComplexityTests(unittest.TestCase):
         self.assertEqual(segmentation["fringe_pixels_removed"], 0)
         self.assertEqual(segmentation["foreground_pixels"], 400)
 
+    def test_a_large_raster_is_averaged_down_to_the_output_grid_and_keeps_its_physical_size(self):
+        from PIL import ImageDraw
+        image = Image.new("RGB", (2400, 1000), "white")
+        ImageDraw.Draw(image).ellipse((200, 100, 2200, 900), fill=(20, 60, 140))
+        data = png(image)
+        result = result_for(data, source=asset(data), configuration=settings(60, 25, 1))  # 0,025 mm por pixel
+        working = result.evidence["segmentation"]["working_resolution"]
+        self.assertTrue(working["downscaled"])
+        self.assertEqual(working["working_size_px"], [1200, 500])  # 0,05 mm por pixel
+        self.assertEqual(working["cropped_size_px"], [2400, 1000])
+        self.assertEqual(result.evidence["segmentation"]["pixels_discarded_by_size_filter"], 0)
+        bounds = result.document.object_bounds_mm
+        self.assertAlmostEqual(bounds.max_x_mm - bounds.min_x_mm, 50.0, delta=0.1)  # 2000 px * 0,025 mm
+        self.assertAlmostEqual(bounds.max_y_mm - bounds.min_y_mm, 20.0, delta=0.1)
+
     def test_excessive_complexity_still_fails_without_simplifying_input(self):
         image = Image.new("RGBA", (512, 512))
         image.putdata([(0, 0, 255, 255) if (x + y) % 2 else (0, 0, 0, 0)

@@ -34,6 +34,13 @@ BACKGROUND_TOLERANCE = 36
 BACKGROUND_MIN_FOREGROUND = 0.01
 BACKGROUND = 65535
 ROW_CANCEL_INTERVAL = 32
+# Resolucion de trabajo: un pixel de la mascara no necesita ser mas fino que la grilla de salida (JEF_ROUNDING_MM de
+# piece_bridges, 0,05 mm). Una imagen de 4000x5000 px sobre 150 mm da 0,03 mm por pixel: el trazo exacto de pixel suma
+# aristas, tiempo y memoria sin informacion nueva (ver tests/engine/test_vectorize_complexity.py). Se reduce SOLO si el
+# pixel resultante seria mas fino que la grilla; si no, la imagen no se toca. Promedio por area (BOX), determinista.
+WORKING_GRID_MM = 0.05
+# Solo imagenes grandes: una imagen pequena no tiene problema de complejidad y reducirla cambiaria resultados sin beneficio.
+WORKING_MIN_PIXELS = 2_000_000
 
 
 @dataclass(frozen=True)
@@ -149,8 +156,23 @@ def _foreground(rgba):
     }
 
 
-def segment(rgba, asset, color_limit, cancel):
+def _working_resolution(rgba, target):
+    """(imagen, factor_x, factor_y, evidencia): reduce por area hasta WORKING_GRID_MM por pixel; nunca amplia."""
+    width, height = rgba.size
+    scale = min(target.width_mm / width, target.height_mm / height) if target is not None else WORKING_GRID_MM
+    evidence = {"working_grid_mm": WORKING_GRID_MM, "source_mm_per_px": scale, "downscaled": False, "downscale_method": None}
+    if scale >= WORKING_GRID_MM or width * height <= WORKING_MIN_PIXELS:
+        return rgba, 1.0, 1.0, evidence
+    size = (max(1, round(width * scale / WORKING_GRID_MM)), max(1, round(height * scale / WORKING_GRID_MM)))
+    reduced = rgba.resize(size, Image.Resampling.BOX)
+    evidence.update(downscaled=True, downscale_method="PIL BOX (area average)", cropped_size_px=[width, height], working_size_px=list(size))
+    return reduced, size[0] / width, size[1] / height, evidence
+
+
+def segment(rgba, asset, color_limit, cancel, target=None):
     rgba, x, y = _crop(rgba, asset)
+    rgba, factor_x, factor_y, working = _working_resolution(rgba, target)
+    check_cancel(cancel)
     rgb, mask, evidence = _foreground(rgba)
     width, height = rgb.size
     mask_bytes = mask.tobytes()
@@ -213,8 +235,9 @@ def segment(rgba, asset, color_limit, cancel):
         "source_mask_sha256": hashlib.sha256(mask_bytes).hexdigest(),
         "crop_box_px": [x, y, width, height],
         "pixels_discarded_by_size_filter": 0,
+        "working_resolution": working,
     })
-    return Segmentation(labels, width, height, x, y, palette, evidence)
+    return Segmentation(labels, width, height, x * factor_x, y * factor_y, palette, evidence)
 
 
 def _median_member_palette(foreground, quantized, keep=None):
