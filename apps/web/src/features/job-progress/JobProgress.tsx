@@ -31,6 +31,7 @@ export function JobProgress({ job, onJobChanged }: JobProgressProps) {
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState<string>();
   const { done, total } = summarizeProgress(job.stages);
+  const percentage = total ? Math.round((done / total) * PERCENT) : 0;
   const active = ACTIVE_STATUSES.includes(job.status);
   const running = active ? job.stages.find((s) => s.outcome === StageOutcome.Running) : undefined;
   const elapsed = useRunningElapsed(running ? `${job.job_id}:${running.stage}` : undefined);
@@ -58,17 +59,17 @@ export function JobProgress({ job, onJobChanged }: JobProgressProps) {
         </p>
         <div className="row">
           <JobStatusBadge status={job.status} />
-          <span>{es.progress.summary(done, total)}</span>
+          <span>{percentage}% completado por etapas · {es.progress.summary(done, total)}</span>
         </div>
         <div
           className="progress-bar"
           role="progressbar"
           aria-valuemin={0}
-          aria-valuemax={total}
-          aria-valuenow={done}
-          aria-label={es.progress.title}
+          aria-valuemax={PERCENT}
+          aria-valuenow={percentage}
+          aria-label="Porcentaje de etapas completadas"
         >
-          <span style={{ width: `${total ? (done / total) * PERCENT : 0}%` }} />
+          <span style={{ width: `${percentage}%` }} />
         </div>
         <ol className="stages">
           {job.stages.map((s) => (
