@@ -18,8 +18,8 @@ La primera vez hace falta `cd apps\web` y `npm install`, y que existan Inkscape,
 ## Usar la página
 | Paso | Qué hacer |
 |---|---|
-| 1 | «Crear proyecto» con cualquier nombre |
-| 2 | Subir la imagen (PNG o JPG, fondo blanco o transparente) |
+| 1 | «Crear proyecto» con cualquier nombre. Un proyecto puede reunir varios archivos: se genera un bordado de cada uno, con sus propios ajustes, y los anteriores quedan en «Trabajos anteriores» |
+| 2 | Subir la imagen (PNG o JPG, fondo blanco o transparente) o un SVG de Illustrator o Inkscape: un SVG común se dibuja a imagen al subirlo (hace falta Inkscape en el servidor) y queda como «nombre.png» |
 | 3 | Ancho y alto máximos en mm (el bordado entra en ese cuadro, sin deformarse) y cantidad de hilos |
 | 4 | Dejar «Sin análisis de IA» (no hace falta OpenAI ni Ollama) |
 | 5 | «Generar bordado» y esperar: de unos segundos a unos minutos, según el diseño |
@@ -32,10 +32,10 @@ La primera vez hace falta `cd apps\web` y `npm install`, y que existan Inkscape,
 | Estado final | «Necesita tu revisión»: siempre. El JEF es descargable, pero ningún diseño queda aprobado por la página; eso lo decide la costura de prueba |
 | Colores | El límite es de hilos. Una capa casi blanca se toma como fondo y no gasta un hilo |
 | Qué se quita | Manchas de menos de 1 mm² y capas casi blancas. La página lo avisa con los números |
-| Técnica | Todo se borda como relleno: las líneas muy finas salen como relleno angosto, no como satin ni como puntada corrida |
+| Técnica | Según el ancho de cada parte del dibujo (guía en `docs/GUIA_BORDADO_INKSTITCH.txt`): menos de 1 mm, puntada corrida; de 1 a 4 mm, satén; más ancho, relleno a 0,35 mm con base. La compensación es 0,25 mm (0,35 en piqué y polar). Son valores de la guía, sin calibrar en tu máquina |
 | SVG preparado | Se borda al tamaño con el que se preparó: el ancho y el alto que indicás son solo el límite (si el dibujo es más grande, el trabajo se rechaza). Para otro tamaño, usá «Variante de tamaño» en el resultado |
-| Bastidor | El perfil actual es SQ20b (200 × 200 mm); el JEF lleva ese código de bastidor |
-| Tiempo | Un logo simple, unos 10 s; Anime Socks, unos 2 min |
+| Bastidor | El JEF lleva el código del bastidor elegido y el bordado queda al menos 2 mm por lado dentro de él |
+| Tiempo | Medido el 2026-11-09 con satén y base: un logo simple, de 15 s a 1 min; uno con muchos detalles (un escudo), de 2 a 4 min. El tope por trabajo es de 10 min |
 
 ## Si algo falla
 | Síntoma | Causa probable |

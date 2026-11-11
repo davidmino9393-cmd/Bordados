@@ -12,13 +12,17 @@ from embroidery_contracts.issues import Severity
 from embroidery_contracts.base import Provenance
 from embroidery_contracts.results import Artifact
 from embroidery_contracts.jobs import StageRecord
-from api_adapter import make_issue, result_documents
+from api_adapter import HOOP_MARGIN_MM, make_issue, result_documents
 from process_runner import WorkerFailure, run_logged
 from vectorize import VectorizeFailure, stitchable, vectorize
 from vectorize.inkstitch import REFERENCE_PULL_COMPENSATION_MM, reference_issues, to_reference_inkstitch_svg
 
 from .analysis import ProviderError, normalize, region_incoherent_issue
 from .errors import ApiProblem
+from .legibility import raster_box
+from . import lettering
+from .palette import clean_palette
+from .profiles import exceeds_hoop
 from .svg_fit import fit_to_target
 
 
@@ -40,8 +44,11 @@ FAILURE_DESCRIPTIONS = {
     IssueCode.LOCAL_MODEL_UNAVAILABLE: "El modelo local no está disponible.",
 }
 VECTORIZATION_REVIEW_UNLOCALIZED = "vectorization_review_unlocalized"
+UNLOCALIZED_DESCRIPTIONS = {
+    "boundary_edge_limit": "La imagen es demasiado compleja para bordarla: parece una foto, un degradado con ruido o una textura. "
+                           "Usá un dibujo de colores planos (logo, ilustración) o simplificá la imagen antes de subirla.",
+}
 DIGITIZING_BLOCKED = "Bloqueado hasta que H3 valide técnica y parámetros físicos"
-MAX_COLOR_LIMIT = 256  # el tope de `JobSettings.color_limit` en el contrato
 DEFAULT_JEF_STEM = "bordado"  # si el original no tiene nombre; el JEF descargado se llama como la imagen de origen
 NOTHING_STITCHABLE = "No queda geometría que se pueda bordar"
 REFERENCE_SVG_FILENAME = "reference-inkstitch.svg"
@@ -246,7 +253,7 @@ class JobRunner:
         try:
             report, manifest, artifact_paths = result_documents(
                 previous.model_dump(mode="json"), result, job_dir, duration_ms,
-                self.config.dimension_tolerance_mm, display_names, input_sha256,
+                self.config.dimension_tolerance_mm, display_names, input_sha256, private.get("vectorization", {}).get("svg"),
             )
         except Exception:
             LOGGER.exception("Could not map worker result for job %s", job_id)
@@ -254,19 +261,21 @@ class JobRunner:
             return
         private["artifact_paths"] = artifact_paths
         issues = tuple(extra_issues) + tuple(report.issues)
-        blocking = any(issue.severity == Severity.BLOCKING_ERROR for issue in issues)
+        blocking_codes = {issue.code for issue in issues if issue.severity == Severity.BLOCKING_ERROR}
         review = any(
             issue.severity == Severity.REVIEW_REQUIRED and (issue.object_ids or issue.region_ids)
             for issue in issues
         )
-        if blocking:
+        oversized_variant = previous.parent_job_id is not None and exceeds_hoop(previous.settings_snapshot)
+        hoop_review = oversized_variant and review and blocking_codes == {IssueCode.HOOP_INCOMPATIBLE}
+        if blocking_codes and not hoop_review:
             self._save_transition(
                 previous, JobStatus.FAILED, private,
                 {"digitizing": ("failed", duration_ms, None), "validating": ("pending", None, None)},
                 {"issues": [issue.model_dump(mode="json") for issue in issues]},
             )
             return
-        if not review and not report.digital_checks_passed:
+        if not review and (oversized_variant or not report.digital_checks_passed):
             self._save_failed(previous, private, "WORKER_EXPORT_FAILED", "review_localization_unavailable")
             return
         extra = {
@@ -414,29 +423,54 @@ class JobRunner:
         """E1 para un bordado: el destino es el tamaño del bordado y el límite de colores es de hilos.
 
         La compensación de tracción engorda cada relleno `REFERENCE_PULL_COMPENSATION_MM` por lado, así que se vectoriza
-        dentro de un destino más chico para que lo bordado entre en el pedido. Una capa casi blanca (el resplandor del
-        fondo) no gasta un hilo: si E1 la produjo, se repite con una capa más.
+        dentro de un destino más chico para que lo bordado entre en el pedido.
+
+        Orden 3.1: antes de vectorizar se fusionan los halos de antialias con su tinta (`palette.clean_palette`), así el
+        límite de hilos se gasta en tintas y no en mezclas con el blanco. El límite NUNCA se infla con capas de fondo: un
+        límite de hilos es de hilos. El asset original (bytes, SHA, dimensiones) no cambia; el motor recibe un PNG limpio con
+        su propio SHA, que queda declarado en la evidencia junto con la regla, el umbral y los conteos.
         """
         settings = previous.settings_snapshot
         inset = 2 * REFERENCE_PULL_COMPENSATION_MM
         target = settings.target
+        if getattr(previous, "parent_job_id", None) is None:  # una variante de tamaño es un pedido explícito: no se acota
+            box_w, box_h = raster_box(target.width_mm, target.height_mm)
+            target = target.model_copy(update={"width_mm": box_w, "height_mm": box_h})
+        # Guía 1.1 y comprobación del bastidor: lo bordado queda HOOP_MARGIN_MM por lado dentro del bastidor. Sin esto, un
+        # destino igual al bastidor (el caso normal en los chicos) terminaba siempre en HOOP_INCOMPATIBLE.
+        hoop = settings.hoop
+        # Una variante pedida más grande que el bastidor se respeta: no se achica en silencio y el resultado lo avisa.
+        if target.width_mm <= hoop.width_mm and target.height_mm <= hoop.height_mm:
+            target = target.model_copy(update={
+                "width_mm": min(target.width_mm, hoop.width_mm - 2 * HOOP_MARGIN_MM),
+                "height_mm": min(target.height_mm, hoop.height_mm - 2 * HOOP_MARGIN_MM),
+            })
         if min(target.width_mm, target.height_mm) > 2 * inset:
             target = target.model_copy(update={"width_mm": target.width_mm - inset, "height_mm": target.height_mm - inset})
-
-        def run(limit):
-            adjusted = settings.model_copy(update={"target": target, "color_limit": limit})
-            return vectorize(image, asset.media_type, asset, analysis, adjusted,
-                             job_id=previous.job_id, revision_id=previous.revision_id, cancel=event)
-
-        result, limit = run(settings.color_limit), settings.color_limit
-        background = sum(1 for item in stitchable.plan(result.document) if item.omitted == stitchable.OMITTED_NEAR_WHITE)
-        if background and settings.color_limit + background <= MAX_COLOR_LIMIT:
-            limit = settings.color_limit + background
-            result = run(limit)
+        cleaning = clean_palette(image, asset.media_type, settings.color_limit, event)
+        engine_image, engine_asset = image, asset
+        if cleaning.applied:
+            width, height = cleaning.size
+            engine_image = cleaning.png
+            engine_asset = asset.model_copy(update={
+                "sha256": cleaning.sha256, "media_type": "image/png", "original_width_px": width, "original_height_px": height,
+            })
+        # El cuantizador del motor recibe tantos lugares como tintas quedaron (más las capas casi blancas reales, que el motor
+        # omite y declara); nunca más hilos que el pedido.
+        quantizer_slots = cleaning.engine_colour_limit if cleaning.applied else settings.color_limit
+        adjusted = settings.model_copy(update={"target": target, "color_limit": quantizer_slots})
+        result = vectorize(engine_image, engine_asset.media_type, engine_asset, analysis, adjusted,
+                           job_id=previous.job_id, revision_id=previous.revision_id, cancel=event)
+        plan = stitchable.plan(result.document)
+        near_white = sum(1 for item in plan if item.omitted == stitchable.OMITTED_NEAR_WHITE)
         return result, {
             "target_requested_mm": [settings.target.width_mm, settings.target.height_mm],
             "target_vectorized_mm": [target.width_mm, target.height_mm], "pull_compensation_inset_mm": inset,
-            "colour_limit_requested": settings.color_limit, "colour_limit_used": limit,
+            "colour_limit_requested": settings.color_limit,
+            "colour_limit_used": sum(1 for item in plan if not item.omitted),  # hilos de verdad, nunca inflados con capas de fondo
+            "engine_quantizer_slots": quantizer_slots,
+            "near_white_layers_omitted": near_white,
+            "palette_cleaning": cleaning.report,
         }
 
     def _vectorization_manifest(self, previous, asset, files):
@@ -471,8 +505,10 @@ class JobRunner:
         else:
             # Una incidencia de revisión sin objeto ni región no puede pausar el job ni declararlo fallido por sí sola:
             # falla con el código genérico y conserva el original.
+            # La persona tiene que saber por qué: se conserva el motivo de E1 y, si la imagen es demasiado compleja, qué hacer.
+            reason = (issue.evidence or {}).get("reason")
             unlocalized = make_issue(
-                IssueCode.WORKER_EXPORT_FAILED, FAILURE_DESCRIPTIONS[IssueCode.WORKER_EXPORT_FAILED],
+                IssueCode.WORKER_EXPORT_FAILED, UNLOCALIZED_DESCRIPTIONS.get(reason) or issue.description,
                 {"reason": VECTORIZATION_REVIEW_UNLOCALIZED, "original_code": issue.code.value,
                  "original_severity": issue.severity.value, "original_evidence": issue.evidence},
             )
@@ -498,12 +534,38 @@ class JobRunner:
                 {"issues": [failure.issue.model_dump(mode="json")]},
             )
             return
+        svg, lettering_issues = self._lettering(svg, result, previous)
         job_dir = Path(private["job_dir"])
         svg_path = job_dir / REFERENCE_SVG_FILENAME
         svg_path.write_bytes(svg)
         stem = Path(asset.original_filename).stem or DEFAULT_JEF_STEM
-        self._run_worker(previous, private, event, svg_path, job_dir / DIGITIZING_DIRECTORY, reference_issues(result),
+        self._run_worker(previous, private, event, svg_path, job_dir / DIGITIZING_DIRECTORY,
+                         (*reference_issues(result), *lettering_issues),
                          self.config.digitizing_timeout_s, {"jef": f"{stem}.jef"}, asset.sha256)
+
+    def _lettering(self, svg, result, previous):
+        """Guía 1.3: las frases en curva que la persona confirmó y eligió bordar con letras reemplazan al trazo copiado.
+
+        Si no se puede (fuente fuera de escala, letras no encontradas), el trazo copiado queda y el motivo se avisa.
+        """
+        saved = (self.store.get("asset", previous.asset_id)["private"].get("inscriptions") or {}).values()
+        chosen = [item for item in saved if item.get("use_font") and item.get("layout") == "curved"
+                  and item.get("circle_px") and item.get("arc")]
+        if not chosen:
+            return svg, ()
+        phrases = [(item["confirmed"], lettering.circle_to_mm(result.document, item["circle_px"]), item["arc"]) for item in chosen]
+        try:
+            svg, evidence = lettering.apply(svg, result.document, phrases,
+                                            lettering.font_directory(self.config.inkstitch_executable))
+        except lettering.LetteringUnavailable as exc:
+            return svg, (make_issue(IssueCode.LEGIBILITY_RISK, f"Las frases elegidas no se bordaron con letras: {exc}",
+                                    {"lettering": "not_applied", "reason": str(exc),
+                                     "phrases": [item["confirmed"] for item in chosen]}),)
+        texts = ", ".join(f"«{item['text']}»" for item in evidence)
+        description = (f"{texts} se bordó con la fuente {lettering.FONT_ID} de Ink/Stitch en lugar del trazo copiado de la "
+                       f"imagen, con mayúsculas de {evidence[0]['cap_mm']:.1f} mm. {lettering.FONT_THREAD}")
+        return svg, (make_issue(IssueCode.LEGIBILITY_RISK, description, {"lettering": evidence},
+                                tuple(sorted({item["object_id"] for item in evidence}))),)
 
     def _command(self, asset_path, job_dir, timeout_s, hoop_code):
         command = [

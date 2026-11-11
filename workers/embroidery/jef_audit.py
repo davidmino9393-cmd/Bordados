@@ -56,10 +56,20 @@ def measure(pattern, raw):
     counts = Counter(s[2] & pe.COMMAND_MASK for s in pattern.stitches)
     if counts[pe.STITCH] != raw["counts"].get("stitch", 0):
         raise ValueError("Independent needle counts disagree")
+    stitches_by_block = [0]
+    for command, _, _ in raw["events_01mm"]:
+        if command == "stitch":
+            stitches_by_block[-1] += 1
+        elif command == "color_change":
+            stitches_by_block.append(0)
+    if any(count == 0 for count in stitches_by_block) or len(stitches_by_block) != raw["thread_entries"]:
+        raise ValueError(f"Empty or unmatched thread blocks: needle stitches per block={stitches_by_block}, "
+                         f"thread entries={raw['thread_entries']}")
     xs, ys = [s[0] / UNITS_PER_MM for s in stitches], [s[1] / UNITS_PER_MM for s in stitches]
     return {"width_mm": max(xs) - min(xs), "height_mm": max(ys) - min(ys),
             "stitch_bounds_mm": [min(xs), min(ys), max(xs), max(ys)],
             "needle_stitches": counts[pe.STITCH], "thread_blocks": len(pattern.threadlist),
+            "needle_stitches_by_thread_block": stitches_by_block,
             "color_changes": counts[pe.COLOR_CHANGE], "raw_jump_commands": raw["counts"].get("jump", 0),
             "displacement_jump_commands": counts[pe.JUMP], "interpreted_trims": counts[pe.TRIM],
             "end_commands": counts[pe.END], "hoop_code": raw["hoop_code"],

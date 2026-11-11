@@ -976,6 +976,17 @@
             "title": "Proposed Technique",
             "type": "string"
           },
+          "reference_rings": {
+            "default": [],
+            "items": {
+              "additionalProperties": {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              "type": "object"
+            },
+            "title": "Reference Rings",
+            "type": "array"
+          },
           "role": {
             "maxLength": 2000,
             "minLength": 1,
@@ -1007,6 +1018,18 @@
             ],
             "default": null,
             "title": "Source Region Id"
+          },
+          "stitch_path_mm": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Stitch Path Mm"
           },
           "work_color": {
             "pattern": "^#[0-9A-Fa-f]{6}$",
@@ -1392,6 +1415,7 @@
           "WORKER_TIMEOUT",
           "JOB_CANCELLED",
           "VISUAL_MISMATCH",
+          "LEGIBILITY_RISK",
           "PHYSICAL_ADJUSTMENT_REQUIRED"
         ],
         "title": "IssueCode",
@@ -10554,7 +10578,7 @@
         ]
       },
       "post": {
-        "description": "Initial revision returns 201 (null base only once); size_variant/correction create a distinct immutable revision and queued child job, returning 202. Parent ownership and object IDs must be checked",
+        "description": "Initial revision returns 201 (null base; each embroidery generated in a project starts from its own initial revision, ratified 2026-11-08); size_variant/correction create a distinct immutable revision and queued child job, returning 202. Parent ownership and object IDs must be checked",
         "operationId": "createRevision",
         "parameters": [
           {
@@ -10667,7 +10691,7 @@
                 }
               }
             },
-            "description": "Initial revision returns 201 (null base only once); size_variant/correction create a distinct immutable revision and queued child job, returning 202. Parent ownership and object IDs must be checked",
+            "description": "Initial revision returns 201 (null base; each embroidery generated in a project starts from its own initial revision, ratified 2026-11-08); size_variant/correction create a distinct immutable revision and queued child job, returning 202. Parent ownership and object IDs must be checked",
             "headers": {
               "Cache-Control": {
                 "example": "no-store",
@@ -11272,7 +11296,7 @@
             }
           }
         },
-        "summary": "Initial revision returns 201 (null base only once); size_variant/correction create a distinct immutable revision and queued child job, returning 202. Parent ownership and object IDs must be checked",
+        "summary": "Initial revision returns 201 (null base; each embroidery generated in a project starts from its own initial revision, ratified 2026-11-08); size_variant/correction create a distinct immutable revision and queued child job, returning 202. Parent ownership and object IDs must be checked",
         "tags": [
           "Projects"
         ]

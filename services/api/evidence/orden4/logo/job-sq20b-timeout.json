@@ -1,0 +1,100 @@
+{
+  "schema_version": "0.1",
+  "job_id": "job_9d6b215a41e24865a62b4be2bc16de2e",
+  "project_id": "project_b07d2cd916f644eba4cf1f4246bb9a50",
+  "revision_id": "rev_2709316bdd8d46088232f375a4b1c82c",
+  "asset_id": "asset_4f01d49a840c4bfb97892febe34b613e",
+  "input_kind": "raster_image",
+  "settings_snapshot": {
+    "schema_version": "0.1",
+    "target": {
+      "width_mm": 200.0,
+      "height_mm": 200.0,
+      "fit": "contain"
+    },
+    "machine_profile": "janome_mc550e",
+    "machine_profile_version": "0.1",
+    "hoop_profile": "sq20b",
+    "hoop": {
+      "profile_id": "sq20b",
+      "profile_version": "0.1",
+      "width_mm": 200.0,
+      "height_mm": 200.0,
+      "jef_hoop_code": 4
+    },
+    "fabric_profile": "gabardina",
+    "fabric_profile_version": "0.1",
+    "thread_profile": "embroidery_thread_initial",
+    "color_limit": 12,
+    "ai_provider": "none",
+    "ai_model": null
+  },
+  "status": "failed",
+  "stages": [
+    {
+      "stage": "analyzing",
+      "outcome": "skipped",
+      "reason": "Sin análisis de IA: la persona eligió continuar sin él",
+      "measured_duration_ms": null
+    },
+    {
+      "stage": "vectorizing",
+      "outcome": "completed",
+      "reason": null,
+      "measured_duration_ms": 1253
+    },
+    {
+      "stage": "digitizing",
+      "outcome": "failed",
+      "reason": null,
+      "measured_duration_ms": 603277
+    },
+    {
+      "stage": "validating",
+      "outcome": "pending",
+      "reason": null,
+      "measured_duration_ms": null
+    }
+  ],
+  "parent_job_id": null,
+  "estimated_remaining_s": null,
+  "sewout_status": "untested",
+  "sewout_record": null,
+  "failure": {
+    "code": "WORKER_TIMEOUT",
+    "message": "El trabajo superó el plazo configurado.",
+    "stage": "digitizing"
+  },
+  "review": null,
+  "diagnostics": [
+    {
+      "code": "WORKER_TIMEOUT",
+      "severity": "blocking_error",
+      "stage": "worker",
+      "object_ids": [],
+      "region_ids": [],
+      "description": "El trabajo superó el plazo configurado.",
+      "evidence": {
+        "reason": "process_deadline_exceeded"
+      },
+      "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+    }
+  ],
+  "cancellation_requested": false,
+  "issues": [
+    {
+      "code": "WORKER_TIMEOUT",
+      "severity": "blocking_error",
+      "stage": "worker",
+      "object_ids": [],
+      "region_ids": [],
+      "description": "El trabajo superó el plazo configurado.",
+      "evidence": {
+        "reason": "process_deadline_exceeded"
+      },
+      "suggested_correction": "Revisar la evidencia de este trabajo y crear otra revisión o intento si corresponde."
+    }
+  ],
+  "validation_report": null,
+  "artifact_manifest": null
+}

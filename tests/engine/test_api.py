@@ -20,6 +20,15 @@ sys.path.insert(0, str(ROOT / "workers" / "embroidery"))
 
 import uvicorn
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from test_input_convert import INKSCAPE, PLAIN_SVG, ILLUSTRATOR_SVG, needs_inkscape  # noqa: E402
+from test_store_backends import isolated_schema_url, postgres_test_url  # noqa: E402
+
+try:
+    import psycopg
+except ImportError:
+    psycopg = None
+
 import embroidery_api.app as api_app
 import embroidery_api.runner as api_runner
 from embroidery_api.app import create_app
@@ -36,7 +45,8 @@ FAKE_WORKER = ROOT / "tests" / "engine" / "fixtures" / "fake_worker.py"
 def svg(marker="", path_id="shape_1", root='width="10mm" height="10mm" viewBox="0 0 10 10"'):
     comment = f"<!-- {marker} -->" if marker else ""
     return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" {root}>'
+        f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkstitch="http://inkstitch.org/namespace" {root}>'
+        f'<metadata><inkstitch:inkstitch_svg_version>3</inkstitch:inkstitch_svg_version></metadata>'
         f'{comment}<path id="{path_id}" d="M 0 0 L 10 10"/></svg>'
     ).encode()
 
@@ -46,10 +56,14 @@ def header(headers, name):
 
 
 class ApiTests(unittest.TestCase):
+    def config_extras(self):
+        """Campos de configuración propios de cada variante de la suite (por ejemplo, la base de datos)."""
+        return {"inkscape_executable": INKSCAPE} if INKSCAPE else {}
+
     def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory()
+        self.tmp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
         self.addCleanup(self.tmp.cleanup)
-        config = ApiConfig(
+        self.config = ApiConfig(
             data_root=Path(self.tmp.name) / "data",
             profiles_path=ROOT / "services" / "api" / "profiles.json",
             python_executable=Path(sys.executable),
@@ -62,9 +76,14 @@ class ApiTests(unittest.TestCase):
             max_queued_jobs=8,
             timeout_s=20,
             worker_script=FAKE_WORKER,
+            **self.config_extras(),
         )
+        self.start_server()
+        self.addCleanup(self._stop)
+
+    def start_server(self):
         self.server = uvicorn.Server(uvicorn.Config(
-            create_app(config), host="127.0.0.1", port=0, log_level="critical",
+            create_app(self.config), host="127.0.0.1", port=0, log_level="critical",
         ))
         self.thread = threading.Thread(target=self.server.run, daemon=True)
         self.thread.start()
@@ -74,11 +93,15 @@ class ApiTests(unittest.TestCase):
         if not self.server.started:
             self.fail("uvicorn did not start")
         self.base_url = f"http://127.0.0.1:{self.server.servers[0].sockets[0].getsockname()[1]}"
-        self.addCleanup(self._stop)
 
     def _stop(self):
         self.server.should_exit = True
         self.thread.join(10)
+
+    def restart(self):
+        """Apaga la API y levanta otra con la misma configuración: lo que sigue ahí es lo que quedó guardado."""
+        self._stop()
+        self.start_server()
 
     def request(self, method, path, body=None, headers=None, auth=True, raw=None, content_type=None):
         values = {}
@@ -238,6 +261,39 @@ class ApiTests(unittest.TestCase):
         status, _, problem = self.artifacts(job["job_id"])
         self.assertEqual((status, problem["code"]), (409, "ARTIFACTS_UNAVAILABLE"))
 
+    def test_projects_jobs_and_downloads_survive_an_api_restart(self):
+        """Lo que se guardó sigue ahí al reiniciar: el proyecto, el archivo, el trabajo y el JEF para volver a descargarlo."""
+        project_id, asset_id, revision_id = self.setup_project(svg())
+        status, _, second_asset = self.upload(project_id, svg(path_id="shape_2"), "dos.svg")
+        self.assertEqual(status, 201)
+        _, job, _ = self.create_job(project_id, asset_id, revision_id)
+        before = self.wait_job(project_id, job["job_id"], {"needs_review"})
+        _, _, manifest_before = self.artifacts(job["job_id"])
+        jef_before = next(item for item in manifest_before["artifacts"] if item["kind"] == "jef")
+        _, _, project_before = self.json_request("GET", f"/api/v1/projects/{project_id}")
+
+        self.restart()
+
+        status, _, project_after = self.json_request("GET", f"/api/v1/projects/{project_id}")
+        self.assertEqual(status, 200)
+        self.assertEqual(project_after["project"], project_before["project"])
+        self.assertEqual([a["asset_id"] for a in project_after["assets"]], [a["asset_id"] for a in project_before["assets"]])
+        self.assertEqual([a["sha256"] for a in project_after["assets"]], [a["sha256"] for a in project_before["assets"]])
+        self.assertIn(second_asset["asset_id"], [a["asset_id"] for a in project_after["assets"]])
+        _, _, after = self.json_request("GET", f"/api/v1/jobs/{job['job_id']}")
+        self.assertEqual(after, before)  # el trabajo, sus ajustes, etapas y avisos, tal como estaban
+        status, _, manifest_after = self.artifacts(job["job_id"])
+        self.assertEqual(status, 200, manifest_after)
+        jef_after = next(item for item in manifest_after["artifacts"] if item["kind"] == "jef")
+        self.assertEqual((jef_after["artifact_id"], jef_after["sha256"], jef_after["byte_size"]),
+                         (jef_before["artifact_id"], jef_before["sha256"], jef_before["byte_size"]))
+        status, _, payload = self.request("GET", urllib.parse.urlsplit(jef_after["download"]["url"]).path, auth=False)
+        self.assertEqual(status, 200)
+        self.assertEqual(hashlib.sha256(payload).hexdigest(), jef_before["sha256"])  # el mismo JEF, byte a byte
+        _, _, again = self.post(f"/api/v1/projects/{project_id}/jobs", {  # y se puede seguir trabajando en el mismo proyecto
+            "schema_version": "0.1", "asset_id": second_asset["asset_id"], "revision_id": revision_id, "input_kind": "prepared_svg", "settings": SETTINGS})
+        self.wait_job(project_id, again["job_id"], {"needs_review"})
+
     def test_a_cancel_after_the_result_was_saved_does_not_touch_it(self):
         project_id, asset_id, revision_id = self.setup_project(svg())
         _, job, _ = self.create_job(project_id, asset_id, revision_id)
@@ -384,6 +440,115 @@ class ApiTests(unittest.TestCase):
     def with_target(self, width, height):
         return {**SETTINGS, "target": {"width_mm": width, "height_mm": height, "fit": "contain"}}
 
+    def upload_as(self, project_id, content, filename, content_type, key=None):
+        boundary = "----conv" + uuid.uuid4().hex
+        body = (f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="{filename}"\r\n'
+                f"Content-Type: {content_type}\r\n\r\n").encode() + content + f"\r\n--{boundary}--\r\n".encode()
+        return self.json_request("POST", f"/api/v1/projects/{project_id}/assets", headers={
+            "Idempotency-Key": key or uuid.uuid4().hex, "Content-Type": f"multipart/form-data; boundary={boundary}"}, raw=body)
+
+    @needs_inkscape
+    def test_a_plain_svg_is_stored_as_a_png_asset_and_the_original_is_kept_next_to_it(self):
+        """Los SVG que se exportan de Illustrator o Inkscape no traen parámetros de Ink/Stitch: se dibujan a imagen al subir."""
+        _, _, project = self.post("/api/v1/projects", {"name": "Logos"})
+        pid = project["project_id"]
+        status, _, asset = self.upload_as(pid, PLAIN_SVG, "Logo Club.svg", "image/svg+xml", "clave-svg-comun")
+        self.assertEqual(status, 201, asset)
+        self.assertEqual((asset["media_type"], asset["original_filename"]), ("image/png", "Logo Club.png"))
+        self.assertEqual(asset["original_width_px"], 2000)  # el dibujo recortado: 200 x 100 se dibuja a 2000 x 1000
+        self.assertEqual(asset["original_height_px"], 1000)
+        status, _, converted = self.request("GET", urllib.parse.urlsplit(asset["original_download"]["url"]).path, auth=False)
+        self.assertEqual(status, 200)
+        self.assertEqual(hashlib.sha256(converted).hexdigest(), asset["sha256"])  # el SHA es el del PNG que ve el motor
+        self.assertEqual(converted[:8], b"\x89PNG\r\n\x1a\n")
+        assets = Path(self.tmp.name) / "data" / "assets"
+        self.assertEqual((assets / f"{asset['asset_id']}.original.svg").read_bytes(), PLAIN_SVG)  # lo subido queda guardado
+
+        status, _, again = self.upload_as(pid, PLAIN_SVG, "Logo Club.svg", "image/svg+xml", "clave-svg-comun")
+        self.assertEqual((status, again["asset_id"]), (201, asset["asset_id"]))  # la misma clave: el mismo asset
+        self.assertEqual(len(list(assets.glob("*.original.svg"))), 1)
+
+    @needs_inkscape
+    def test_an_illustrator_svg_and_a_prepared_svg_are_each_handled_by_what_they_are(self):
+        _, _, project = self.post("/api/v1/projects", {"name": "Dos SVG"})
+        pid = project["project_id"]
+        _, _, converted = self.upload_as(pid, ILLUSTRATOR_SVG, "illustrator.svg", "image/svg+xml")
+        _, _, prepared = self.upload_as(pid, svg(), "preparado.svg", "image/svg+xml")
+        self.assertEqual((converted["media_type"], prepared["media_type"]), ("image/png", "image/svg+xml"))
+        self.assertEqual(prepared["original_filename"], "preparado.svg")
+
+    @needs_inkscape
+    def test_an_svg_that_reaches_for_files_on_the_server_is_refused_and_nothing_is_stored(self):
+        _, _, project = self.post("/api/v1/projects", {"name": "Hostil"})
+        pid = project["project_id"]
+        hostile = (b'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 10 10">'
+                   b'<image xlink:href="file:///C:/Windows/win.ini" width="10" height="10"/></svg>')
+        status, _, problem = self.upload_as(pid, hostile, "hostil.svg", "image/svg+xml")
+        self.assertEqual((status, problem["code"]), (422, "INVALID_REQUEST"))
+        self.assertIn("externos", problem["detail"])
+        _, _, detail = self.json_request("GET", f"/api/v1/projects/{pid}")
+        self.assertEqual(detail["assets"], [])
+
+    def test_content_that_is_not_an_admitted_file_is_refused_with_the_reason(self):
+        _, _, project = self.post("/api/v1/projects", {"name": "Raro"})
+        pid = project["project_id"]
+        for content, declared, expected in (
+            (b"no soy una imagen", "image/png", (415, "UNSUPPORTED_MEDIA_TYPE")),
+            (b"RIFF\x00\x00\x00\x00WEBPVP8 \x00\x00\x00\x00", "image/webp", (415, "UNSUPPORTED_MEDIA_TYPE")),  # WebP todavía no está en el catálogo
+        ):
+            with self.subTest(declared=declared):
+                status, _, problem = self.upload_as(pid, content, "x.bin", declared)
+                self.assertEqual((status, problem["code"]), expected)
+
+    @needs_inkscape
+    def test_a_converted_svg_goes_through_the_image_pipeline_to_a_jef(self):
+        _, _, project = self.post("/api/v1/projects", {"name": "Logo a JEF"})
+        pid = project["project_id"]
+        settings = self.with_target(200.0, 200.0)
+        _, _, asset = self.upload_as(pid, PLAIN_SVG, "logo.svg", "image/svg+xml")
+        _, _, revision = self.post(f"/api/v1/projects/{pid}/revisions", {
+            "schema_version": "0.1", "base_revision_id": None, "reason": "Ajustes iniciales", "settings": settings, "document": None})
+        status, _, job = self.post(f"/api/v1/projects/{pid}/jobs", {
+            "schema_version": "0.1", "asset_id": asset["asset_id"], "revision_id": revision["revision_id"],
+            "input_kind": "raster_image", "settings": settings})
+        self.assertEqual(status, 202, job)
+        done = self.wait_job(pid, job["job_id"], {"needs_review", "failed"}, timeout=60)
+        self.assertEqual(done["status"], "needs_review", done.get("issues"))
+        _, _, manifest = self.artifacts(job["job_id"])
+        self.assertEqual(manifest["input_sha256"], asset["sha256"])  # la procedencia es el PNG que salió del SVG
+
+    def test_a_project_admits_one_initial_revision_per_embroidery_each_with_its_own_settings(self):
+        """Un proyecto reúne varios archivos: cada bordado nuevo parte de su propia revisión inicial y de sus ajustes."""
+        first_settings, second_settings = self.with_target(160.0, 160.0), self.with_target(200.0, 170.0)
+        project_id, first_asset, first_revision = self.setup_project(svg(), first_settings)
+        status, _, second_asset = self.upload(project_id, svg(path_id="shape_2"), "dos.svg")
+        self.assertEqual(status, 201, second_asset)
+        body = {"schema_version": "0.1", "base_revision_id": None, "reason": "Ajustes iniciales",
+                "settings": second_settings, "document": None}
+        path = f"/api/v1/projects/{project_id}/revisions"
+        status, _, second_revision = self.post(path, body, "clave-del-segundo-bordado")
+        self.assertEqual(status, 201, second_revision)  # antes: 409 «El proyecto ya tiene una revisión inicial»
+        self.assertNotEqual(second_revision["revision_id"], first_revision)
+        status, _, again = self.post(path, body, "clave-del-segundo-bordado")
+        self.assertEqual((status, again), (201, second_revision))  # la misma clave devuelve la misma revisión, no otra
+        _, _, listing = self.json_request("GET", path)
+        self.assertEqual([item["kind"] for item in listing["items"]], ["initial", "initial"])
+
+        done = {}
+        for label, asset_id, revision_id, settings in (
+            ("uno", first_asset, first_revision, first_settings),
+            ("dos", second_asset["asset_id"], second_revision["revision_id"], second_settings),
+        ):
+            status, job, _ = self.create_job(project_id, asset_id, revision_id, settings)
+            self.assertEqual(status, 202, job)
+            done[label] = self.wait_job(project_id, job["job_id"], {"needs_review"})
+        self.assertEqual((done["uno"]["asset_id"], done["uno"]["revision_id"]), (first_asset, first_revision))
+        self.assertEqual((done["dos"]["asset_id"], done["dos"]["revision_id"]), (second_asset["asset_id"], second_revision["revision_id"]))
+        self.assertEqual(done["uno"]["settings_snapshot"]["target"], first_settings["target"])
+        self.assertEqual(done["dos"]["settings_snapshot"]["target"], second_settings["target"])
+        status, problem, _ = self.create_job(project_id, second_asset["asset_id"], first_revision, second_settings)
+        self.assertEqual((status, problem["code"]), (409, "REVISION_CONFLICT"))  # los ajustes de una revisión siguen siendo inmutables
+
     def test_a_prepared_svg_job_is_digitized_at_its_declared_size_and_the_target_is_only_a_limit(self):
         """B2: el job base no escala el SVG preparado aunque el destino difiera; solo una variante cambia el tamaño."""
         cases = (
@@ -410,6 +575,41 @@ class ApiTests(unittest.TestCase):
         failed = self.wait_job(project_id, job["job_id"], {"failed"})
         self.assertIn("DIMENSIONS_EXCEEDED", [issue["code"] for issue in failed["issues"]])
         self.assertEqual(self.job_input(job["job_id"]), svg())
+
+    def hoop_settings(self, hoop_id, width, height, code):
+        hoop = {**SETTINGS["hoop"], "profile_id": hoop_id, "width_mm": width, "height_mm": height, "jef_hoop_code": code}
+        return {**SETTINGS, "hoop_profile": hoop_id, "hoop": hoop, "target": {"width_mm": width, "height_mm": height, "fit": "contain"}}
+
+    def test_a_design_that_does_not_fit_the_fixed_hoop_fails_with_hoop_incompatible_and_the_measures(self):
+        """El límite es el bastidor: pasarse no es DIMENSIONS_EXCEEDED sino HOOP_INCOMPATIBLE con bastidor y medidas."""
+        settings = self.hoop_settings("sq10b", 100.0, 100.0, 0)  # el worker de prueba entrega un JEF de 150 × 142,8 mm
+        project_id, asset_id, revision_id = self.setup_project(svg(), settings)
+        _, job, _ = self.create_job(project_id, asset_id, revision_id, settings)
+        failed = self.wait_job(project_id, job["job_id"], {"failed"})
+        codes = [issue["code"] for issue in failed["issues"]]
+        self.assertIn("HOOP_INCOMPATIBLE", codes)
+        self.assertNotIn("DIMENSIONS_EXCEEDED", codes)
+        issue = next(item for item in failed["issues"] if item["code"] == "HOOP_INCOMPATIBLE")
+        self.assertEqual((issue["evidence"]["hoop_profile"], issue["evidence"]["hoop_width_mm"], issue["evidence"]["hoop_height_mm"]), ("sq10b", 100.0, 100.0))
+        self.assertIn("100 x 100", issue["description"])
+
+    def test_a_size_variant_larger_than_the_hoop_is_accepted_and_the_result_warns_with_hoop_incompatible(self):
+        """Decisión de David: una variante más grande que el bastidor se permite y se avisa; no se achica en silencio."""
+        settings = self.hoop_settings("sq10b", 100.0, 100.0, 0)
+        project_id, asset_id, revision_id = self.setup_project(svg(), settings)
+        _, parent, _ = self.create_job(project_id, asset_id, revision_id, settings)
+        self.wait_job(project_id, parent["job_id"], {"failed", "needs_review"})
+        status, _, child = self.variant(project_id, parent["job_id"], 130.0, 120.0)
+        self.assertEqual(status, 202, child)
+        self.assertEqual(child["settings_snapshot"]["target"], {"width_mm": 130.0, "height_mm": 120.0, "fit": "contain"})
+        done = self.wait_job(project_id, child["job_id"], {"failed", "needs_review"})
+        self.assertIn("HOOP_INCOMPATIBLE", [issue["code"] for issue in done["issues"]])
+
+    def test_a_job_target_larger_than_the_hoop_is_refused_before_any_job_exists(self):
+        settings = {**self.hoop_settings("sq10b", 100.0, 100.0, 0), "target": {"width_mm": 130.0, "height_mm": 120.0, "fit": "contain"}}
+        project_id, asset_id, revision_id = self.setup_project(svg(), self.with_target(10.0, 10.0))
+        status, problem, _ = self.create_job(project_id, asset_id, revision_id, settings)
+        self.assertEqual((status, problem["code"]), (422, "INVALID_REQUEST"))
 
     def test_a_variant_of_a_variant_is_fitted_from_the_original_asset_not_from_the_parents_fitted_svg(self):
         """B3: la cadena base -> A -> B parte siempre del asset que subió la persona."""
@@ -489,6 +689,21 @@ class ApiTests(unittest.TestCase):
         status, _, conflict = self.post("/api/v1/projects", {"name": "Different"}, key)
         self.assertEqual(status, 409)
         self.assertEqual(conflict["code"], "IDEMPOTENCY_CONFLICT")
+
+
+@unittest.skipUnless(postgres_test_url(), "No hay PostgreSQL de prueba (EMBROIDERY_TEST_DATABASE_URL o postgres-dev.json)")
+class ApiTestsOnPostgres(ApiTests):
+    """La suite entera de la API, con los datos en PostgreSQL en vez de SQLite."""
+
+    def config_extras(self):
+        return {**super().config_extras(), "database_url": isolated_schema_url(self, postgres_test_url())}
+
+    def test_the_data_lives_in_postgresql_and_not_in_a_sqlite_file(self):
+        self.setup_project(svg())
+        self.assertFalse((Path(self.tmp.name) / "data" / "metadata.sqlite3").exists())
+        with psycopg.connect(self.config.database_url, autocommit=True) as db:
+            counts = dict(db.execute("SELECT kind, COUNT(*) FROM resources GROUP BY kind").fetchall())
+        self.assertEqual((counts["project"], counts["asset"], counts["revision"]), (1, 1, 1))
 
 
 if __name__ == "__main__":

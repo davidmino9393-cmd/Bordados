@@ -1,0 +1,24 @@
+{
+  "schema_version": "0.1",
+  "target": {
+    "width_mm": 140.0,
+    "height_mm": 140.0,
+    "fit": "contain"
+  },
+  "machine_profile": "janome_mc550e",
+  "machine_profile_version": "0.1",
+  "hoop_profile": "sq14b",
+  "hoop": {
+    "profile_id": "sq14b",
+    "profile_version": "0.1",
+    "width_mm": 140.0,
+    "height_mm": 140.0,
+    "jef_hoop_code": 2
+  },
+  "fabric_profile": "algodon",
+  "fabric_profile_version": "0.1",
+  "thread_profile": "embroidery_thread_initial",
+  "color_limit": 12,
+  "ai_provider": "none",
+  "ai_model": null
+}

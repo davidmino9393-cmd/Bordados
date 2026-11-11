@@ -76,7 +76,7 @@ const issueTitles: Record<string, string> = {
   PROVIDER_UNAVAILABLE: 'El proveedor de IA elegido no está disponible',
   LOCAL_MODEL_UNAVAILABLE: 'El modelo local no está disponible',
   GEOMETRY_INVALID: 'Hay una geometría inválida o degenerada',
-  GEOMETRY_REPAIR_AMBIGUOUS: 'Reparar la geometría podría cambiar la forma del elemento',
+  GEOMETRY_REPAIR_AMBIGUOUS: 'Revisá que el fondo se haya quitado bien',
   GEOMETRY_HOLES_CHANGED: 'La reparación modificó huecos del diseño',
   SATIN_RAILS_UNVERIFIED: 'No se pudo verificar la correspondencia de los bordes del satén',
   SATIN_WIDTH_UNSUPPORTED: 'El ancho del satén está fuera de lo calibrado',
@@ -84,21 +84,36 @@ const issueTitles: Record<string, string> = {
   SATIN_PAIRED_NODES_VERIFIED: 'Satén verificado por nodos correspondientes',
   ROUTING_PRECEDENCE_VIOLATION: 'Se violó un orden obligatorio de bordado',
   ROUTING_VISIBLE_TRAVEL: 'Hay desplazamientos visibles entre elementos',
-  DENSITY_REVIEW_REQUIRED: 'La densidad o los parámetros de puntada necesitan validación',
+  DENSITY_REVIEW_REQUIRED: 'Probá el bordado antes de usarlo en la pieza final',
   DIMENSIONS_EXCEEDED: 'La medida real supera el tamaño pedido',
   HOOP_INCOMPATIBLE: 'El diseño no es compatible con el bastidor elegido',
   JEF_INVALID: 'El archivo JEF generado no es válido',
   JEF_UNKNOWN_COMMAND: 'El JEF contiene una orden desconocida',
-  ENGINE_DIAGNOSTIC_UNCLASSIFIED: 'El motor informó un aviso sin clasificar',
+  ENGINE_DIAGNOSTIC_UNCLASSIFIED: 'Observación técnica del programa de bordado',
   WORKER_EXPORT_FAILED: 'Falló la exportación del bordado',
   WORKER_TIMEOUT: 'La generación superó el tiempo máximo',
   JOB_CANCELLED: 'Generación cancelada',
-  VISUAL_MISMATCH: 'El resultado difiere del original',
+  VISUAL_MISMATCH: 'El bordado no es idéntico a tu imagen',
   PHYSICAL_ADJUSTMENT_REQUIRED: 'La muestra física requiere ajustes',
 };
 
 export function issueTitle(code: string, fallback: string): string {
   return issueTitles[code] ?? fallback;
+}
+
+/** Qué significa el aviso para quien borda y qué conviene hacer, sin términos del motor. Sin entrada: solo el título. */
+const issueAdvice: Record<string, string> = {
+  DENSITY_REVIEW_REQUIRED: 'Las puntadas usan valores generales, no ajustados a tu tela. Probá el bordado en un retazo antes de la pieza final.',
+  GEOMETRY_REPAIR_AMBIGUOUS: 'El fondo se separó del dibujo de forma automática. Compará las vistas: si falta una parte o sobra fondo, usá una imagen con fondo liso o transparente.',
+  VISUAL_MISMATCH: 'Para poder bordarlo se simplificaron colores o se quitaron detalles muy chicos. Compará el bordado con tu imagen.',
+  ENGINE_DIAGNOSTIC_UNCLASSIFIED: 'El programa de bordado dejó una observación sobre la forma de alguna pieza. No suele impedir bordar: mirá la vista del bordado.',
+  HOOP_INCOMPATIBLE: 'El bordado no entra en el bastidor elegido con el margen de seguridad. Elegí un tamaño menor.',
+  DIMENSIONS_EXCEEDED: 'El bordado salió más grande que el tamaño pedido.',
+  SATIN_RUNG_WARNING: 'Una columna de satén no tiene guías de dirección. Revisá esa pieza en la vista del bordado.',
+};
+
+export function issueAdviceFor(code: string): string | undefined {
+  return issueAdvice[code];
 }
 
 export const es = {
@@ -136,15 +151,45 @@ export const es = {
     none: 'Subí una imagen para continuar.',
     unavailable: 'La vista previa del original no está disponible.',
   },
+  legibility: {
+    measuring: 'Midiendo el ancho de trazo al tamaño pedido…',
+    unavailable: 'No se pudo medir la legibilidad de la imagen. Es solo un aviso: podés generar igual.',
+    warnTitle: 'Aviso de legibilidad',
+    infoTitle: 'Legibilidad al tamaño pedido',
+    notBlocking: 'Es un aviso con números, no un bloqueo: podés generar igual.',
+    belowLimit: (percent: number) => `El ${percent}% del trazo mide menos de 0,6 mm (se avisa a partir del 30%).`,
+    method: 'Cómo se mide',
+    methodText: 'Ancho de trazo a tamaño final, medido sobre la imagen con el borde suavizado ya fusionado con su color. Es una estimación: en trazos diagonales exagera la finura hasta 1,4 veces.',
+    marginTitle: 'Opción de ajuste: recortar el margen blanco',
+  },
+  inscriptions: {
+    searching: 'Buscando texto en la imagen… La primera vez tarda unos segundos.',
+    failed: 'No se pudo buscar texto en la imagen. Es solo un aviso: podés generar igual.',
+    unavailable: 'La búsqueda de texto no está instalada en este servidor.',
+    title: 'Texto encontrado en la imagen',
+    intro:
+      'Confirmá o corregí cada frase tal como tiene que quedar bordada. Se guarda con la imagen y vale para los próximos bordados.',
+    fieldLabel: (curved: boolean, mm: string | null) =>
+      `${curved ? 'Texto en curva' : 'Texto'}${mm ? ` (letras de ~${mm} mm de alto)` : ''}`,
+    small: (limit: string) => `Las letras de menos de ${limit} mm se pierden al trazarlas: conviene bordar esta frase con letras de bordado.`,
+    confidence: (percent: number) => `Leído con ${percent}% de confianza.`,
+    useFont: 'Bordar esta frase con letras de bordado (fuente de Ink/Stitch)',
+    useFontHint:
+      'Reemplaza el trazo copiado de la imagen por letras parejas. Pide hilo 60 y aguja 60/8: con hilo 40, probá antes en un retazo.',
+    confirm: 'Confirmar frases',
+    saving: 'Guardando…',
+    saved: 'Frases confirmadas y guardadas con la imagen.',
+    saveFailed: 'No se pudieron guardar las frases. Probá de nuevo.',
+  },
   settings: {
     title: '2. Ajustes del bordado',
+    limit: (w: string, h: string) =>
+      `Área máxima del bastidor: ${w} × ${h} mm. El límite lo fija el bastidor y el diseño no se escala al cambiarlo.`,
     width: 'Ancho máximo (mm)',
     height: 'Alto máximo (mm)',
-    keepProportions: 'Conservar proporciones dentro del área indicada',
     machine: 'Máquina',
     hoop: 'Bastidor',
     fabric: 'Tela',
-    thread: 'Hilo',
     colors: 'Cantidad de colores',
     provider: 'Análisis con',
     noFallback: 'No se usará otro proveedor en su lugar.',
@@ -158,11 +203,11 @@ export const es = {
     positive: 'Ingresá un número mayor que cero.',
     colorsRange: (max: number) => `Elegí entre 1 y ${max} colores.`,
     outsideHoop: (w: number, h: number) =>
-      `El área indicada es mayor que el bastidor (${w} × ${h} mm). Podés continuar: el servidor confirmará el encaje.`,
+      `El área indicada es mayor que el bastidor (${w} × ${h} mm). Se genera igual, pero no entra en este bastidor: el resultado queda para revisar.`,
     estimate: (w: string, h: string) =>
       `Tamaño estimado: ${w} × ${h} mm. El tamaño real se mide al releer el archivo generado.`,
     preparedSvgSize:
-      'Un SVG preparado se borda al tamaño con el que se preparó: las medidas de arriba son solo el límite (si el dibujo es más grande, el trabajo se rechaza). Para otro tamaño, pedí una «Variante de tamaño» desde el resultado.',
+      'Un SVG preparado se borda al tamaño con el que se preparó: el bastidor es solo el límite (si el dibujo es más grande, el trabajo se rechaza con «el diseño no es compatible con el bastidor»). Para otro tamaño, pedí una «Variante de tamaño» desde el resultado.',
     submit: 'Generar bordado',
     submitting: 'Enviando…',
     needAsset: 'Primero subí una imagen.',
@@ -179,6 +224,7 @@ export const es = {
     title: 'Progreso',
     estimate: (s: number) => `Tiempo restante estimado: unos ${s} s (es una estimación).`,
     stageDuration: (s: string) => `${s} s medidos`,
+    elapsed: (clock: string) => `trabajando hace ${clock}`,
     cancel: 'Cancelar generación',
     cancelling: 'Cancelando…',
     retryingIn: (s: number) => `Reintentando en ${s} s…`,
@@ -198,6 +244,9 @@ export const es = {
     failedAt: (stage: string) => `Falló en la etapa: ${stage}.`,
     retrySame: 'Reintentar con los mismos ajustes',
     compareTitle: 'Comparación',
+    compareHint: 'Tocá una vista para ampliarla. El fondo cuadriculado marca las zonas sin dibujo.',
+    zoomIn: (label: string) => `Ampliar: ${label}`,
+    zoomClose: 'Cerrar ampliación',
     original: 'Original',
     vector: 'Vector',
     jefPreview: 'Puntadas del archivo releído',
@@ -219,7 +268,6 @@ export const es = {
   metrics: {
     size: 'Medida',
     stitches: 'Puntadas',
-    blocks: 'Bloques de hilo',
     colorChanges: 'Cambios de color',
     displacementJumps: 'Saltos de desplazamiento',
     trims: 'Cortes (interpretados)',
@@ -231,6 +279,8 @@ export const es = {
     objects: 'Elementos',
     regions: 'Zonas',
     evidence: 'Qué se detectó',
+    details: 'Detalles técnicos',
+    code: 'Código',
     suggestion: 'Qué se sugiere',
     action: 'Qué querés hacer',
     keep: 'Sin cambios',
@@ -242,10 +292,40 @@ export const es = {
     filesNotReadyTitle: 'Archivos para revisar: no están listos para prueba',
     filesNotReadyText:
       'Los controles digitales no pasaron. Podés inspeccionarlos o registrar una muestra, pero resolvé las incidencias antes de usarlos como versión final.',
-    jefHeroTitle: 'Tu archivo de bordado',
+    jefHeroTitle: 'Archivo de bordado: todavía no está validado para coser',
     jefHeroText:
-      'El JEF está listo para descargar, pero los parámetros de puntada son de referencia y no están calibrados para tu tela. Cosé una prueba en un retazo antes de bordar la pieza final y revisá los avisos de más abajo.',
-    jefHeroDownload: 'Descargar archivo JEF',
+      'El JEF se generó, pero sus parámetros de puntada son de referencia y no están calibrados para tu tela. No es una versión final: cosé una prueba en un retazo y revisá los controles y avisos de abajo.',
+    jefHeroDownload: 'Descargar JEF (con avisos)',
+    gateDigitalFailed: 'Controles digitales: NO pasaron.',
+    gateDigitalNoReport: 'Controles digitales: no hay informe, así que no se puede afirmar que pasaron.',
+    gateDigitalPassed: 'Controles digitales: pasaron.',
+    gatePhysicalUntested: 'Aprobación física: sin probar (ninguna muestra cosida aprobada).',
+    gatePhysicalNeedsAdjustment: 'Aprobación física: la muestra requiere ajustes.',
+    gatePhysicalApproved: 'Aprobación física: muestra aprobada.',
+    gateChecksTitle: 'Controles',
+    checkKind: {
+      file: 'Archivo',
+      dimensions: 'Dimensiones',
+      hoop: 'Bastidor',
+      geometry: 'Geometría',
+      satin: 'Satén',
+      routing: 'Recorrido',
+      visual: 'Comparación visual',
+    } as Record<string, string>,
+    checkOutcome: {
+      passed: 'pasó',
+      failed: 'FALLÓ',
+      needs_review: 'requiere revisión',
+      not_run: 'NO SE EJECUTÓ',
+    } as Record<string, string>,
+    legibilityTitle: 'Riesgo de legibilidad',
+    legibilityTechniques: 'Técnica por objeto',
+    legibilityNoTechnique: 'Esta versión del motor todavía no informa la técnica de cada objeto en la incidencia.',
+    confirmDownload: (pending: string) =>
+      `Entiendo que el archivo no está listo para coser: faltan o no pasaron estos controles (${pending}) y no hay muestra aprobada.`,
+    confirmDownloadNoReport: 'Entiendo que el archivo no está listo para coser: no hay informe de controles y no hay muestra aprobada.',
+    confirmDownloadUnapproved: 'Entiendo que el archivo no está listo para coser: no hay una muestra física aprobada.',
+    downloadLocked: 'Marcá la confirmación para habilitar la descarga.',
     geometryOnlyTitle: 'Solo geometría: todavía no hay archivo de bordado',
     geometryOnlyText:
       'Se vectorizó la imagen y podés descargar el SVG editable. Las puntadas y el JEF no se generan hasta que se validen los parámetros físicos; por eso no hay muestra para registrar ni correcciones para aplicar.',

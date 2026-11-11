@@ -1,0 +1,167 @@
+{
+  "round": 5,
+  "date": "2026-11-08",
+  "base_commit": "bf91e6fd14724690d8f2eb8fbc858a7840e7baa9",
+  "implementation_commit": "5dfd8aa1d915acd511d0f5ac41f2404508a398ab",
+  "main": "b1ce70ca06d06b81e35c8becfefecac5e40412c9",
+  "main_updated_by_codex": false,
+  "motor": {
+    "total": 196,
+    "passed": 192,
+    "skipped": 4,
+    "failures": 0,
+    "errors": 0,
+    "duration_seconds": 78.024,
+    "exit_code": 0,
+    "log_sha256": "245a7b1e25b8ce0548d6b3b33515abb8aafc526482c828cce1b8675e57175419",
+    "log_capture": "PowerShell stderr redirection; original UTF-16LE capture normalized to UTF-8/LF, trailing whitespace trimmed; test text and counts preserved.",
+    "raw_capture_sha256": "d8d1e74441cb9037c73a3ab6cf3bf0211dacfc1fedb76e7ed5550ad69a5d1813"
+  },
+  "F": {
+    "status": "passed",
+    "exit_code": 0,
+    "summary": {
+      "images": 16,
+      "skipped": 2,
+      "errors": 0,
+      "checks": {
+        "colors_within_limit": {
+          "passed": 14,
+          "of": 14
+        },
+        "deterministic": {
+          "passed": 14,
+          "of": 14
+        },
+        "document_valid": {
+          "passed": 14,
+          "of": 14
+        },
+        "geometry_kinds_allowed": {
+          "passed": 14,
+          "of": 14
+        },
+        "has_objects": {
+          "passed": 14,
+          "of": 14
+        },
+        "minimum_feature_reported_never_removed": {
+          "passed": 14,
+          "of": 14
+        },
+        "provisional_values_marked": {
+          "passed": 14,
+          "of": 14
+        },
+        "within_target_contain": {
+          "passed": 14,
+          "of": 14
+        }
+      },
+      "foreground_iou": {
+        "min": 0.699623,
+        "median": 0.9886705,
+        "measured": 14,
+        "of": 14
+      },
+      "duration_ms": {
+        "median": 2177.5,
+        "max": 13296,
+        "runs": 28
+      }
+    },
+    "static_review": {
+      "per_logo_literals": []
+    },
+    "sha256": "7d325d11ae522bda33f4b12bbeac525578447ebd39d683975ba96195a077dbfd"
+  },
+  "real_job": "job_c934f8b296d64d59b4547806295c6a26",
+  "metrics_before": {
+    "original_jef_sha256": "5fda3c1ddbabffcd1d446761898ca0f0e80cc33a3795e15ba623934c544c0246",
+    "needle_stitches": 7945,
+    "thread_entries": 2,
+    "needle_stitches_by_thread_block": [
+      7870,
+      75
+    ],
+    "block_sizes_mm": [
+      [
+        111.0,
+        111.6
+      ],
+      [
+        0.7,
+        13.3
+      ]
+    ],
+    "jef_size_mm": [
+      111.0,
+      111.6
+    ],
+    "input_svg_bounds_size_mm": [
+      110.444,
+      111.017
+    ],
+    "expansion_per_side_mm": [
+      0.2779999999999987,
+      0.2914999999999992
+    ],
+    "diagnostic_discrepancy": "Current raw binary reread counts 7870 and 75 STITCH records, not an empty second block. Same JEF SHA as the order; no historical empty-block claim is inherited. New code still rejects genuinely empty blocks and omits the 1.2462 mm2 residual colour.",
+    "old_recorded_export_duration_ms": 335102,
+    "old_duration_source": "historical job result.json, not rerun"
+  },
+  "metrics_after": {
+    "width_mm": 111.0,
+    "height_mm": 111.4,
+    "stitch_bounds_mm": [
+      -55.5,
+      -55.7,
+      55.5,
+      55.7
+    ],
+    "needle_stitches": 8627,
+    "thread_blocks": 1,
+    "needle_stitches_by_thread_block": [
+      8627
+    ],
+    "color_changes": 0,
+    "raw_jump_commands": 198,
+    "displacement_jump_commands": 189,
+    "interpreted_trims": 28,
+    "end_commands": 1,
+    "hoop_code": 4,
+    "count_method": "pyembroidery 1.5.1: trims=True,trim_at=3,trim_distance=None,clipping=True; STITCH endpoint bounds; native coordinates /10 to mm",
+    "physical_trim_execution_verified": false,
+    "jef_sha256": "ebca76ab811d42ab802f828b5be570f49fc03c8125fe1c8d625b775f00855783",
+    "byte_size": 18172,
+    "normalized_commands_sha256": "ab5e6df8a7eff9c73160d27991334954f6c0aa5ea6c9e66bdc9b870d329f4295"
+  },
+  "source_path_data_mm_unchanged": true,
+  "measured_input_svg_sha256": "51b257f71d38f0c4b69064b29c617b1d94684f3c1fda60249d0c540dd80a15cd",
+  "derived_svg_sha256": "3c8218cb13a9945215e040e766a30438cf2928476a4ba59ee63374fff9c38722",
+  "satin_implemented": false,
+  "satin_limitation": "Ink/Stitch 3.2.2 supports satin; verified rails are pending; authorized narrow-fill fallback at 0.35 mm.",
+  "physical_approval": "untested",
+  "digital_readiness_evaluated": false,
+  "ready_for_sewout_claim": false,
+  "runtime_dependencies_added": false,
+  "protected_blobs": {
+    "services/api/build_openapi.py": "411bcbc54519a20a0b9e5fa7603a62d8c83b4b81",
+    "workers/embroidery/vectorize/thin_features.py": "16e024cff92f2580b3ef3cc0c02b4af69222512b",
+    "workers/embroidery/vectorize/stitchable.py": "acf113799c6d9faadedb030108b0449075d3bd7c",
+    "tests/h2_eval/run_eval.py": "3a85ca37daa85b23d334e1a69cdfc79e3d7a6076"
+  },
+  "h3_fill_attributes_ast_unchanged": true,
+  "openapi_max_decoded_pixels_untouched": 40000000,
+  "non_final_attempts": {
+    "full_export_timeout_s": 240,
+    "cleanup_confirmed": true,
+    "isolated_running_export_ms": 3484,
+    "short_fill_probes_s": [
+      65,
+      70,
+      100
+    ],
+    "interpretation": "Inconclusive deadlines; old historical job required 335102 ms. Final export measured with 900 s harness deadline; no production timeout changed."
+  }
+}

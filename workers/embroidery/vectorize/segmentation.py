@@ -26,6 +26,12 @@ FRINGE_PASSES = 2  # anillos de píxeles que se pueden descartar desde el fondo 
 ALPHA_THRESHOLD = 128
 WHITE_THRESHOLD = 250
 WHITE_BORDER_CONSENSUS = 0.95
+# Un fondo que no es blanco (papel beige, gris, un color liso) también es la tela: si casi todo el borde de la imagen es de un
+# mismo color, ese color se quita igual que el blanco. Tolerancia por canal: absorbe el grano de un papel o el ruido de un JPEG
+# (la diferencia con el fondo de un color de diseño suele ser de 60 o más). Si quitarlo deja casi nada, no era un fondo.
+BACKGROUND_BORDER_CONSENSUS = 0.95
+BACKGROUND_TOLERANCE = 36
+BACKGROUND_MIN_FOREGROUND = 0.01
 BACKGROUND = 65535
 ROW_CANCEL_INTERVAL = 32
 
@@ -79,6 +85,35 @@ def _border_white_fraction(white):
     return sum(value == 255 for value in border) / len(border)
 
 
+def _border_pixels(rgb):
+    width, height = rgb.size
+    strips = [rgb.crop((0, 0, width, 1)).tobytes()]
+    if height > 1:
+        strips.append(rgb.crop((0, height - 1, width, height)).tobytes())
+    if height > 2:
+        strips.append(rgb.crop((0, 1, 1, height - 1)).tobytes())
+        if width > 1:
+            strips.append(rgb.crop((width - 1, 1, width, height - 1)).tobytes())
+    data = b"".join(strips)
+    return list(zip(data[0::3], data[1::3], data[2::3]))
+
+
+def _border_background(rgb):
+    """El color del borde (mediana por canal) y qué fracción del borde está a menos de BACKGROUND_TOLERANCE de él."""
+    pixels = _border_pixels(rgb)
+    color = tuple(sorted(channel)[len(channel) // 2] for channel in zip(*pixels))
+    near = sum(all(abs(value - center) <= BACKGROUND_TOLERANCE for value, center in zip(pixel, color)) for pixel in pixels)
+    return color, near / len(pixels)
+
+
+def _near_color(rgb, color, tolerance):
+    mask = None
+    for channel, center in zip(rgb.split(), color):
+        near = channel.point(lambda value, center=center: 255 if abs(value - center) <= tolerance else 0)
+        mask = near if mask is None else ImageChops.darker(mask, near)
+    return mask
+
+
 def _foreground(rgba):
     rgb = rgba.convert("RGB")
     alpha = rgba.getchannel("A")
@@ -91,14 +126,26 @@ def _foreground(rgba):
     remove_white = not transparent and border_fraction >= WHITE_BORDER_CONSENSUS
     if remove_white:
         visible = ImageChops.subtract(visible, white)
+    color_background = None
+    if not transparent and not remove_white:
+        color, fraction = _border_background(rgb)
+        if fraction >= BACKGROUND_BORDER_CONSENSUS:
+            candidate = ImageChops.subtract(visible, _near_color(rgb, color, BACKGROUND_TOLERANCE))
+            if candidate.histogram()[255] >= BACKGROUND_MIN_FOREGROUND * rgb.size[0] * rgb.size[1]:
+                visible, color_background = candidate, (color, fraction)
+    method = ("alpha_threshold" if transparent else "white_border_consensus" if remove_white
+              else "border_color_consensus" if color_background else "no_background_removed")
     return rgb, visible, {
-        "background_method": "alpha_threshold" if transparent else "white_border_consensus" if remove_white else "no_background_removed",
+        "background_method": method,
         "alpha_threshold": ALPHA_THRESHOLD,
         "partial_alpha_pixels": partial,
         "white_threshold": WHITE_THRESHOLD,
         "white_border_fraction": border_fraction,
         "white_removed_globally": remove_white,
         "background_is_assumption": not transparent,
+        "background_color": list(color_background[0]) if color_background else None,
+        "background_tolerance": BACKGROUND_TOLERANCE if color_background else None,
+        "background_border_fraction": color_background[1] if color_background else None,
     }
 
 

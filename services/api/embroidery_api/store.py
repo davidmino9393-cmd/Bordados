@@ -112,3 +112,12 @@ class Store:
     def close(self):
         with self.lock:
             self.db.close()
+
+
+def open_store(data_root, database_url=None):
+    """SQLite dentro de `data_root` o, con `database_url`, PostgreSQL; los archivos quedan siempre en `data_root`."""
+    if not database_url:
+        return Store(data_root)
+    from .store_postgres import PostgresStore  # recién acá: quien usa SQLite no necesita psycopg
+
+    return PostgresStore(data_root, database_url)

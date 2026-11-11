@@ -10,6 +10,8 @@ const HTTP_NOT_IMPLEMENTED = 501;
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 const DEFAULT_UPLOAD_TIMEOUT_MS = 120_000;
+/** La primera lectura de texto de una imagen tarda segundos por cada sello (y la primera vez carga los modelos). */
+const INSCRIPTION_TIMEOUT_MS = 120_000;
 /** Máximo que admite el backend por página; menos viajes y la lista más completa de entrada. */
 const PAGE_LIMIT = 100;
 
@@ -18,6 +20,10 @@ function pageQuery(cursors: Record<string, string | undefined>): string {
   const query = new URLSearchParams({ limit: String(PAGE_LIMIT) });
   for (const [name, value] of Object.entries(cursors)) if (value) query.set(name, value);
   return `?${query}`;
+}
+
+function sizeQuery(size: { width_mm: number; height_mm: number }): string {
+  return new URLSearchParams({ width_mm: String(size.width_mm), height_mm: String(size.height_mm) }).toString();
 }
 
 interface RequestOptions {
@@ -68,6 +74,7 @@ export function createHttpApiClient(config: HttpClientConfig = {}): ApiClient {
   const doFetch = config.fetchImpl ?? ((input, init) => fetch(input, init));
   const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const uploadTimeoutMs = config.uploadTimeoutMs ?? DEFAULT_UPLOAD_TIMEOUT_MS;
+  const inscriptionTimeoutMs = Math.max(timeoutMs, INSCRIPTION_TIMEOUT_MS);
 
   async function request<T>(method: string, path: string, options: RequestOptions = {}): Promise<T> {
     const headers: Record<string, string> = { Accept: 'application/json' };
@@ -121,6 +128,20 @@ export function createHttpApiClient(config: HttpClientConfig = {}): ApiClient {
     // job de imagen en needs_review por análisis, algo que el backend de H0-04 todavía no produce.
     getAnalysis: (jobId) => request('GET', `/jobs/${id(jobId)}/analysis`),
     decideAnalysis: (jobId, body, key) => request('POST', `/jobs/${id(jobId)}/analysis-decision`, { key, body }),
+    getLegibility: (projectId, assetId, query) => {
+      const params = new URLSearchParams();
+      for (const [name, value] of Object.entries(query)) if (value !== undefined) params.set(name, String(value));
+      return request('GET', `/projects/${id(projectId)}/assets/${id(assetId)}/legibility?${params}`);
+    },
+    getInscriptions: (projectId, assetId, size) =>
+      request('GET', `/projects/${id(projectId)}/assets/${id(assetId)}/inscriptions?${sizeQuery(size)}`, {
+        timeoutMs: inscriptionTimeoutMs,
+      }),
+    confirmInscriptions: (projectId, assetId, confirmed, size) =>
+      request('PUT', `/projects/${id(projectId)}/assets/${id(assetId)}/inscriptions?${sizeQuery(size)}`, {
+        body: { confirmed },
+        timeoutMs: inscriptionTimeoutMs,
+      }),
     recordSewout: (projectId, body, key) => request('POST', `/projects/${id(projectId)}/sewouts`, { key, body }),
     createDerivedRevision: (projectId, body, key) =>
       request('POST', `/projects/${id(projectId)}/revisions`, { key, body }),

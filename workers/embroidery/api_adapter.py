@@ -12,6 +12,7 @@ from embroidery_contracts.results import Artifact, RereadMetrics, ValidationChec
 
 SVG = "http://www.w3.org/2000/svg"
 IS = "http://inkstitch.org/namespace"
+HOOP_MARGIN_MM = 2.0
 
 
 def digest(path):
@@ -73,21 +74,35 @@ def measured_checks(job, result, tolerance):
     metrics, settings = result["metrics"], job["settings_snapshot"]
     target, hoop = settings["target"], settings["hoop"]
     dimensions_ok = metrics["width_mm"] <= target["width_mm"] + tolerance and metrics["height_mm"] <= target["height_mm"] + tolerance
-    hoop_ok = metrics["hoop_code"] == hoop["jef_hoop_code"] and metrics["width_mm"] <= hoop["width_mm"] + tolerance and metrics["height_mm"] <= hoop["height_mm"] + tolerance
+    left, top, right, bottom = metrics["stitch_bounds_mm"]
+    clearances = {"left": left + hoop["width_mm"] / 2, "right": hoop["width_mm"] / 2 - right,
+                  "top": top + hoop["height_mm"] / 2, "bottom": hoop["height_mm"] / 2 - bottom}
+    hoop_ok = (metrics["hoop_code"] == hoop["jef_hoop_code"]
+               and min(clearances.values()) >= HOOP_MARGIN_MM)
     checks = [ValidationCheck(kind=kind, outcome="passed" if passed else "failed", method=method)
               for kind, passed, method in (("file", True, "independent JEF binary parser and pyembroidery reread"),
                                           ("dimensions", dimensions_ok, f"reread bounds within target; tolerance {tolerance} mm; no resizing"),
-                                          ("hoop", hoop_ok, "reread dimensions and unmodified JEF code versus configured profile"))]
+                                          ("hoop", hoop_ok, f"native stitch bounds and JEF code versus configured profile; clearance >= {HOOP_MARGIN_MM:g} mm per side"))]
     checks += [ValidationCheck(kind=kind, outcome="not_run", method="not implemented in H0-04; no inferred approval") for kind in ("geometry", "satin", "routing", "visual")]
     issues = []
-    if not dimensions_ok:
+    target_is_hoop = target["width_mm"] == hoop["width_mm"] and target["height_mm"] == hoop["height_mm"]
+    # Si el límite del trabajo es el propio bastidor, pasarse es que el diseño no entra en él.
+    if not dimensions_ok and not target_is_hoop:
         issues.append(make_issue("DIMENSIONS_EXCEEDED", "Las medidas releídas superan el destino configurado.", {"width_mm": metrics["width_mm"], "height_mm": metrics["height_mm"], "tolerance_mm": tolerance}))
     if not hoop_ok:
-        issues.append(make_issue("HOOP_INCOMPATIBLE", "El tamaño o código JEF no corresponde al perfil de bastidor.", {"jef_hoop_code": metrics["hoop_code"], "expected_hoop_code": hoop["jef_hoop_code"]}))
+        # Medidas y bastidor (orden 4) más el margen de seguridad por lado que pide la guía (orden 6).
+        detail = {"jef_hoop_code": metrics["hoop_code"], "expected_hoop_code": hoop["jef_hoop_code"], "hoop_profile": hoop.get("profile_id"),
+                  "hoop_width_mm": hoop["width_mm"], "hoop_height_mm": hoop["height_mm"],
+                  "design_width_mm": metrics["width_mm"], "design_height_mm": metrics["height_mm"],
+                  "required_margin_per_side_mm": HOOP_MARGIN_MM, "clearance_per_side_mm": clearances}
+        issues.append(make_issue(
+            "HOOP_INCOMPATIBLE",
+            f"El diseño ({metrics['width_mm']:g} x {metrics['height_mm']:g} mm) no entra en el bastidor {hoop.get('profile_id') or 'elegido'} "
+            f"({hoop['width_mm']:g} x {hoop['height_mm']:g} mm) con el margen de seguridad de {HOOP_MARGIN_MM:g} mm por lado.", detail))
     return checks, issues
 
 
-def result_documents(job, result, directory, duration_ms, tolerance, display_names=None, input_sha256=None):
+def result_documents(job, result, directory, duration_ms, tolerance, display_names=None, input_sha256=None, editable_svg=None):
     """`display_names`: nombre que ve la persona al descargar, por tipo de archivo; en disco el archivo no cambia.
 
     `input_sha256`: huella de lo que subió la persona. Sin ella (un SVG preparado) la entrada es el SVG que recibió el
@@ -106,7 +121,7 @@ def result_documents(job, result, directory, duration_ms, tolerance, display_nam
     report = ValidationReport(report_id=f"{job_id}_report", job_id=job_id, revision_id=job["revision_id"],
                               provenance=provenance, checks=checks, issues=issues, digital_checks_passed=False, metrics=metrics)
     (directory / "validation.json").write_text(report.model_dump_json(indent=2), encoding="utf-8")
-    shutil.copyfile(directory / "input.svg", directory / "editable.svg")
+    shutil.copyfile(editable_svg or directory / "input.svg", directory / "editable.svg")
     shutil.copyfile(directory / "input.svg", directory / "inkstitch.svg")
     files = (("jef", "output.jef", "application/octet-stream", "export"),
              ("editable_svg", "editable.svg", "image/svg+xml", "document"), ("inkstitch_svg", "inkstitch.svg", "image/svg+xml", "document"),

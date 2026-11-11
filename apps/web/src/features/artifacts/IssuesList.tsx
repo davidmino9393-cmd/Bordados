@@ -1,9 +1,11 @@
+import { publicIssues } from './publicIssues';
 import type { Issue } from '../../contracts/validation';
 import { es, issueTitle, severityLabel } from '../../copy/es';
 import { Card } from '../../shared/components/Card';
 
-/** Los avisos nunca se ocultan: cada uno indica severidad y objetos afectados. */
+/** El informe de validación conserva los diagnósticos completos. */
 export function IssuesList({ issues }: { issues: Issue[] }) {
+  const visible = publicIssues(issues);
   return (
     <Card>
       <Card.Header>{es.result.issuesTitle}</Card.Header>
@@ -11,12 +13,9 @@ export function IssuesList({ issues }: { issues: Issue[] }) {
         {issues.length === 0 ? (
           <p>{es.result.noIssues}</p>
         ) : (
-          issues.map((issue, index) => (
+          visible.length === 0 ? <p>Revisá el diseño en la vista de puntadas.</p> : visible.map((issue, index) => (
             <div key={`${issue.code}-${index}`} className="issue">
-              <strong>{severityLabel[issue.severity]}: {issueTitle(issue.code, issue.description)}</strong>
-              <span className="field__hint">
-                {es.review.objects}: {[...issue.object_ids, ...issue.region_ids].join(', ') || '—'}
-              </span>
+              <strong>{severityLabel[issue.severity]}: {issueTitle(issue.code, 'Revisá el resultado')}</strong>
             </div>
           ))
         )}

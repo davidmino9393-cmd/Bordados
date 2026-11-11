@@ -8,6 +8,7 @@ import io
 import json
 import logging
 from pathlib import Path
+import threading
 import uuid
 import xml.etree.ElementTree as ET
 
@@ -15,6 +16,7 @@ from fastapi import APIRouter, Depends, FastAPI, File, Form, Header, Query, Requ
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from PIL import Image, UnidentifiedImageError
+from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from embroidery_contracts import (
@@ -25,15 +27,19 @@ from embroidery_contracts import (
 )
 from embroidery_contracts.http import ERROR_STATUS, FieldError, ProblemResponse
 from embroidery_contracts.job_views import SewoutProjection
+from vectorize import VectorizeFailure
 
 from .analysis import configured_providers, provider_availability
 from .config import ApiConfig
-from .downloads import ASSET_SCOPE, DownloadSigner
+from .downloads import ASSET_SCOPE, DownloadSigner, archived_vector
 from .errors import ApiProblem
+from .input_convert import ORIGINAL_SUFFIX, ConversionRefused, normalize_upload
+from .inscriptions import InscriptionConfirmation, ReaderUnavailable, report as inscription_report, timed_detect, unavailable as inscriptions_unavailable
+from .legibility import check as check_legibility, prepare as prepare_legibility
 from .profiles import load_profiles, validate_settings
 from .runner import FIT_SVG_TO_TARGET, JobRunner, continuation_stages, initial_stages, raster_stages, unanalyzed_raster_stages
 from .svg_fit import fit_to_target
-from .store import Store
+from .store import open_store
 
 
 LOGGER = logging.getLogger(__name__)
@@ -182,14 +188,14 @@ def _original_response(request, store, data_root, grant):
                         headers={"X-Content-Type-Options": "nosniff"})
 
 
-def create_app(config: ApiConfig, analysis_providers=None):
+def create_app(config: ApiConfig, analysis_providers=None, inscription_detector=timed_detect):
     providers = dict(analysis_providers) if analysis_providers is not None else configured_providers(config)
     # La disponibilidad de proveedores sale de lo realmente configurado, no del archivo de perfiles.
     catalog = load_profiles(config.profiles_path).model_copy(update={"providers": provider_availability(providers)})
     data_root = Path(config.data_root)
     for name in ("assets", "jobs", "runs"):
         (data_root / name).mkdir(parents=True, exist_ok=True)
-    store = Store(data_root)
+    store = open_store(data_root, config.database_url)
     signer = DownloadSigner(config.signing_key, config.public_base_url)
     runner = JobRunner(config, store, providers)
     owner = config.principal_id
@@ -303,30 +309,172 @@ def create_app(config: ApiConfig, analysis_providers=None):
         owned("project", id)
         if purpose not in ASSET_PURPOSES:
             raise ApiProblem("INVALID_REQUEST", "purpose debe ser design o sewout_photo.")
-        data = await file.read()
-        content_type = (file.content_type or "").split(";", 1)[0].strip().lower()
-        digest, width, height, suffix = _validate_upload(data, content_type, catalog.upload_limits)
-        filename = _safe_filename(file.filename)
-        if purpose == "sewout_photo" and content_type == "image/svg+xml":
+        upload = await file.read()
+        declared = (file.content_type or "").split(";", 1)[0].strip().lower()
+        upload_name = _safe_filename(file.filename)
+        if len(upload) > catalog.upload_limits.max_bytes:
+            raise ApiProblem("PAYLOAD_TOO_LARGE", "El archivo supera el límite configurado.")
+        if purpose == "sewout_photo" and declared == "image/svg+xml":
             raise ApiProblem("INVALID_REQUEST", "Una foto de la muestra debe ser PNG o JPEG.")
-        logical = {"project_id": id, "sha256": digest, "filename": filename, "content_type": content_type, "purpose": purpose}
+        data, content_type, filename, original, conversion = upload, declared, upload_name, None, None
+        if purpose == "design":
+            # Un SVG común, un PDF o una imagen WebP/GIF/BMP/TIFF se convierten al subir; el asset es el convertido.
+            try:
+                normalized = await run_in_threadpool(
+                    normalize_upload, upload, declared, upload_name,
+                    accepted=frozenset(catalog.upload_limits.accepted_mime_types), inkscape=config.inkscape_executable,
+                )
+            except ConversionRefused as refused:
+                raise ApiProblem(refused.code, refused.detail) from None
+            data, content_type, filename = normalized.data, normalized.media_type, normalized.filename
+            original, conversion = normalized.original, normalized.conversion
+        digest, width, height, suffix = _validate_upload(data, content_type, catalog.upload_limits)
+        upload_sha256 = hashlib.sha256(upload).hexdigest()
+        logical = {"project_id": id, "sha256": upload_sha256, "filename": upload_name, "content_type": declared, "purpose": purpose}
 
         def action():
             asset_id = _new_id("asset")
             path = data_root / "assets" / f"{asset_id}{suffix}"
             path.write_bytes(data)
+            private = {"path": str(path), "sha256": digest, "media_type": content_type}
+            if original:  # lo que subió la persona queda guardado junto al convertido
+                original_path = data_root / "assets" / f"{asset_id}.original{ORIGINAL_SUFFIX[original['media_type']]}"
+                original_path.write_bytes(original["data"])
+                private["upload"] = {"path": str(original_path), "sha256": upload_sha256, "media_type": original["media_type"],
+                                     "filename": original["filename"], "conversion": conversion}
             body = SourceAsset(
                 asset_id=asset_id, project_id=id, sha256=digest, media_type=content_type,
                 original_filename=filename, original_width_px=width, original_height_px=height, purpose=purpose,
             )
-            store.create(
-                "asset", asset_id, owner, id, body.model_dump(mode="json"),
-                {"path": str(path), "sha256": digest, "media_type": content_type},
-            )
+            store.create("asset", asset_id, owner, id, body.model_dump(mode="json"), private)
             return 201, body.model_dump(mode="json")
 
         status, body = store.idempotent(f"uploadAsset:{owner}:{id}", idempotency_key, logical, action)
         return JSONResponse(with_original_download(body).model_dump(mode="json"), status_code=status)
+
+    legibility_cache, legibility_lock = {}, threading.Lock()
+
+    @api.get("/projects/{id}/assets/{asset_id}/legibility")
+    def get_asset_legibility(
+        id: str,
+        asset_id: str,
+        width_mm: float = Query(gt=0, le=2000),
+        height_mm: float = Query(gt=0, le=2000),
+        color_limit: int = Query(3, ge=1, le=256),
+        hoop_width_mm: float | None = Query(None, gt=0, le=2000),
+        hoop_height_mm: float | None = Query(None, gt=0, le=2000),
+    ):
+        """CAMBIO PROPUESTO (orden 3.2, fuera de OpenAPI v0.1): aviso de legibilidad con números, antes de generar.
+
+        No bloquea nada y no crea jobs: mide el ancho de trazo de la imagen al tamaño pedido. Solo PNG/JPEG.
+        """
+        owned("project", id)
+        asset = owned("asset", asset_id, id)
+        media_type = asset["body"].get("media_type")
+        if asset["body"].get("purpose", "design") != "design" or media_type not in ("image/png", "image/jpeg"):
+            raise ApiProblem("INVALID_REQUEST", "La medición de legibilidad aplica solo a un diseño PNG o JPEG.")
+        key = (asset["body"]["sha256"], color_limit)
+        with legibility_lock:
+            prepared = legibility_cache.get(key)
+        try:
+            if prepared is None:
+                prepared = prepare_legibility(Path(asset["private"]["path"]).read_bytes(), media_type, color_limit)
+                with legibility_lock:
+                    if len(legibility_cache) >= 8:
+                        legibility_cache.pop(next(iter(legibility_cache)))
+                    legibility_cache[key] = prepared
+            hoop = (hoop_width_mm, hoop_height_mm) if hoop_width_mm and hoop_height_mm else None
+            result = check_legibility(b"", media_type, width_mm, height_mm, color_limit, hoop_mm=hoop, prepared=prepared) if prepared else None
+        except VectorizeFailure as failure:
+            raise ApiProblem("INVALID_REQUEST", failure.issue.description) from failure
+        if result is None:
+            raise ApiProblem("INVALID_REQUEST", "La imagen no tiene tinta que medir.")
+        return JSONResponse(result.model_dump(mode="json"))
+
+    inscription_cache, inscription_lock = {}, threading.Lock()
+
+    def inscription_asset(project_id, asset_id):
+        owned("project", project_id)
+        asset = owned("asset", asset_id, project_id)
+        if asset["body"].get("purpose", "design") != "design" or asset["body"].get("media_type") not in ("image/png", "image/jpeg"):
+            raise ApiProblem("INVALID_REQUEST", "La detección de texto aplica solo a un diseño PNG o JPEG.")
+        return asset
+
+    def detected_inscriptions(asset):
+        """Lecturas del original (lentas: segundos), guardadas por contenido; no dependen del tamaño pedido."""
+        key = asset["body"]["sha256"]
+        with inscription_lock:
+            cached = inscription_cache.get(key)
+        if cached is None:
+            try:
+                cached = inscription_detector(Path(asset["private"]["path"]).read_bytes())
+            except ValueError as exc:
+                raise ApiProblem("INVALID_REQUEST", str(exc)) from exc
+            with inscription_lock:
+                if len(inscription_cache) >= 8:
+                    inscription_cache.pop(next(iter(inscription_cache)))
+                inscription_cache[key] = cached
+        return cached
+
+    def asset_size(asset):
+        return asset["body"]["original_width_px"], asset["body"]["original_height_px"]
+
+    @api.get("/projects/{id}/assets/{asset_id}/inscriptions")
+    def get_asset_inscriptions(
+        id: str,
+        asset_id: str,
+        width_mm: float | None = Query(None, gt=0, le=2000),
+        height_mm: float | None = Query(None, gt=0, le=2000),
+    ):
+        """CAMBIO PROPUESTO (guía 1.3, fuera de OpenAPI v0.1): inscripciones de la imagen para confirmar la frase.
+
+        No bloquea nada y no crea jobs. Con el tamaño pedido informa la altura de letra en mm y marca las menores de 5 mm.
+        Sin el lector instalado responde `available: false`: es un aviso que falta, no un error del pedido.
+        """
+        asset = inscription_asset(id, asset_id)
+        try:
+            found, duration_ms = detected_inscriptions(asset)
+        except ReaderUnavailable as exc:
+            LOGGER.warning("lector de texto no disponible: %s", exc)
+            return JSONResponse(inscriptions_unavailable("El lector de texto no está instalado en el servidor.").model_dump(mode="json"))
+        confirmed = asset["private"].get("inscriptions")
+        body = inscription_report(found, asset_size(asset), width_mm, height_mm, confirmed, duration_ms)
+        return JSONResponse(body.model_dump(mode="json"))
+
+    @api.put("/projects/{id}/assets/{asset_id}/inscriptions")
+    def confirm_asset_inscriptions(
+        id: str,
+        asset_id: str,
+        payload: InscriptionConfirmation,
+        width_mm: float | None = Query(None, gt=0, le=2000),
+        height_mm: float | None = Query(None, gt=0, le=2000),
+    ):
+        """CAMBIO PROPUESTO (guía 1.3): guarda la frase exacta de cada inscripción. Reemplaza las confirmaciones anteriores."""
+        asset = inscription_asset(id, asset_id)
+        try:
+            found, duration_ms = detected_inscriptions(asset)
+        except ReaderUnavailable as exc:
+            raise ApiProblem("SERVICE_UNAVAILABLE", "El lector de texto no está instalado en el servidor.") from exc
+        detected = {f"inscription_{number}": item for number, item in enumerate(found, start=1)}
+        unknown = sorted({c.inscription_id for c in payload.confirmed} - detected.keys())
+        if unknown:
+            raise ApiProblem("INVALID_REQUEST", f"Esas inscripciones no existen en la imagen: {', '.join(unknown)}.")
+        straight = sorted(c.inscription_id for c in payload.confirmed if c.use_font and detected[c.inscription_id].layout != "curved")
+        if straight:
+            raise ApiProblem("INVALID_REQUEST", f"Por ahora solo el texto en curva de un sello se borda con letras: {', '.join(straight)}.")
+        arcs = [(detected[c.inscription_id].circle_px, detected[c.inscription_id].arc) for c in payload.confirmed if c.use_font]
+        if len(arcs) != len(set(arcs)):
+            # El lector puede leer dos veces la misma frase (una con errores): se borda con letras una sola por arco.
+            raise ApiProblem("INVALID_REQUEST", "Elegí una sola frase por arco del sello para bordar con letras.")
+        # El runner necesita dónde está la frase (círculo y arco) para reemplazarla por letras de bordado.
+        saved = {c.inscription_id: {"detected": detected[c.inscription_id].text, "confirmed": c.text, "use_font": c.use_font,
+                                    "layout": detected[c.inscription_id].layout, "arc": detected[c.inscription_id].arc,
+                                    "circle_px": detected[c.inscription_id].circle_px,
+                                    "letter_height_px": detected[c.inscription_id].letter_height_px}
+                 for c in payload.confirmed}
+        store.mutate("asset", asset_id, lambda body, private: (body, {**private, "inscriptions": saved}))
+        body = inscription_report(found, asset_size(asset), width_mm, height_mm, saved, duration_ms)
+        return JSONResponse(body.model_dump(mode="json"))
 
     @api.post("/projects/{id}/revisions")
     def create_revision(
@@ -343,8 +491,8 @@ def create_app(config: ApiConfig, analysis_providers=None):
         validate_settings(request.settings, catalog)
 
         def action():
-            if any(row["body"].get("kind") == "initial" for row in store.rows("revision", owner, id)):
-                raise ApiProblem("REVISION_CONFLICT", "El proyecto ya tiene una revisión inicial.")
+            # Un proyecto reúne varios archivos: cada bordado nuevo parte de su propia revisión inicial, con sus ajustes
+            # inmutables (el job los exige iguales). Antes se admitía una sola; David lo ratificó el 2026-11-08.
             revision_id = _new_id("rev")
             body = RevisionResponse(
                 revision_id=revision_id, project_id=id, base_revision_id=None,
@@ -377,7 +525,7 @@ def create_app(config: ApiConfig, analysis_providers=None):
             raise ApiProblem("REVISION_CONFLICT", "El trabajo de origen todavía está en curso: esperá a que termine para pedir una variante.")
         asset = owned("asset", original.asset_id, project_id)
         settings = original.settings_snapshot.model_copy(update={"target": request.target})
-        validate_settings(settings, catalog)
+        validate_settings(settings, catalog, size_variant=True)
         extra = None
         if original.input_kind == "prepared_svg":
             stages = initial_stages()
@@ -569,7 +717,10 @@ def create_app(config: ApiConfig, analysis_providers=None):
         if body.status not in ARTIFACT_STATES or body.artifact_manifest is None:
             raise ApiProblem("ARTIFACTS_UNAVAILABLE", "Los artefactos todavía no están disponibles para este trabajo.")
         artifacts = []
+        historical = archived_vector(job, body.artifact_manifest)
         for artifact in body.artifact_manifest.artifacts:
+            if historical and artifact.kind == "editable_svg":
+                artifact = historical[0]
             item = artifact.model_dump(mode="json")
             item.pop("download_url", None)
             item.pop("expires_at", None)
@@ -680,9 +831,13 @@ def create_app(config: ApiConfig, analysis_providers=None):
              if item.artifact_id == grant["artifact_id"]),
             None,
         )
+        path_value = job["private"].get("artifact_paths", {}).get(grant["artifact_id"])
+        if artifact is None and grant["artifact_id"] == body.job_id + "_design_svg":
+            historical = archived_vector(job, body.artifact_manifest)
+            if historical:
+                artifact, path_value = historical
         if artifact is None or artifact.sha256 != grant["sha256"]:
             return _download_error(request, "NOT_FOUND", "El artefacto no está disponible.")
-        path_value = job["private"].get("artifact_paths", {}).get(artifact.artifact_id)
         if not path_value:
             return _download_error(request, "NOT_FOUND", "El artefacto no está disponible.")
         job_dir = Path(job["private"]["job_dir"]).resolve()

@@ -1,0 +1,107 @@
+{
+  "input_sha256": "3ba1cfc1f560fa4dfa47d23b3fe2f5be986b9714f9ad1124bce8cb0bb746f6c8",
+  "input_size_px": [
+    1254,
+    1254
+  ],
+  "input_svg_sha256": "f3ba464e66514fa82b20abe41657e3561a9f2bba0827af8f7f1ccf1b26ddc130",
+  "requested_settings": {
+    "schema_version": "0.1",
+    "target": {
+      "width_mm": 140.0,
+      "height_mm": 140.0,
+      "fit": "contain"
+    },
+    "machine_profile": "janome_mc550e",
+    "machine_profile_version": "0.1",
+    "hoop_profile": "sq14b",
+    "hoop": {
+      "profile_id": "sq14b",
+      "profile_version": "0.1",
+      "width_mm": 140.0,
+      "height_mm": 140.0,
+      "jef_hoop_code": 2
+    },
+    "fabric_profile": "algodon",
+    "fabric_profile_version": "0.1",
+    "thread_profile": "embroidery_thread_initial",
+    "color_limit": 12,
+    "ai_provider": "none",
+    "ai_model": null
+  },
+  "target_vectorized_mm": [
+    129.6,
+    129.6
+  ],
+  "api_inset_mm_before": 0.4,
+  "api_inset_mm_after": 0.5,
+  "same_registered_e1_geometry_used": true,
+  "source_e1_document_sha256": "8fb87ee04ebe321b778b1edfd33872d7a159945169ab723d92de19655d3936c0",
+  "before_svg_sha256": "9e4a445c0c2c415bcca509d6b9f81f0a5b5a378ba32e34f26b7b723b129c357f",
+  "vectorization_and_svg_s": 16.69438010000158,
+  "e1_path_data_sha256": "91c1c165886ff0eff86996924ed1ca48936e0f9d21c1d0ca12f491e61dec8d0e",
+  "e1_paths_unchanged_by_adapter": true,
+  "width_selection": {
+    "techniques": {
+      "satin": 309,
+      "running": 589,
+      "fill": 4
+    },
+    "width_bins_mm": {
+      "<1": {
+        "running": 286,
+        "satin": 30
+      },
+      "1-<1.5": {
+        "running": 105,
+        "satin": 132
+      },
+      "1.5-4": {
+        "satin": 147,
+        "running": 198
+      },
+      ">4-<7": {
+        "fill": 1
+      },
+      ">=7": {
+        "fill": 3
+      }
+    },
+    "unit_count": 902,
+    "units_sha256": "9bfbc23ece791de45fa2ad0a9c0a49b44e21808f85f77d25658310adc188f816"
+  },
+  "component_topology": {
+    "retained_original_components": 59,
+    "overexpanded_8_connected_components": 28,
+    "cut_lower_bound": 27,
+    "overapproximation_box_radius_mm": 0.31004784688995213,
+    "policy": "box dilation contains 0.25mm pull + 0.05mm JEF rounding; no connector across remaining blank gaps"
+  },
+  "svg_path_techniques": {
+    "satin": 309,
+    "running": 704,
+    "fill": 4,
+    "hidden_running_connector": 8
+  },
+  "e1_mask_evidence": [
+    {
+      "boundary_edges": 44774,
+      "bounds_crop_px": [
+        48,
+        22,
+        1207,
+        1187
+      ],
+      "colour": "#eb0403",
+      "exact_area_px2": 235277,
+      "holes": 59,
+      "pixel_count": 235277,
+      "subpaths": 119
+    }
+  ],
+  "svg_trim_after_true": 694,
+  "status": "needs_review",
+  "parameters_calibrated": false,
+  "physical_approval": "untested",
+  "digital_readiness_evaluated": false
+}

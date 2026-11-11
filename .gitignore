@@ -5,7 +5,7 @@
 .kit-data/
 # <<< ai-kit (managed) <<<
 
-# Configuración de agentes (incluida explícitamente)
+# Configuraciï¿½n de agentes (incluida explï¿½citamente)
 AGENTS.md
 WORKFLOW.md
 .codex/config.toml
@@ -19,3 +19,6 @@ WORKFLOW.md
 # Dentro de .codex, ignorar logs y credenciales
 .codex/hooks/.logs/
 .codex/hooks/notifications/.env
+# Python: bytecode generado por las pruebas
+__pycache__/
+*.pyc

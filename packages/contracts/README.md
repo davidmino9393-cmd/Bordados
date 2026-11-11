@@ -11,7 +11,7 @@ Contenido: [Uso](#uso), [documentos](#documentos), [reglas](#reglas), [relaciona
 - Validación: `JobCreate.model_validate(datos)`; JSON Schema: `JobCreate.model_json_schema()`.
 - Desde la raíz: `python -m unittest discover -s tests/engine -p test_contracts.py` con ese entorno.
 - Objetos Pydantic congelados; solicitudes rechazan campos desconocidos. Cambiar ajustes crea otra revisión, no modifica una generación anterior.
-- Inicio: proyecto → asset → revisión inicial (`base_revision_id: null`) → job. Null solo admite la primera revisión; H1 valida esa condición y pertenencia de la revisión base en las siguientes.
+- Inicio: proyecto → asset → revisión inicial (`base_revision_id: null`) → job. `base_revision_id: null` solo identifica una revisión inicial: un proyecto admite varias, una por cada bordado que se genera (ratificado por David el 2026-11-08; antes solo la primera). H1 valida la pertenencia de la revisión base en las siguientes.
 
 ## Documentos
 

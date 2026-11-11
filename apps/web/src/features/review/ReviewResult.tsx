@@ -26,7 +26,7 @@ export function ReviewResult({ job, asset, onJobChanged }: ReviewResultProps) {
   return (
     <>
       {isRasterWithJef(job) && <JefHero job={job} />}
-      <ReviewPanel job={job} asset={asset} correctable={canCorrect(job)} />
+      {/* Primero lo que la persona vino a ver (el archivo y la comparación); los avisos van después. */}
       {job.artifact_manifest && (
         <>
           <Notice
@@ -36,9 +36,10 @@ export function ReviewResult({ job, asset, onJobChanged }: ReviewResultProps) {
             <p>{geometryOnly ? es.review.geometryOnlyText : es.review.filesNotReadyText}</p>
           </Notice>
           <JobFiles job={job} asset={asset} onJobChanged={onJobChanged} showIssues={false} />
-          <VariantForm job={job} />
         </>
       )}
+      <ReviewPanel job={job} asset={asset} correctable={canCorrect(job)} />
+      {job.artifact_manifest && <VariantForm job={job} />}
       {!geometryOnly && <PhysicalSewout job={job} onJobChanged={onJobChanged} />}
     </>
   );

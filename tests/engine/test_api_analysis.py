@@ -14,6 +14,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest.mock import patch
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -29,8 +30,12 @@ from PIL import Image, ImageDraw
 
 from embroidery_api.analysis import AnalysisProvider, OllamaProvider, ProviderError, ProviderResult
 from embroidery_api.app import create_app
+from embroidery_api.inscriptions import Detected, ReaderUnavailable, mm_per_px
 from embroidery_api.config import ApiConfig
+from embroidery_api.profiles import load_profiles
 from embroidery_contracts import IssueCode
+from api_adapter import HOOP_MARGIN_MM
+from vectorize.inkstitch import REFERENCE_ADAPTER, REFERENCE_PULL_COMPENSATION_MM
 
 TOKEN = "test-token"
 SETTINGS = json.loads((ROOT / "packages" / "contracts" / "fixtures" / "generation-from-svg.json").read_text(encoding="utf-8"))["payload"]["settings"]
@@ -50,6 +55,12 @@ def png(width=80, height=60, shape=False):
     return buffer.getvalue()
 
 
+# Un SVG preparado: trae los parámetros de Ink/Stitch (sin ellos la API lo trata como un SVG común y lo convierte a imagen).
+PREPARED_SVG = (b'<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkstitch="http://inkstitch.org/namespace" width="10mm" height="10mm">'
+                b'<metadata><inkstitch:inkstitch_svg_version>3</inkstitch:inkstitch_svg_version></metadata>'
+                b'<path id="a" d="M0 0L1 1"/></svg>')
+
+
 class FakeProvider(AnalysisProvider):
     def __init__(self, provider_id, regions=(INSIDE,), error=None):
         self.provider_id, self.model = provider_id, f"fake-{provider_id}"
@@ -66,7 +77,7 @@ class AnalysisApiTests(unittest.TestCase):
     providers = None
     raster_digitizing = True  # con el worker falso: se prueba el cableado, no la calidad de las puntadas
 
-    def start(self, providers):
+    def start(self, providers, **app_options):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         config = ApiConfig(
@@ -76,7 +87,8 @@ class AnalysisApiTests(unittest.TestCase):
             max_workers=1, max_queued_jobs=8, timeout_s=20, worker_script=FAKE_WORKER,
             raster_digitizing=self.raster_digitizing,
         )
-        server = uvicorn.Server(uvicorn.Config(create_app(config, analysis_providers=providers), host="127.0.0.1", port=0, log_level="critical"))
+        app = create_app(config, analysis_providers=providers, **app_options)
+        server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=0, log_level="critical"))
         thread = threading.Thread(target=server.run, daemon=True)
         thread.start()
         deadline = time.time() + 10
@@ -166,7 +178,7 @@ class CatalogAndCreationTests(AnalysisApiTests):
         self.start({"openai": FakeProvider("openai")})
         _, project = self.call("POST", "/api/v1/projects", {"name": "H2"})
         pid = project["project_id"]
-        _, svg = self.upload(pid, b'<svg xmlns="http://www.w3.org/2000/svg" width="10mm" height="10mm"><path id="a" d="M0 0L1 1"/></svg>', "a.svg", "image/svg+xml")
+        _, svg = self.upload(pid, PREPARED_SVG, "a.svg", "image/svg+xml")
         _, image = self.upload(pid, png())
         _, revision = self.call("POST", f"/api/v1/projects/{pid}/revisions", {"schema_version": "0.1", "base_revision_id": None, "reason": "r", "settings": self.settings(), "document": None})
         for asset, kind in ((svg, "raster_image"), (image, "prepared_svg")):
@@ -221,7 +233,7 @@ class AnalysisFlowTests(AnalysisApiTests):
                 payload = response.read()
             self.assertEqual((len(payload), hashlib.sha256(payload).hexdigest()), (artifact["byte_size"], artifact["sha256"]))
         self.assertIn(b"<svg", payload[:400])
-        self.assertIn(b"e1-reference-fill-v1", payload)  # el SVG que se bordó es el de referencia, no la entrada cruda
+        self.assertIn(REFERENCE_ADAPTER.encode(), payload)  # el SVG que se bordó es el de referencia, no la entrada cruda
 
     def test_the_worker_receives_the_reference_svg_made_from_the_vectorized_geometry(self):
         self.start({"openai": FakeProvider("openai", [INSIDE])})
@@ -279,7 +291,7 @@ class AnalysisFlowTests(AnalysisApiTests):
         self.assertEqual((status, design["purpose"], photo["purpose"]), (201, "design", "sewout_photo"))
         self.assertEqual({a["purpose"] for a in self.call("GET", f"/api/v1/projects/{pid}")[1]["assets"]}, {"design", "sewout_photo"})
         self.assertEqual(self.upload(pid, png(), "x.png", purpose="otra")[0], 422)
-        svg = b'<svg xmlns="http://www.w3.org/2000/svg" width="10mm" height="10mm"><path id="a" d="M0 0L1 1"/></svg>'
+        svg = PREPARED_SVG
         self.assertEqual(self.upload(pid, svg, "a.svg", "image/svg+xml", purpose="sewout_photo")[0], 422)
         _, revision = self.call("POST", f"/api/v1/projects/{pid}/revisions", {"schema_version": "0.1", "base_revision_id": None, "reason": "r", "settings": self.settings(), "document": None})
         job_body = {"schema_version": "0.1", "asset_id": photo["asset_id"], "revision_id": revision["revision_id"], "input_kind": "raster_image", "settings": self.settings()}
@@ -349,7 +361,7 @@ class AnalysisFlowTests(AnalysisApiTests):
         self.assertEqual(self.call("GET", "/api/v1/jobs/job_inexistente/analysis")[0], 404)
         _, project = self.call("POST", "/api/v1/projects", {"name": "SVG"})
         pid = project["project_id"]
-        svg = b'<svg xmlns="http://www.w3.org/2000/svg" width="10mm" height="10mm"><path id="a" d="M0 0L1 1"/></svg>'
+        svg = PREPARED_SVG
         _, asset = self.upload(pid, svg, "a.svg", "image/svg+xml")
         _, revision = self.call("POST", f"/api/v1/projects/{pid}/revisions", {"schema_version": "0.1", "base_revision_id": None, "reason": "r", "settings": SETTINGS, "document": None})
         status, job = self.call("POST", f"/api/v1/projects/{pid}/jobs", {"schema_version": "0.1", "asset_id": asset["asset_id"], "revision_id": revision["revision_id"], "input_kind": "prepared_svg", "settings": SETTINGS})
@@ -403,6 +415,10 @@ class JefFromImageTests(AnalysisApiTests):
         svg = self.artifact(job, "inkstitch_svg")
         self.assertEqual(manifest["input_sha256"], hashlib.sha256(image).hexdigest())
         self.assertEqual(manifest["geometry_sha256"], hashlib.sha256(svg).hexdigest())
+        editable = self.artifact(job, "editable_svg")
+        self.assertNotEqual(editable, svg)
+        drawing = next(a for a in manifest["artifacts"] if a["kind"] == "editable_svg")
+        self.assertEqual(drawing["sha256"], hashlib.sha256(editable).hexdigest())
         self.assertNotEqual(manifest["input_sha256"], manifest["geometry_sha256"])
 
     def test_an_image_without_ai_analysis_goes_straight_to_vectorizing_and_the_jef(self):
@@ -455,15 +471,76 @@ class JefFromImageTests(AnalysisApiTests):
         self.assertEqual(self.stages(final), {"analyzing": "skipped", "vectorizing": "completed", "digitizing": "completed", "validating": "completed"})
         self.assertEqual(final["settings_snapshot"]["target"], {"width_mm": 160.0, "height_mm": 160.0, "fit": "contain"})
         self.assertTrue(self.artifact(variant, "jef"))
-        # Se vuelve a generar desde los píxeles: el SVG de la variante crece en la proporción de los destinos (149,6 -> 159,6).
+        # Se vuelve a generar desde los píxeles: el SVG de la variante crece en la proporción de los destinos (orden 5: 129,6 del trabajo inicial, acotado a 130 -> 159,6 de la variante explícita).
         extent = lambda item: self.x_extent(self.artifact(item, "inkstitch_svg").decode("utf-8").split("<path", 1)[1])  # noqa: E731
-        self.assertAlmostEqual(extent(variant) / extent(job), 159.6 / 149.6, delta=0.01)
+        self.assertAlmostEqual(extent(variant) / extent(job), 159.6 / 129.6, delta=0.01)
         self.assertEqual(self.call("GET", f"/api/v1/jobs/{job['job_id']}")[1]["status"], "needs_review")  # el origen no cambió
+
+    def test_an_image_on_a_small_hoop_leaves_the_two_mm_safety_margin_on_each_side(self):
+        """Guía 1.1: el diseño queda 2 mm por lado dentro del bastidor. Con SQ10b (100 mm) el motor recibe 96 mm menos la compensación."""
+        hoop = {**SETTINGS["hoop"], "profile_id": "sq10b", "width_mm": 100.0, "height_mm": 100.0, "jef_hoop_code": 0}
+        small = {"hoop_profile": "sq10b", "hoop": hoop, "target": {"width_mm": 100.0, "height_mm": 100.0, "fit": "contain"}}
+        self.start({})
+        _, job = self.raster_job("none", image=Image_bytes((80, 80), DARK_BLUE), settings=dict(self.settings("none"), **small))
+        self.wait(job["job_id"])
+        svg = (Path(self.tmp.name) / "data" / "jobs" / job["job_id"] / "reference-inkstitch.svg").read_text(encoding="utf-8")
+        extent = self.x_extent(svg.split("<path", 1)[1])
+        self.assertAlmostEqual(extent, 100.0 - 2 * HOOP_MARGIN_MM - 2 * REFERENCE_PULL_COMPENSATION_MM, delta=0.02)
+
+    def test_an_image_too_complex_to_stitch_fails_saying_why_and_what_to_do(self):
+        """Una foto o una textura con ruido supera el límite de complejidad de E1: el aviso lo dice, no «falló la exportación»."""
+        noise = Image.effect_noise((700, 700), 90).convert("RGB")
+        buffer = io.BytesIO()
+        noise.save(buffer, "PNG")
+        job, done = self.run_without_ai(buffer.getvalue())
+        self.assertEqual((done["status"], done["failure"]["stage"]), ("failed", "vectorizing"))
+        issue = done["issues"][0]
+        self.assertEqual(issue["evidence"]["original_evidence"]["reason"], "boundary_edge_limit")
+        self.assertIn("demasiado compleja", issue["description"])
+        self.assertIn("colores planos", issue["description"])
 
     def test_the_vectorized_size_leaves_room_for_the_pull_compensation(self):
         job, _ = self.run_without_ai(Image_bytes((80, 60), DARK_BLUE))
         extent = self.x_extent(self.artifact(job, "inkstitch_svg").decode("utf-8").split("<path", 1)[1])
-        self.assertAlmostEqual(extent, 150.0 - 0.4, delta=0.02)  # el destino pedido es 150 mm; la compensación suma 0,2 por lado
+        # Orden 5: el destino de una imagen se acota a 130 mm aunque el bastidor mida 150; el runner descuenta la compensación de ambos lados.
+        self.assertAlmostEqual(extent, 130.0 - 2 * REFERENCE_PULL_COMPENSATION_MM, delta=0.02)
+
+    def test_oversized_variant_preserves_geometry_and_offers_only_hoop_blocked_jef_for_inspection(self):
+        # El JEF de la fixture mide 150 × 142,8 mm. Un aro de 140 mm lo bloquea realmente.
+        catalog_path = ROOT / "services" / "api" / "profiles.json"
+        catalog = load_profiles(catalog_path)
+        hoop = next(item for item in catalog.hoops if item.profile_id == SETTINGS["hoop_profile"])
+        narrow = hoop.model_copy(update={"width_mm": 140.0, "height_mm": 200.0})
+        catalog = catalog.model_copy(update={"hoops": (narrow,)})
+        with patch("embroidery_api.app.load_profiles", return_value=catalog):
+            self.start({})
+        settings = self.settings("none")
+        settings["hoop"].update(width_mm=140.0, height_mm=200.0)
+        settings["target"].update(width_mm=140.0, height_mm=160.0)
+        project, parent = self.raster_job("none", image=Image_bytes((80, 60), DARK_BLUE), settings=settings)
+        self.assertEqual(self.wait(parent["job_id"])["status"], "failed")
+
+        for height, expected in ((360.0, "needs_review"), (100.0, "failed")):
+            with self.subTest(height=height):
+                target = {"width_mm": 280.0, "height_mm": height, "fit": "contain"}
+                status, child = self.call("POST", f"/api/v1/projects/{project}/revisions", {
+                    "schema_version": "0.1", "kind": "size_variant", "parent_job_id": parent["job_id"], "target": target,
+                })
+                self.assertEqual(status, 202, child)
+                done = self.wait(child["job_id"])
+                self.assertEqual(done["status"], expected)
+                blocks = {i["code"] for i in done["issues"] if i["severity"] == "blocking_error"}
+                if expected == "needs_review":
+                    self.assertEqual(blocks, {"HOOP_INCOMPATIBLE"})
+                    self.assertTrue(done["review"]["object_ids"])
+                    self.assertFalse(done["validation_report"]["digital_checks_passed"])
+                    self.assertTrue(self.artifact(child, "jef"))
+                    svg = self.artifact(child, "inkstitch_svg").decode("utf-8")
+                    self.assertAlmostEqual(self.x_extent(svg.split("<path", 1)[1]),
+                                           280.0 - 2 * REFERENCE_PULL_COMPENSATION_MM, delta=0.2)
+                else:
+                    self.assertEqual(blocks, {"HOOP_INCOMPATIBLE", "DIMENSIONS_EXCEEDED"})
+                    self.assertEqual(self.call("GET", f"/api/v1/jobs/{child['job_id']}/artifacts")[0], 409)
 
 
 def Image_bytes(size, colour):
@@ -570,3 +647,140 @@ class DecisionTests(AnalysisApiTests):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LegibilityEndpointTests(AnalysisApiTests):
+    """Orden 3.2: el aviso de legibilidad se pide antes de generar; no crea jobs ni bloquea."""
+
+    def setUp(self):
+        self.start({})
+        _, project = self.call("POST", "/api/v1/projects", {"name": "L"})
+        self.pid = project["project_id"]
+
+    def url(self, asset_id, query):
+        return f"/api/v1/projects/{self.pid}/assets/{asset_id}/legibility?{query}"
+
+    def test_it_returns_the_measured_share_and_the_exact_warning_for_a_fine_drawing(self):
+        _, asset = self.upload(self.pid, png(400, 300, shape=True))
+        status, body = self.call("GET", self.url(asset["asset_id"], "width_mm=10&height_mm=8&hoop_width_mm=140&hoop_height_mm=140"))
+        self.assertEqual(status, 200, body)
+        self.assertTrue(body["warn"])
+        self.assertRegex(body["message"], r"^El \d+% del trazo mide menos de 0,6 mm; a \d+ mm las letras no van a quedar legibles\.")
+        self.assertGreater(body["thin_share_below_0_6_mm"], 0.30)
+        self.assertEqual(body["requested_width_mm"], 10)
+        self.assertIn("minimum_size", body)
+
+    def test_a_big_enough_size_does_not_warn_and_nothing_is_created(self):
+        _, asset = self.upload(self.pid, png(400, 300, shape=True))
+        status, body = self.call("GET", self.url(asset["asset_id"], "width_mm=130&height_mm=120"))
+        self.assertEqual((status, body["warn"], body["message"]), (200, False, None))
+        _, detail = self.call("GET", f"/api/v1/projects/{self.pid}")
+        self.assertEqual(detail["jobs"], [])
+
+    def test_a_prepared_svg_a_sewout_photo_unknown_assets_and_bad_sizes_are_refused(self):
+        _, svg = self.upload(self.pid, PREPARED_SVG, "a.svg", "image/svg+xml")
+        _, photo = self.upload(self.pid, png(80, 60, shape=True), purpose="sewout_photo")
+        _, image = self.upload(self.pid, png(80, 60, shape=True))
+        for asset, query, expected in (
+            (svg["asset_id"], "width_mm=10&height_mm=10", 422),
+            (photo["asset_id"], "width_mm=10&height_mm=10", 422),
+            ("asset_missing", "width_mm=10&height_mm=10", 404),
+            (image["asset_id"], "width_mm=0&height_mm=10", 422),
+            (image["asset_id"], "height_mm=10", 400),  # falta un parámetro: MALFORMED_REQUEST
+        ):
+            with self.subTest(asset=asset, query=query):
+                self.assertEqual(self.call("GET", self.url(asset, query))[0], expected)
+
+    def test_it_needs_authentication(self):
+        _, asset = self.upload(self.pid, png(80, 60, shape=True))
+        request = urllib.request.Request(self.base + self.url(asset["asset_id"], "width_mm=10&height_mm=10"), method="GET")
+        with self.assertRaises(urllib.error.HTTPError) as caught:
+            urllib.request.urlopen(request, timeout=10)
+        self.assertEqual(caught.exception.code, 401)
+        caught.exception.close()
+
+
+class InscriptionEndpointTests(AnalysisApiTests):
+    """Guía 1.3: las inscripciones se leen antes de generar para confirmar la frase. El lector es falso: se prueba el cableado."""
+    FOUND = (
+        Detected("MUNICIPALIDAD DE EL FORTÍN", 0.998, "curved", (10, 10, 900, 900), 50.0),
+        Detected("TALLER", 0.99, "straight", (100, 1000, 600, 260), 200.0),
+    )
+    SIZE = (2000, 1500)
+
+    def setUp(self):
+        self.reads, self.reader_missing = 0, False
+
+        def detector(data):
+            self.reads += 1
+            if self.reader_missing:
+                raise ReaderUnavailable("ModuleNotFoundError: rapidocr")
+            return list(self.FOUND), 12
+
+        self.start({}, inscription_detector=detector)
+        _, project = self.call("POST", "/api/v1/projects", {"name": "I"})
+        self.pid = project["project_id"]
+        _, self.asset = self.upload(self.pid, png(*self.SIZE, shape=True))
+
+    def url(self, asset_id=None, query=""):
+        return f"/api/v1/projects/{self.pid}/assets/{asset_id or self.asset['asset_id']}/inscriptions" + (f"?{query}" if query else "")
+
+    def test_the_readings_come_with_letter_heights_at_the_requested_size_and_are_read_once(self):
+        status, body = self.call("GET", self.url(query="width_mm=100&height_mm=100"))
+        self.assertEqual(status, 200, body)
+        scale = mm_per_px(100.0, 100.0, self.SIZE)
+        self.assertTrue(body["available"])
+        self.assertEqual([(i["inscription_id"], i["text"], i["layout"]) for i in body["inscriptions"]],
+                         [("inscription_1", "MUNICIPALIDAD DE EL FORTÍN", "curved"), ("inscription_2", "TALLER", "straight")])
+        self.assertEqual([i["letter_height_mm"] for i in body["inscriptions"]], [round(50 * scale, 1), round(200 * scale, 1)])
+        self.assertEqual([i["small"] for i in body["inscriptions"]], [True, False])
+        status, other = self.call("GET", self.url(query="width_mm=130&height_mm=130"))
+        self.assertEqual((status, self.reads), (200, 1))  # otro tamaño no vuelve a leer la imagen
+        _, detail = self.call("GET", f"/api/v1/projects/{self.pid}")
+        self.assertEqual(detail["jobs"], [])
+
+    def test_a_confirmed_phrase_is_saved_with_the_asset_and_returned_afterwards(self):
+        status, body = self.call("PUT", self.url(query="width_mm=100&height_mm=100"),
+                                 {"confirmed": [{"inscription_id": "inscription_1", "text": " Municipalidad de El Fortín "}]})
+        self.assertEqual(status, 200, body)
+        self.assertEqual([i["confirmed_text"] for i in body["inscriptions"]], ["Municipalidad de El Fortín", None])
+        _, again = self.call("GET", self.url())
+        self.assertEqual([i["confirmed_text"] for i in again["inscriptions"]], ["Municipalidad de El Fortín", None])
+
+    def test_a_curved_phrase_can_be_chosen_for_letters_once_per_arc_and_never_a_straight_line(self):
+        circle = (460.0, 460.0, 450.0)
+        self.FOUND = (Detected("MUNICIPALIDAD DE EL FORTÍN", 0.988, "curved", (10, 10, 900, 900), 42.0, circle, "top"),
+                      Detected("MUNTCTPALTDAD", 0.92, "curved", (10, 10, 900, 900), 22.0, circle, "top"),
+                      Detected("TALLER", 0.99, "straight", (100, 1000, 600, 260), 200.0))
+        status, body = self.call("PUT", self.url(), {"confirmed": [
+            {"inscription_id": "inscription_1", "text": "MUNICIPALIDAD DE EL FORTÍN", "use_font": True}]})
+        self.assertEqual(status, 200, body)
+        self.assertEqual([(i["arc"], i["use_font"]) for i in body["inscriptions"]], [("top", True), ("top", False), (None, False)])
+        for confirmed in ([{"inscription_id": "inscription_3", "text": "TALLER", "use_font": True}],
+                          [{"inscription_id": "inscription_1", "text": "A", "use_font": True},
+                           {"inscription_id": "inscription_2", "text": "B", "use_font": True}]):
+            with self.subTest(confirmed=confirmed):
+                status, body = self.call("PUT", self.url(), {"confirmed": confirmed})
+                self.assertEqual((status, body["code"]), (422, "INVALID_REQUEST"))
+        _, again = self.call("GET", self.url())
+        self.assertEqual([i["use_font"] for i in again["inscriptions"]], [True, False, False])  # lo rechazado no se guardó
+
+    def test_unknown_inscriptions_empty_phrases_and_assets_that_are_not_images_are_refused(self):
+        _, svg = self.upload(self.pid, PREPARED_SVG, "a.svg", "image/svg+xml")
+        for method, url, body, expected in (
+            ("PUT", self.url(), {"confirmed": [{"inscription_id": "inscription_9", "text": "x"}]}, 422),
+            ("PUT", self.url(), {"confirmed": [{"inscription_id": "inscription_1", "text": "  "}]}, 422),
+            ("PUT", self.url(), {}, 400),
+            ("GET", self.url(svg["asset_id"]), None, 422),
+            ("GET", self.url("asset_missing"), None, 404),
+        ):
+            with self.subTest(method=method, url=url, body=body):
+                self.assertEqual(self.call(method, url, body)[0], expected)
+
+    def test_without_the_reader_the_query_says_so_and_a_confirmation_cannot_be_saved(self):
+        self.reader_missing = True
+        status, body = self.call("GET", self.url(query="width_mm=100&height_mm=100"))
+        self.assertEqual((status, body["available"], body["inscriptions"]), (200, False, []))
+        self.assertIn("no está instalado", body["unavailable_reason"])
+        status, body = self.call("PUT", self.url(), {"confirmed": []})
+        self.assertEqual((status, body["code"]), (503, "SERVICE_UNAVAILABLE"))

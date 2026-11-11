@@ -224,7 +224,7 @@ def revision_operations():
     sewout = fixture("physical-sewout")
     sewout_result = dict(sewout, sewout_id="sewout_mock_1", project_id="project_mock_1", recorded_at="2026-11-01T11:01:00Z")
     operations = {
-        revisions_path: {"post": operation(revisions_path, "post", "createRevision", "Initial revision returns 201 (null base only once); size_variant/correction create a distinct immutable revision and queued child job, returning 202. Parent ownership and object IDs must be checked", RevisionResponse, 201,
+        revisions_path: {"post": operation(revisions_path, "post", "createRevision", "Initial revision returns 201 (null base; each embroidery generated in a project starts from its own initial revision, ratified 2026-11-08); size_variant/correction create a distinct immutable revision and queued child job, returning 202. Parent ownership and object IDs must be checked", RevisionResponse, 201,
                             {"initial": example(RevisionResponse, result)}, RevisionRequest, revision, POST_ERRORS + (ErrorCode.NOT_FOUND, ErrorCode.REVISION_CONFLICT))},
         sewouts_path: {"post": operation(sewouts_path, "post", "recordSewout", "Record the authorized user's physical observation for an owned revision; never changes digital job status", SewoutResponse, 201,
                           {"simulated": example(SewoutResponse, sewout_result)}, SewoutRecord, sewout, POST_ERRORS + (ErrorCode.NOT_FOUND, ErrorCode.REVISION_CONFLICT))},

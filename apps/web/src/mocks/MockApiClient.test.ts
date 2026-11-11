@@ -21,12 +21,9 @@ async function settingsFor(provider: AiProvider = AiProvider.OpenAI): Promise<Jo
   const catalog = await api.getProfiles();
   return toJobSettings(
     {
-      width_mm: '130',
-      height_mm: '120',
       machine_profile: 'janome_mc550e',
       hoop_profile: 'sq20b',
       fabric_profile: 'gabardina_inicial',
-      thread_profile: 'embroidery_thread_initial',
       color_limit: '3',
       ai_provider: provider,
     },
@@ -207,7 +204,7 @@ describe('MockApiClient (SIMULADO, forma de contratos-v0.1)', () => {
     expect(variant.job_id).not.toBe(job.job_id);
     expect(variant.parent_job_id).toBe(job.job_id);
     expect(variant.settings_snapshot.target.width_mm).toBe(90);
-    expect((await api.getJob(job.job_id)).settings_snapshot.target.width_mm).toBe(130);
+    expect((await api.getJob(job.job_id)).settings_snapshot.target.width_mm).toBe(200);
   });
 
   it('la muestra física actualiza solo sewout_status; el estado digital no cambia', async () => {
@@ -430,8 +427,8 @@ describe('MockApiClient (SIMULADO, forma de contratos-v0.1)', () => {
     const catalog = await local.getProfiles();
     const settings = toJobSettings(
       {
-        width_mm: '130', height_mm: '120', machine_profile: 'janome_mc550e', hoop_profile: 'sq20b',
-        fabric_profile: 'gabardina_inicial', thread_profile: 'embroidery_thread_initial',
+        machine_profile: 'janome_mc550e', hoop_profile: 'sq20b',
+        fabric_profile: 'gabardina_inicial',
         color_limit: '3', ai_provider: AiProvider.Ollama,
       },
       catalog,

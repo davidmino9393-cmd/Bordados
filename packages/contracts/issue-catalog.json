@@ -140,6 +140,11 @@
       "severity": "info",
       "stage": "worker"
     },
+    "LEGIBILITY_RISK": {
+      "meaning": "Measured thin area may be illegible at the requested size",
+      "severity": "review_required",
+      "stage": "visual"
+    },
     "LOCAL_MODEL_UNAVAILABLE": {
       "meaning": "Selected local vision model unavailable",
       "severity": "blocking_error",

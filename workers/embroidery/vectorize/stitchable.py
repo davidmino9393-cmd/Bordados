@@ -9,6 +9,8 @@ qué entra en el SVG para puntadas, simplifica los contornos y deja la cuenta de
 from dataclasses import dataclass
 import re
 
+from .contours import signed_area
+
 # ≈ 1 mm de lado: el ancho mínimo publicado de un satin (tests/calibration/h3/REFERENCIAS_JANOME_MC550E.md, §5).
 MIN_STITCHABLE_AREA_MM2 = 1.0
 # Una capa cuyo color tiene todos los canales por encima de esto se toma como fondo y no se borda.
@@ -104,7 +106,82 @@ def simplify_ring(points, tolerance=SIMPLIFY_TOLERANCE_MM):
     anchor = max(range(len(points)), key=lambda i: (points[i][0] - points[0][0]) ** 2 + (points[i][1] - points[0][1]) ** 2)
     first = _simplify_chain(points[:anchor + 1], tolerance_squared)
     second = _simplify_chain(points[anchor:] + points[:1], tolerance_squared)
-    return first[:-1] + second[:-1]
+    candidate = first[:-1] + second[:-1]
+    return candidate if simple_ring(candidate) else list(points)
+
+
+def _cross(a, b, c):
+    return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+
+
+def segments_intersect(a, b, c, d):
+    if max(a[0], b[0]) < min(c[0], d[0]) or max(c[0], d[0]) < min(a[0], b[0]):
+        return False
+    if max(a[1], b[1]) < min(c[1], d[1]) or max(c[1], d[1]) < min(a[1], b[1]):
+        return False
+    return _cross(a, b, c) * _cross(a, b, d) <= 0 and _cross(c, d, a) * _cross(c, d, b) <= 0
+
+
+def simple_ring(points):
+    """Reject self contacts as well as crossings; Ink/Stitch rejects both."""
+    if len(points) < 3 or len(set(points)) != len(points):
+        return False
+    edges = list(zip(points, points[1:] + points[:1]))
+    ordered = sorted(enumerate(edges), key=lambda item: min(item[1][0][0], item[1][1][0]))
+    active = []
+    for i, (a, b) in ordered:
+        left = min(a[0], b[0])
+        active = [(j, c, d) for j, c, d in active if max(c[0], d[0]) >= left]
+        for j, c, d in active:
+            if abs(i - j) == 1 or {i, j} == {0, len(edges) - 1}:
+                continue
+            if segments_intersect(a, b, c, d):
+                return False
+        active.append((i, a, b))
+    return True
+
+
+def split_contacts(points):
+    """Split exact pixel contours at repeated vertices without deleting holes."""
+    pending, output = [list(points)], []
+    while pending:
+        ring = pending.pop()
+        positions = {}
+        for i, point in enumerate(ring):
+            if point in positions:
+                previous = positions[point]
+                parts = (ring[previous:i], ring[:previous] + ring[i:])
+                pending.extend(part for part in parts if len(part) >= 3)
+                break
+            positions[point] = i
+        else:
+            if len(ring) >= 3 and ring_area_mm2(ring) > 0:
+                output.append(ring)
+    return output
+
+
+def clean_rings(rings, tolerance=SIMPLIFY_TOLERANCE_MM):
+    """Topology checked simplification, preserving every negative (hole) loop."""
+    clean = []
+    for ring in rings:
+        for part in split_contacts(ring):
+            candidate = simplify_ring(part, tolerance)
+            # Rounding to 0.001 mm can create a new contact on tiny details.
+            rounded = [(round(x, OUTPUT_DECIMALS), round(y, OUTPUT_DECIMALS)) for x, y in candidate]
+            clean.append(rounded if simple_ring(rounded) else part)
+    # Do not allow independently simplified holes to cross their outer border.
+    bounds = [(min(x for x, _ in ring), min(y for _, y in ring),
+               max(x for x, _ in ring), max(y for _, y in ring)) for ring in clean]
+    for i, ring in enumerate(clean):
+        for j, other in enumerate(clean[:i]):
+            a, b = bounds[i], bounds[j]
+            if a[2] < b[0] or b[2] < a[0] or a[3] < b[1] or b[3] < a[1]:
+                continue
+            if any(segments_intersect(a, b, c, d)
+                   for a, b in zip(ring, ring[1:] + ring[:1])
+                   for c, d in zip(other, other[1:] + other[:1])):
+                return [part for original in rings for part in split_contacts(original)]
+    return clean
 
 
 def _number(value):
@@ -137,14 +214,16 @@ def plan_object(obj, tolerance=SIMPLIFY_TOLERANCE_MM):
                  removed_area_mm2=total, points=points, kept_points_before=0, kept_points=0, tolerance_mm=tolerance)
     if is_near_white(obj.work_color):
         return StitchableObject(**whole, omitted=OMITTED_NEAR_WHITE)
-    large = [ring for ring, area in zip(rings, areas) if area >= MIN_STITCHABLE_AREA_MM2]
-    kept = [ring for ring in (simplify_ring(ring, tolerance) for ring in large) if len(ring) >= 3]
+    # Small islands may be noise; small negative loops are design holes and
+    # must survive every reference contour derivation.
+    large = [ring for ring, area in zip(rings, areas) if area >= MIN_STITCHABLE_AREA_MM2 or signed_area(ring) < 0]
+    kept = clean_rings(large, tolerance)
     if not kept:
         return StitchableObject(**whole, omitted=OMITTED_TOO_SMALL)
     return StitchableObject(
         object_id=obj.object_id, path_data_mm=" ".join(_format_ring(ring) for ring in kept), omitted=None, loops=len(rings),
         removed_loops=len(rings) - len(kept), total_area_mm2=total,
-        removed_area_mm2=sum(area for area in areas if area < MIN_STITCHABLE_AREA_MM2), points=points,
+        removed_area_mm2=sum(area for ring, area in zip(rings, areas) if area < MIN_STITCHABLE_AREA_MM2 and signed_area(ring) > 0), points=points,
         kept_points_before=sum(len(ring) for ring in large), kept_points=sum(len(ring) for ring in kept), tolerance_mm=tolerance)
 
 

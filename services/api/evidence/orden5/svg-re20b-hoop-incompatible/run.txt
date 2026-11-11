@@ -1,0 +1,19 @@
+asset 201 asset_584b99d425ef49f4bd0f9af7d68446a5
+job 202 job_447982b0a8124195b0dacc730437427c
+status failed 437.4 s
+ issue HOOP_INCOMPATIBLE blocking_error El diseño (150 x 142.8 mm) no entra en el bastidor re20b (140 x 200 mm).
+ issue SATIN_RUNG_WARNING review_required Satin has no rungs
+ issue SATIN_RUNG_WARNING review_required Satin has no rungs
+ issue SATIN_RUNG_WARNING review_required Satin has no rungs
+ issue SATIN_RUNG_WARNING review_required Satin has no rungs
+ issue SATIN_RUNG_WARNING review_required Satin has no rungs
+ issue SATIN_RUNG_WARNING review_required Satin has no rungs
+ issue SATIN_RUNG_WARNING review_required Satin has no rungs
+ issue SATIN_RUNG_WARNING review_required Satin has no rungs
+ issue SATIN_RUNG_WARNING review_required Satin has no rungs
+ issue SATIN_RUNG_WARNING review_required Satin has no rungs
+ issue SATIN_RUNG_WARNING review_required Satin has no rungs
+ issue SATIN_RUNG_WARNING review_required Satin has no rungs
+ issue SATIN_RUNG_WARNING review_required Satin has no rungs
+ issue SATIN_RUNG_WARNING review_required Satin has no rungs
+artifacts 409 {'schema_version': '0.1', 'type': 'urn:embroidery:problem:artifacts-unavailable', 'title': 'Artifacts Unavailable', 'status': 409, 'detail': 'Los artefactos todavía no están disponibles para este trabajo.', 'instance': '/api/v1/jobs/job_447982b0a8124195b0dacc730437427c/artifacts', 'code': 'ARTIFACTS_UNAVAILABLE', 'request_id': '132eacb0-969b-405d-9178-c62c9ec16c89', 'errors': []}
