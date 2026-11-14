@@ -57,4 +57,4 @@ No reutilizar directorio de job. Código 0 = exportación/relectura completas; 1
 
 ## Relacionados
 
-[Resultados](evidence/README.md), [Bridge](evidence/bridge/README.md), [inventario](inventory/README.md), [tests](../../tests/engine/test_worker.py), [Windows Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects).
+Resultados, Bridge, inventario, [tests](../../tests/engine/test_worker.py), [Windows Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects).

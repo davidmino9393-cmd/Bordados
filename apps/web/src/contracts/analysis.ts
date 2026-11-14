@@ -2,7 +2,7 @@
 //
 // AnalysisRegion / AnalysisSpec: forma CONGELADA en contratos-v0.1 (design.py, componentes de
 // openapi.json). Ningún endpoint de v0.1 los devuelve todavía.
-// AnalysisDecision y las operaciones getAnalysis / decideAnalysis: forma CONFIRMADA por OpenCode, pero
+// AnalysisDecision y las operaciones getAnalysis / decideAnalysis: forma CONFIRMADA, pero
 // todavía no incorporada a OpenAPI/contracts (cambio aditivo pendiente). Detalle en
 // apps/web/docs/H0-05-recorrido-web.md.
 import type { BoundsPX } from './project';

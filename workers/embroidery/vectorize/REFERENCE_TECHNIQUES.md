@@ -41,5 +41,5 @@ Sin calibración ni aprobación física: `digital_readiness_evaluated=false`, `p
 ## Documentos relacionados
 
 - [Pruebas](../../../tests/engine/test_reference_techniques.py)
-- [Evidencia reproducible](../../../tests/engine/round6_evidence.py)
-- [Entrada y reglas](CONTINUAR.md)
+- Evidencia reproducible
+- Entrada y reglas

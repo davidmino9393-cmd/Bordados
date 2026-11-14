@@ -12,7 +12,7 @@ Anime Socks (confirmado por David)
   Conjunto total: 16 imagenes. El validador permite repetir «file» solo dentro de la familia anime_socks.
 
 Como usarlo
-  1) Copiar esta carpeta a C:\dev\wt-web\tests\fixtures\h2\ (o donde indique la rama claude/web).
+  1) Esta carpeta va en tests/fixtures/h2/ del proyecto.
   2) Agregar al manifest.json las 2 entradas de Anime Socks (con file y sha256 reales).
   3) python validate_manifest.py manifest.json --check-files
 

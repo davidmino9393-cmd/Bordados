@@ -6,7 +6,7 @@ Fecha: 2026-11-02. Estado: documento de trabajo. La búsqueda no pudo usar Reddi
 
 Contenido: [1 Cómo leerlo](#1-cómo-leer-este-documento) · [2 Qué no se pudo consultar](#2-qué-no-se-pudo-consultar) · [3 Límites de la máquina](#3-límites-de-la-máquina) · [4 Formato JEF](#4-formato-jef) · [5 Digitalización publicada](#5-referencias-de-digitalización-publicadas) · [6 Anime Socks](#6-anime-socks-referencia-empírica) · [7 Qué cubre H3](#7-qué-cubre-h3) · [8 Cambios propuestos](#8-cambios-propuestos-no-aplicados) · [9 Otras máquinas](#9-otras-máquinas) · [10 Pendientes](#10-pendientes-para-cerrar-h3) · [11 Fuentes](#11-fuentes)
 
-Documentos relacionados: [PROTOCOLO_H3.md](PROTOCOLO_H3.md) · [planilla_h3.csv](planilla_h3.csv) · [Anime_Socks_Informe.md](../../../Anime_Socks_Bordado/Anime_Socks_Informe.md) · [profiles.py](../../../packages/contracts/embroidery_contracts/profiles.py) · [profiles.json](../../../services/api/profiles.json)
+Documentos relacionados: [PROTOCOLO_H3.md](PROTOCOLO_H3.md) · [planilla_h3.csv](planilla_h3.csv) · Anime_Socks_Informe.md · [profiles.py](../../../packages/contracts/embroidery_contracts/profiles.py) · [profiles.json](../../../services/api/profiles.json)
 
 ## 1. Cómo leer este documento
 | Confianza | Significa |
@@ -88,7 +88,7 @@ Condiciones de la costura, declaradas por David el 2026-11-02. No hay fotos ni m
 | Dato | Declarado | Falta anotar |
 |---|---|---|
 | Resultado | «Salió muy bien» | Fotos y medidas |
-| Archivo | El JEF que le dio Codex, de nombre parecido a «animesocks.jef» | Cuál era (ver abajo): no hay ningún archivo con ese nombre en el repo |
+| Archivo | El JEF usado, de nombre parecido a «animesocks.jef» | Cuál era (ver abajo): no hay ningún archivo con ese nombre en el repo |
 | Tela | Gabardina | |
 | Estabilizador | Grueso | Tipo (recortable o rasgable) y gramaje |
 | Hilo | Hilo de bordar | Marca y grosor |
@@ -179,7 +179,7 @@ Procedimiento: ficha → manual → especificación del formato → foros para c
 - [x] David: condiciones de la costura de Anime Socks (gabardina, estabilizador grueso, hilo de bordar, aguja de fábrica, 400 ppm). Hecho el 2026-11-02.
 - [ ] David: qué tamaño mostró la máquina al cargar el archivo (150,0 × 142,8 mm o 126,2 × 120,0 mm); identifica el archivo y el bastidor.
 - [ ] David: tipo de estabilizador, número de aguja, marca y grosor del hilo, y fotos del bordado. Las fotos se pueden registrar en la web en «Registrar muestra física» (hasta 4).
-- [ ] Codex: confirmar el nombre y el hash exactos del JEF que le dio a David.
+- [ ] Confirmar el nombre y el hash exactos del JEF cosido.
 - [ ] Decidir si `gabardina_inicial` pasa a `physically_calibrated`: exige un registro de calibración con evidencia física (la muestra H3, o fotos y medidas de Anime Socks).
 - [ ] David: manual oficial en PDF y/o hilos de Reddit (ver §2).
 - [ ] En la máquina: umbral de corte de saltos en el menú y bastidor propuesto al cargar `muestra_h3.jef`.

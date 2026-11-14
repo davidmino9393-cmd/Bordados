@@ -6,7 +6,7 @@ Contenido: [Fuente](#fuente), [mapa](#mapa), [relacionados](#relacionados).
 
 ## Fuente
 
-Leído completo, en solo lectura: `C:\dev\wt-web\apps\web\docs\H0-05-recorrido-web.md`.
+Basado en el documento del recorrido web H0-05.
 
 SHA-256: `4f807df992677e8420e6f5c671bac350e4774abd51dba86906e7f478f31c6c8a`.
 

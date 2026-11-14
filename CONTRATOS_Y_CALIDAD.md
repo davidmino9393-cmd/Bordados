@@ -124,9 +124,3 @@ Medir después de exportar y releer: ancho/alto, puntadas de aguja, bloques de h
 En JEF, los tripletes de saltos cero utilizados para codificar cortes se distinguen de saltos de desplazamiento. La ejecución del corte en la máquina se verifica por separado. La paleta visual de trabajo y la aproximación del catálogo del formato también se conservan como datos distintos.
 
 Guardar hashes de entradas, geometría, configuración, modelo/prompt, versiones del motor y artefactos. La fecha de cabecera del JEF puede cambiar su hash sin cambiar las puntadas; una prueba de regresión compara además las órdenes y coordenadas normalizadas, con tolerancia definida.
-
-## 9. Contrato entre las IAs desarrolladoras
-
-La IA coordinadora mantiene el esquema, OpenAPI y las decisiones de arquitectura. Las otras IAs consumen una versión identificada y proponen cambios de contrato con un ejemplo y su impacto. Tras acordarlos, se actualizan juntos backend, frontend y pruebas.
-
-Las pruebas de la interfaz pueden usar respuestas simuladas identificadas como tales. La aceptación del recorrido completo requiere un JEF producido por el worker y releído por el validador.

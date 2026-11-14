@@ -1,7 +1,0 @@
-Traceback (most recent call last):
-  File "C:\dev\wt-motor\workers\embroidery\.tools\inkstitch-source\inkstitch-inkstitch-102bc89\inkstitch.py", line 117, in <module>
-    from lib.debug.debug import debug  # noqa: E402  # import global variable debug - don't import whole module
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\dev\wt-motor\workers\embroidery\.tools\inkstitch-source\inkstitch-inkstitch-102bc89\lib\debug\debug.py", line 15, in <module>
-    import inkex
-ModuleNotFoundError: No module named 'inkex'

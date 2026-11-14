@@ -1,5 +1,0 @@
-# Audit history and binary artefacts remain local. Only the two selected reviews are versioned.
-/*
-!/.gitignore
-!/25370ff/
-!/e426456/

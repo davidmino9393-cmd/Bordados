@@ -333,7 +333,7 @@ export function createMockApiClient(options: MockOptions = {}): ApiClient {
       confirmedInscriptions.set(assetId, saved);
       return simulatedInscriptions(size, saved);
     },
-    // H2 (confirmado por OpenCode, aún fuera de OpenAPI v0.1): 200 si el job tiene un análisis asociado,
+    // H2 (aún fuera de OpenAPI v0.1): 200 si el job tiene un análisis asociado,
     // propio o el aprobado de su padre en un job de continuación; 404 en cualquier otro caso.
     async getAnalysis(jobId) {
       const job = requireJob(jobId);

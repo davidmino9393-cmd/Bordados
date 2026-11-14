@@ -13,6 +13,9 @@ sys.path.insert(0, str(ROOT / "workers" / "embroidery"))
 from process_runner import WorkerFailure, run_logged
 from worker import prepared_input, with_hoop_code
 
+# Reference designs are not versioned; the tests that read them are skipped when they are absent.
+REFERENCE_JEF_13X12 = ROOT / "Anime_Socks_Bordado_13x12/Anime_Socks_13x12.jef"
+REFERENCE_JEF = ROOT / "Anime_Socks_Bordado/Anime_Socks_Optimizado.jef"
 
 class WorkerTests(unittest.TestCase):
     def test_invalid_svg_is_controlled_before_execution(self):
@@ -50,8 +53,9 @@ class WorkerTests(unittest.TestCase):
                 run_logged([sys.executable, "-c", "pass"], tmp, "empty", 5)
             self.assertEqual(caught.exception.issue["reason"], "nonzero_exit_or_empty_payload")
 
+    @unittest.skipUnless(REFERENCE_JEF_13X12.exists(), "reference design not included")
     def test_the_header_hoop_code_follows_the_profile_and_nothing_else_in_the_file_changes(self):
-        original = (ROOT / "Anime_Socks_Bordado_13x12/Anime_Socks_13x12.jef").read_bytes()  # el exportador le puso código 2 (140 x 200)
+        original = REFERENCE_JEF_13X12.read_bytes()  # el exportador le puso código 2 (140 x 200)
         before = struct.unpack_from("<I", original, 32)[0]
         self.assertNotEqual(before, 4)
         patched, change = with_hoop_code(original, 4)
@@ -67,9 +71,10 @@ class WorkerTests(unittest.TestCase):
             with_hoop_code(b"\x00" * 20, 4)
         self.assertEqual(caught.exception.issue["code"], "JEF_INVALID")
 
+    @unittest.skipUnless(REFERENCE_JEF.exists(), "reference design not included")
     def test_reader_cannot_hide_missing_or_invalid_end(self):
         from jef_audit import binary_commands
-        data = (ROOT / "Anime_Socks_Bordado/Anime_Socks_Optimizado.jef").read_bytes()
+        data = REFERENCE_JEF.read_bytes()
         missing_end = bytearray(data[:-2])
         records = struct.unpack_from("<I", data, 28)[0]
         struct.pack_into("<I", missing_end, 28, records - 1)
