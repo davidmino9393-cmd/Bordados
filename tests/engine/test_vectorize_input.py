@@ -63,7 +63,7 @@ def asymmetric_image():
 
 class RasterInputTests(unittest.TestCase):
     def test_engine_imports_the_shared_helper_limits(self):
-        # The API catalogue integration belongs to Claude; this test verifies the delivered engine boundary.
+        # The API catalogue integration lives in services/api; this test verifies the delivered engine boundary.
         self.assertEqual((MAX_INPUT_BYTES, MAX_INPUT_PIXELS), (MAX_BYTES, MAX_PIXELS))
         self.assertEqual((segmentation.MAX_INPUT_BYTES, segmentation.MAX_INPUT_PIXELS), (MAX_BYTES, MAX_PIXELS))
 

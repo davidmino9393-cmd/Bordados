@@ -3,7 +3,7 @@ import type { JobResponse } from '../../contracts/job';
 import { SewoutStatus } from '../../contracts/sewout';
 import type { Issue } from '../../contracts/validation';
 
-/** Código que emite el motor (ronda 5 de Codex) cuando el trazo es demasiado fino para la técnica elegida. */
+/** Código que emite el motor cuando el trazo es demasiado fino para la técnica elegida. */
 export const LEGIBILITY_RISK = 'LEGIBILITY_RISK';
 
 export interface JefGate {

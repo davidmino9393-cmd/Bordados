@@ -29,4 +29,4 @@ Contenido: [Convenciones](#convenciones), [evidencia](#evidencia), [relacionados
 
 ## Relacionados
 
-[Modelos](README.md), [estados](states.md), [inventario](../../workers/embroidery/inventory/README.md).
+[Modelos](README.md), [estados](states.md), inventario.

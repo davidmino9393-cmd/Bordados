@@ -18,7 +18,7 @@ Contenido: [Casos](#casos), [copia](#copia), [relacionados](#relacionados).
 ## Copia
 
 - Envelope: `schema_version: "0.1"`, `contract_revision: "B2"`, `simulated: true`, `case`, `model`, `direction`, `endpoint`, `payload`.
-- Claude Code copia los JSON a `apps/web/mocks/`. No necesita importar Python ni el paquete backend.
+- La web usa estos JSON desde `apps/web/mocks/`. No necesita importar Python ni el paquete backend.
 - Usar `payload` como cuerpo request/response del mock. El envelope identifica datos de prueba y **no** se envía a la API real.
 - Mantener en web una señal visible de modo simulado; no borrar procedencia al mostrar mocks. El resultado incluye además provenance.simulated=true.
 - IDs `*_mock_*`, URLs `example.invalid`, hashes de relleno y tamaños no identifican archivos existentes. Los conteos del caso válido ilustran el inventario histórico, no una exportación realizada por este contrato.

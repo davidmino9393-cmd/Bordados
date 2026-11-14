@@ -1,24 +1,6 @@
-# >>> ai-kit (managed) >>>
-# Installed by devagent-kit — keep kit files local, do not commit.
-.agents/
-.ai-kit.lock
-.kit-data/
-# <<< ai-kit (managed) <<<
-
-# Configuraci�n de agentes (incluida expl�citamente)
-AGENTS.md
-WORKFLOW.md
-.codex/config.toml
-.codex/hooks.json
-.codex/.aikit.json
-.codex/.aikit-ignore
-.codex/agents/
-.codex/output-styles/
-.codex/runtime/
-.codex/agent-memory/
-# Dentro de .codex, ignorar logs y credenciales
-.codex/hooks/.logs/
-.codex/hooks/notifications/.env
 # Python: bytecode generado por las pruebas
 __pycache__/
 *.pyc
+
+# Archivos temporales de las pruebas
+tests/engine/.tmp/

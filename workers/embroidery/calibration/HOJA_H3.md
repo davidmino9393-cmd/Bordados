@@ -31,7 +31,7 @@ Usar `tests/calibration/h3/muestra_h3.jef` y registrar su hash. Su preview es di
 
 ## Registro
 
-Completar [mediciones.csv](../../../tests/engine/evidence/h3-measurement/mediciones.csv): 39 filas para 31 piezas y marco; cada relleno D tiene X/Y separados, con medidas digitales propias.
+Completar mediciones.csv: 39 filas para 31 piezas y marco; cada relleno D tiene X/Y separados, con medidas digitales propias.
 
 - Error nominal = media real − objetivo físico; error digital = media real − dimensión JEF.
 - En D: medir diez intervalos entre filas, perpendiculares a su dirección, y dividir por diez. En B comparar cobertura/fruncido entre separaciones programadas; no equiparar zigzag visible con separación nominal.
@@ -41,4 +41,4 @@ Completar [mediciones.csv](../../../tests/engine/evidence/h3-measurement/medicio
 ## Referencias
 
 - [Protocolo existente](../../../tests/calibration/h3/PROTOCOLO_H3.md)
-- [Criterios e instrumentos](CRITERIOS_H3.md) · [Plantilla](../../../tests/engine/evidence/h3-measurement/mediciones.csv)
+- [Criterios e instrumentos](CRITERIOS_H3.md) · Plantilla

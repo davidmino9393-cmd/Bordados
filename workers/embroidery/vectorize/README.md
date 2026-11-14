@@ -31,7 +31,7 @@ result = vectorize(
 
 ## Integración
 
-Claude conserva `services/api`, web y evaluación F. Este módulo no cambia estados del job ni contratos.
+Este módulo no cambia estados del job ni contratos.
 
 `EmbroideryObject` exige técnica efectiva y parámetros: E1 los completa con valores **provisionales**, emite `DENSITY_REVIEW_REQUIRED` localizado y deja `h3_validation_required` en evidencia. No habilitan `ready_for_sewout`.
 
@@ -39,9 +39,7 @@ Claude conserva `services/api`, web y evaluación F. Este módulo no cambia esta
 
 ## Referencias
 
-- [Continuar en otro chat](CONTINUAR.md)
-- [Próxima tarea de paleta](PROXIMA_TAREA.md)
 - [Modelos congelados](../../../packages/contracts/embroidery_contracts/design.py)
 - [Fixtures de entrada](../../../tests/fixtures/h2/LEEME.txt)
-- [Evidencia reproducible](../../../tests/engine/evidence/h2-e1/README.md)
+- Evidencia reproducible
 - [Atributos oficiales Ink/Stitch](https://inkstitch.org/developers/inkstitch/namespace/)

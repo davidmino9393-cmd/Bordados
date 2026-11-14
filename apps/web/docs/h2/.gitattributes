@@ -1,2 +1,0 @@
-# El parche se guarda tal cual: sin conversión de fin de línea.
-*.patch -text

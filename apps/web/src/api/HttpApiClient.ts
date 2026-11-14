@@ -124,7 +124,7 @@ export function createHttpApiClient(config: HttpClientConfig = {}): ApiClient {
     getArtifacts: (jobId) => request('GET', `/jobs/${id(jobId)}/artifacts`),
     cancelJob: (jobId, key) =>
       request('POST', `/jobs/${id(jobId)}/cancel`, { key, body: { schema_version: '0.1' } }),
-    // H2: forma confirmada por OpenCode; falta incorporarla a OpenAPI/contracts. La web solo las usa con un
+    // H2: forma confirmada; falta incorporarla a OpenAPI/contracts. La web solo las usa con un
     // job de imagen en needs_review por análisis, algo que el backend de H0-04 todavía no produce.
     getAnalysis: (jobId) => request('GET', `/jobs/${id(jobId)}/analysis`),
     decideAnalysis: (jobId, body, key) => request('POST', `/jobs/${id(jobId)}/analysis-decision`, { key, body }),
